@@ -38,7 +38,7 @@ const Home = () => {
               Welcome Back, {user.name || 'Hunter'}
             </h1>
             <p className="text-sl-gray-light max-w-2xl mx-auto text-sm md:text-base">
-              Your Solo Leveling journey continues. Track your progress, plan your workouts, and level up.
+              Your Genesis Rise journey continues. Track your progress, plan your workouts, and level up.
             </p>
           </div>
 
@@ -133,7 +133,7 @@ const Home = () => {
             Level Up Your Fitness Journey
           </h1>
           <p className="text-sl-gray-light max-w-3xl mx-auto text-lg">
-            Inspired by the Solo Leveling anime, transform your workouts into a quest for strength. Track progress, earn XP, unlock achievements, and become the strongest version of yourself.
+             Transform your workouts into a quest for strength. Track progress, earn XP, unlock achievements, and become the strongest version of yourself.
           </p>
           <div className="flex justify-center mt-8 space-x-4">
             <Link to="/register" className="holo-button px-6 py-3">
@@ -236,7 +236,7 @@ const Home = () => {
 
       {/* Footer */}
       <footer className="mt-20 text-center text-sl-gray-light/50">
-        <p>© 2026 Solo Leveling System. All rights reserved.</p>
+        <p>© 2026 genesis Rise. All rights reserved.</p>
       </footer>
     </div>
   );
