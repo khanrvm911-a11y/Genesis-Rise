@@ -10,30 +10,37 @@ export const AuthProvider = ({ children }) => {
   });
 
   // Login function
-  const login = (email) => {
-    // In a real app, this would be an API call
-    // For now, we'll simulate successful login with mock data
-    const mockUser = {
-      id: 1,
-      email: email || 'user@sololeveling.com',
-      name: 'Shadow Hunter'
-    };
-
-    localStorage.setItem('sl_user', JSON.stringify(mockUser));
-    setUser(mockUser);
-
-    // Return promise for async handling
-    return Promise.resolve(mockUser);
+  const login = (email, password) => {
+    // Try to load existing user for this email
+    const stored = localStorage.getItem('sl_user');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.email === email) {
+        // Validate password
+        // In a real app, you would compare hashed passwords
+        // For this demo, we'll store password in plain text for simplicity
+        // NOTE: In production, always hash passwords and compare hashes
+        if (parsed.password === password) {
+          setUser(parsed);
+          return Promise.resolve(parsed);
+        } else {
+          return Promise.reject(new Error('Wrong password'));
+        }
+      }
+    }
+    // If no user found with this email
+    return Promise.reject(new Error('Email does not exist. Please register your account.'));
   };
 
   // Register function
-  const register = (email, name) => {
+  const register = (email, name, password) => {
     // In a real app, this would be an API call
     // For now, we'll simulate successful registration
     const newUser = {
       id: Date.now(),
       email: email,
-      name: name || 'New Hunter'
+      name: name || 'New Hunter',
+      password: password // Store password (in production, use hashed password)
     };
 
     localStorage.setItem('sl_user', JSON.stringify(newUser));
@@ -44,7 +51,7 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function
   const logout = () => {
-    localStorage.removeItem('sl_user');
+    // Keep user data in localStorage for persistence across sessions
     setUser(null);
   };
 

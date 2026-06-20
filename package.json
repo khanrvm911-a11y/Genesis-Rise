@@ -16,6 +16,7 @@
     "express": "^5.2.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-helmet-async": "^2.0.5",
     "react-router-dom": "^7.18.0"
   },
   "devDependencies": {
@@ -30,6 +31,7 @@
     "globals": "^17.6.0",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.3.1",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vite-plugin-sitemap": "^0.6.0"
   }
 }

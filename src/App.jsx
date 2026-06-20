@@ -6,6 +6,9 @@ import Planner from './components/Planner';
 import Adviser from './components/Adviser';
 import Health from './components/Health';
 import PlanDesigner from './components/PlanDesigner';
+import WorkoutLogger from './components/WorkoutLogger';
+import Home from './pages/Home';
+import About from './pages/About';
 import { useLevel } from './context/LevelContext';
 import { useAuth } from './context/AuthContext';
 import XPToast from './components/XPToast';
@@ -19,7 +22,7 @@ function App() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Close dropdown on window click
@@ -29,9 +32,11 @@ function App() {
     return () => window.removeEventListener('click', closeDropdown);
   }, []);
 
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  // Define public routes that don't require authentication
+  const publicPaths = ['/', '/about', '/login', '/register'];
 
-  if (!user && !isAuthPage) {
+  // Redirect to login if not on a public path and not authenticated
+  if (!user && !publicPaths.includes(location.pathname)) {
     return <Navigate to="/login" replace={true} />;
   }
 
@@ -53,22 +58,26 @@ function App() {
           </Link>
 
           <div className="flex items-center space-x-4">
-            {/* Level indicator with XP bar */}
-            <div className="flex items-center space-x-3 bg-sl-purple/20 px-3 py-1 rounded-full border border-sl-purple/30 shadow-sl-glow">
-              <span className="text-xs text-sl-purple-light">Lv.</span>
-              <span className="font-bold text-sl-purple-light" id="user-level">{level}</span>
-            </div>
+            {/* Level indicator with XP bar (only show when logged in) */}
+            {user && (
+              <>
+                <div className="flex items-center space-x-3 bg-sl-purple/20 px-3 py-1 rounded-full border border-sl-purple/30 shadow-sl-glow">
+                  <span className="text-xs text-sl-purple-light">Lv.</span>
+                  <span className="font-bold text-sl-purple-light" id="user-level">{level}</span>
+                </div>
 
-            {/* Slim XP bar */}
-            <div className="flex-1 max-w-xs">
-              <div className="w-full h-2 bg-sl-gray/40 rounded-full overflow-hidden border border-sl-purple/10">
-                <div className={`h-full bg-gradient-to-r from-sl-purple to-sl-red transition-all duration-1000`} style={{ width: `${progress * 100}%` }}></div>
-              </div>
-              <div className="text-xs text-sl-purple-light mt-1 flex justify-between">
-                <span>{xp} XP</span>
-                <span>{Math.floor(progress * 100)}%</span>
-              </div>
-            </div>
+                {/* Slim XP bar */}
+                <div className="flex-1 max-w-xs">
+                  <div className="w-full h-2 bg-sl-gray/40 rounded-full overflow-hidden border border-sl-purple/10">
+                    <div className={`h-full bg-gradient-to-r from-sl-purple to-sl-red transition-all duration-1000`} style={{ width: `${progress * 100}%` }}></div>
+                  </div>
+                  <div className="text-xs text-sl-purple-light mt-1 flex justify-between">
+                    <span>{xp} XP</span>
+                    <span>{Math.floor(progress * 100)}%</span>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="flex space-x-2">
               {/* User profile dropdown */}
@@ -99,7 +108,7 @@ function App() {
                       }}
                       className="w-full text-left px-4 py-3 text-sl-purple-light hover:bg-sl-purple/15 transition flex items-center space-x-2">
                         <svg className="w-4 h-4 text-sl-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3 3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                         <span>Logout</span>
                       </button>
@@ -108,7 +117,7 @@ function App() {
                 </div>
               )}
 
-              {/* Nav links */}
+              {/* Nav links for guests (login/register) */}
               {!user && (
                 <>
                   <Link to="/login" className="holo-button holo-button-sm px-4">
@@ -123,8 +132,14 @@ function App() {
               {/* App links (only show when logged in) */}
               {user && (
                 <div className="flex space-x-2">
+                  <Link to="/" className="holo-button holo-button-sm px-4">
+                    Home
+                  </Link>
                   <Link to="/tracker" className="holo-button holo-button-sm px-4">
                     Tracker
+                  </Link>
+                  <Link to="/workout-logger" className="holo-button holo-button-sm px-4">
+                    Workout Logger
                   </Link>
                   <Link to="/planner" className="holo-button holo-button-sm px-4">
                     Planner
@@ -146,20 +161,22 @@ function App() {
       </nav>
 
       <Routes>
-        {/* Auth routes */}
+        {/* Public routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* Protected routes */}
-        <Route path="/" element={<Navigate to="/tracker" replace={true} />} />
         <Route path="/tracker" element={<Tracker />} />
+        <Route path="/workout-logger" element={<WorkoutLogger />} />
         <Route path="/planner" element={<Planner />} />
         <Route path="/adviser" element={<Adviser />} />
         <Route path="/health" element={<Health />} />
         <Route path="/plan-designer" element={<PlanDesigner />} />
 
-        {/* Redirect unknown routes to login */}
-        <Route path="*" element={<Navigate to="/login" replace={true} />} />
+        {/* Redirect unknown routes to home */}
+        <Route path="*" element={<Navigate to="/" replace={true} />} />
       </Routes>
 
       {/* Toast container for level-ups */}

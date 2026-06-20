@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLevel } from '../context/LevelContext';
 
 const XPToast = () => {
   const { level } = useLevel();
-  const [prevLevel, setPrevLevel] = useState(level);
+  const prevLevelRef = useRef(level);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  if (level > prevLevel) {
-    setPrevLevel(level);
-    setToastVisible(true);
-    setToastMessage(`Level Up! You are now Level ${level}`);
-  }
+  useEffect(() => {
+    if (level > prevLevelRef.current) {
+      setToastVisible(true);
+      setToastMessage(`Level Up! You are now Level ${level}`);
+    }
+    prevLevelRef.current = level;
+  }, [level]);
 
   useEffect(() => {
     if (toastVisible) {
