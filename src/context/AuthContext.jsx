@@ -1,66 +1,177 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Initialize user from localStorage synchronously
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('sl_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Login function
-  const login = (email, password) => {
-    // Try to load existing user for this email
-    const stored = localStorage.getItem('sl_user');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (parsed.email === email) {
-        // Validate password
-        // In a real app, you would compare hashed passwords
-        // For this demo, we'll store password in plain text for simplicity
-        // NOTE: In production, always hash passwords and compare hashes
-        if (parsed.password === password) {
-          setUser(parsed);
-          return Promise.resolve(parsed);
-        } else {
-          return Promise.reject(new Error('Wrong password'));
-        }
-      }
+  // Check for existing session and set up auth state listener
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Clean up subscription on unmount
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Monitor user email confirmation status
+  useEffect(() => {
+    if (user && !user.email_confirmed_at) {
+      // Email not confirmed, log out user
+      supabase.auth.signOut().then(() => {
+        setUser(null);
+        setError('Please verify your email before logging in. A verification link has been sent to your email.');
+      });
     }
-    // If no user found with this email
-    return Promise.reject(new Error('Email does not exist. Please register your account.'));
+  }, [user]);
+
+  const login = async (email, password) => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      // If user exists but email not confirmed, log out and throw error
+      if (data.user && !data.user.email_confirmed_at) {
+        await supabase.auth.signOut();
+        throw new Error('Please verify your email before logging in. A verification link has been sent to your email.');
+      }
+      // Note: We don't set user here; it will be set via onAuthStateChange
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
   };
 
-  // Register function
-  const register = (email, name, password) => {
-    // In a real app, this would be an API call
-    // For now, we'll simulate successful registration
-    const newUser = {
-      id: Date.now(),
-      email: email,
-      name: name || 'New Hunter',
-      password: password // Store password (in production, use hashed password)
-    };
-
-    localStorage.setItem('sl_user', JSON.stringify(newUser));
-    setUser(newUser);
-
-    return Promise.resolve(newUser);
+  const register = async (email, password, username) => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: username,
+          },
+        },
+      });
+      if (error) throw error;
+      // Note: We don't set user here; it will be set via onAuthStateChange
+      // After signUp, we need to send email verification
+      // Supabase sends verification email automatically if email confirmations are enabled
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
   };
 
-  // Logout function
-  const logout = () => {
-    // Keep user data in localStorage for persistence across sessions
-    setUser(null);
+  const logout = async () => {
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      // User will be set to null via onAuthStateChange
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        // You can set redirectTo to a custom reset password page
+        // redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const resetPassword = async (password) => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        password: password,
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Function to send email verification link (if needed)
+  const sendVerificationEmail = async () => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.resend({
+        type: 'signup',
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Function to update user metadata (e.g., username)
+  const updateUser = async (userData) => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.updateUser(userData);
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
   };
 
   const value = {
     user,
+    loading,
+    error,
     login,
     register,
-    logout
+    logout,
+    forgotPassword,
+    resetPassword,
+    sendVerificationEmail,
+    updateUser,
   };
+
+  if (loading) {
+    return (
+      <AuthContext.Provider value={value}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>

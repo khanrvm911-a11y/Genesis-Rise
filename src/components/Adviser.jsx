@@ -4,7 +4,7 @@ const Adviser = () => {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Welcome, Hunter. I am the System Advisor. Direct your Wish toward workouts, combat parameters, optimal nutrition, or recovery paths.",
+      content: "Welcome, Master. I am the System Advisor. Direct your Wish toward workouts, combat parameters, optimal nutrition, or recovery paths.",
     },
   ]);
   const [input, setInput] = useState('');
@@ -56,7 +56,7 @@ const Adviser = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'API request failed');
+        throw new Error(errorData.error?.message || 'API reMission failed');
       }
 
       const data = await response.json();
@@ -112,7 +112,7 @@ const Adviser = () => {
                 }`}
               >
                 <div className="text-xxs uppercase tracking-wider font-bold mb-1.5 opacity-60">
-                  {msg.role === 'user' ? 'Hunter' : '[SYSTEM ADVISOR]'}
+                  {msg.role === 'user' ? 'Champion' : '[SYSTEM ADVISOR]'}
                 </div>
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
               </div>
@@ -157,7 +157,7 @@ const Adviser = () => {
                 disabled={loading || !input.trim()}
                 className="holo-button py-2.5 px-6 font-bold uppercase tracking-wider text-xs md:text-sm shadow-sl-glow-purple flex-1 md:flex-none text-center"
               >
-                {loading ? 'Transmitting...' : 'As you wish hunter'}
+                {loading ? 'Transmitting...' : 'As you wish Champion'}
               </button>
               
               {/* Clear chat button */}
@@ -167,7 +167,7 @@ const Adviser = () => {
                   setMessages([
                     {
                       role: 'assistant',
-                      content: "Welcome, Hunter. I am the System Advisor. Direct queries toward workouts, combat parameters, optimal nutrition, or recovery paths.",
+                      content: "Welcome, Champion. I am the System Advisor. Direct queries toward workouts, combat parameters, optimal nutrition, or recovery paths.",
                     },
                   ]);
                 }}

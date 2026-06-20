@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const [formState, setFormState] = useState({
@@ -28,16 +28,12 @@ const Login = () => {
 
     try {
       await login(formState.email, formState.password);
+      // If login succeeded and email confirmed, user will be set via auth state
       navigate('/', { replace: true });
     } catch (err) {
-      // Show specific error messages based on the error
-      if (err.message.includes('Email does not exist')) {
-        setError(err.message); // "Email does not exist. Please register your account."
-      } else if (err.message.includes('Wrong password')) {
-        setError(err.message); // "Wrong password"
-      } else {
-        setError('Invalid email or password'); // Fallback
-      }
+      // Error already set in auth context by login method; we can show it
+      // But we also have local error state; we can set from err.message
+      setError(err.message);
       console.error(err);
     } finally {
       setLoading(false);
@@ -49,10 +45,10 @@ const Login = () => {
       <div className="w-full max-w-md space-y-8">
         <div>
           <h2 className="text-3xl font-bold text-center gradient-text animate-pulse-red">
-            Solo Leveling
+            Genesis Rise
           </h2>
           <p className="text-center text-sl-gray-light">
-            Login to continue your journey
+            Welcome Champion
           </p>
         </div>
 
@@ -121,6 +117,15 @@ const Login = () => {
             {loading ? 'Logging In...' : 'Enter The System'}
           </button>
         </form>
+
+        <div className="text-center text-sl-gray-light/50">
+          <p>
+            Forgot your password?{' '}
+            <Link to="/forgot-password" className="text-sl-purple-light hover:text-sl-purple/70 transition">
+              Reset it here
+            </Link>
+          </p>
+        </div>
 
         <div className="text-center text-sl-gray-light/50">
           <p>

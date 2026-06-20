@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useLevel } from '../context/LevelContext';
 import { calculateWorkoutXP } from '../utils/workoutUtils';
 
-const SYSTEM_QUESTS = [
-  { id: 'sys_daily_quest', name: 'Daily Quest: Preparations for Becoming Strong', duration: 45, calories: 350 },
+const SYSTEM_MissionS = [
+  { id: 'sys_daily_Mission', name: 'Daily Mission: Preparations for Becoming Strong', duration: 45, calories: 350 },
   { id: 'sys_shadow_march', name: 'Shadow Army Marching', duration: 35, calories: 250 },
   { id: 'sys_monarch_trial', name: "Monarch's Strength Trial", duration: 60, calories: 500 }
 ];
@@ -44,8 +44,8 @@ const Tracker = () => {
     setSelectedPreset(val);
     if (!val) return;
 
-    // Check system quests
-    const sys = SYSTEM_QUESTS.find(q => q.id === val);
+    // Check system Missions
+    const sys = SYSTEM_MissionS.find(q => q.id === val);
     if (sys) {
       setFormState(prev => ({
         ...prev,
@@ -123,9 +123,9 @@ const Tracker = () => {
             onChange={handlePresetSelect}
             className="holo-input bg-sl-gray/30 text-white select-dark cursor-pointer"
           >
-            <option value="" className="bg-sl-gray text-white">-- Select custom plan or predefined quest --</option>
-            <optgroup label="System Quests" className="bg-sl-gray text-sl-red-light font-bold">
-              {SYSTEM_QUESTS.map(q => (
+            <option value="" className="bg-sl-gray text-white">-- Select custom plan or predefined Mission --</option>
+            <optgroup label="System Missions" className="bg-sl-gray text-sl-red-light font-bold">
+              {SYSTEM_MissionS.map(q => (
                 <option key={q.id} value={q.id} className="bg-sl-gray text-white">{q.name}</option>
               ))}
             </optgroup>

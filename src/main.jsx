@@ -12,13 +12,13 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
-        <LevelProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <LevelProvider>
             <WorkoutProvider>
               <App />
             </WorkoutProvider>
-          </AuthProvider>
-        </LevelProvider>
+          </LevelProvider>
+        </AuthProvider>
       </BrowserRouter>
     </HelmetProvider>
   </StrictMode>,

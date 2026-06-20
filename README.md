@@ -1,6 +1,6 @@
-# SoloLeveling Workout Tracker
+# Genesis Rise
 
-A workout tracking application inspired by the Solo Leveling anime. Track your workouts, plan your fitness journey, get advice, and monitor your health - all with a Solo Leveling theme.
+A workout tracking application to track your workouts, plan your fitness journey, get advice, and monitor your health.
 
 ## Features
 
@@ -9,14 +9,13 @@ A workout tracking application inspired by the Solo Leveling anime. Track your w
 - **Adviser**: Get personalized workout and health advice
 - **Health Advisor**: Monitor health metrics and get insights
 - **Plan Designer**: Create custom workout plans tailored to your goals
-- **Solo Leveling Theme**: Dark theme with red accents inspired by the anime
+- **Genesis Rise Theme**: Dark theme with red accents
 
 ## Tech Stack
 
 - React 18+ with Vite
 - React Router for navigation
 - Tailwind CSS for styling
-- Solo Leveling inspired color scheme
 
 ## Getting Started
 
@@ -38,7 +37,7 @@ A workout tracking application inspired by the Solo Leveling anime. Track your w
 - Workout analytics and progress charts
 - Integration with health APIs (Apple Health, Google Fit)
 - Social features to share progress with friends
-- Solo Leveling achievements and leveling system
+- Achievements and leveling system
 
 ## License
 

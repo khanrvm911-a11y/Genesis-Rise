@@ -3,12 +3,12 @@ import { useLevel } from '../context/LevelContext';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-const SYSTEM_QUESTS = [
+const SYSTEM_MissionS = [
   {
-    id: 'sys_daily_quest',
-    name: 'Daily Quest: Preparations for Becoming Strong',
-    description: 'The standard quest assigned by the System. Failure to complete results in a Penalty Quest.',
-    rank: 'E',
+    id: 'sys_daily_Mission',
+    name: 'Daily Mission: Preparations for Becoming Strong',
+    description: 'The standard Mission assigned by the System. Failure to complete results in a Penalty Mission.',
+    rank: 'Novice',
     exercises: [
       { name: 'Push-ups', sets: 10, reps: 10, type: 'reps' },
       { name: 'Sit-ups', sets: 10, reps: 10, type: 'reps' },
@@ -21,7 +21,7 @@ const SYSTEM_QUESTS = [
     id: 'sys_shadow_march',
     name: 'Shadow Army Marching',
     description: 'Train alongside your shadows to build extreme muscular endurance.',
-    rank: 'C',
+    rank: 'Warrior',
     exercises: [
       { name: 'Pull-ups', sets: 5, reps: 10, type: 'reps' },
       { name: 'Push-ups', sets: 5, reps: 20, type: 'reps' },
@@ -34,7 +34,7 @@ const SYSTEM_QUESTS = [
     id: 'sys_monarch_trial',
     name: "Monarch's Strength Trial",
     description: 'A brutal regimen that pushes human limits. Only those who stand at the pinnacle can survive.',
-    rank: 'S',
+    rank: 'Genesis',
     exercises: [
       { name: 'Weighted Pull-ups', sets: 5, reps: 12, type: 'reps' },
       { name: 'Decline Push-ups', sets: 8, reps: 25, type: 'reps' },
@@ -60,9 +60,9 @@ const Planner = () => {
 
   // Active day selection for modal assignment
   const [activeDay, setActiveDay] = useState(null);
-  // Track checklist progress for today's active quest
+  // Track checklist progress for today's active Mission
   const [todayProgress, setTodayProgress] = useState({});
-  const [questCompleted, setQuestCompleted] = useState(false);
+  const [MissionCompleted, setMissionCompleted] = useState(false);
 
   // Save schedule when it changes
   useEffect(() => {
@@ -77,9 +77,9 @@ const Planner = () => {
     const planId = schedule[day];
     if (!planId) return null;
 
-    // Check system quests first
-    const sysQuest = SYSTEM_QUESTS.find(q => q.id === planId);
-    if (sysQuest) return sysQuest;
+    // Check system Missions first
+    const sysMission = SYSTEM_MissionS.find(q => q.id === planId);
+    if (sysMission) return sysMission;
 
     // Check custom plans
     const customPlan = customPlans.find(p => p.id === planId);
@@ -101,7 +101,7 @@ const Planner = () => {
     }
     const timer = setTimeout(() => {
       setTodayProgress(initialProgress);
-      setQuestCompleted(false);
+      setMissionCompleted(false);
     }, 0);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,20 +130,20 @@ const Planner = () => {
     }));
   };
 
-  const handleCompleteQuest = () => {
+  const handleCompleteMission = () => {
     if (!todayPlan) return;
 
     // Verify everything is checked off
     const allChecked = Object.values(todayProgress).every(val => val === true);
     if (!allChecked) {
-      alert('You must complete all tasks assigned in the active daily quest!');
+      alert('You must complete all tasks assigned in the active Daily Mission!');
       return;
     }
 
     // Determine XP reward
     const xpReward = todayPlan.xpReward
       ? todayPlan.xpReward
-      : Math.floor((todayPlan.exercises.length * 20) * ({ E: 1.0, D: 1.2, C: 1.5, B: 2.0, A: 3.0, S: 5.0 }[todayPlan.rank] || 1.0));
+      : Math.floor((todayPlan.exercises.length * 20) * ({ Novice: 1.0, Rookie: 1.2, Warrior: 1.5, Champion: 2.0, Master: 3.0, Grandmaster: 5.0, Legend: 8.0, Genesis: 10.0 }[todayPlan.rank] || 1.0));
 
     // Award XP
     addXP(xpReward);
@@ -162,17 +162,17 @@ const Planner = () => {
     workoutsList.push(loggedWorkout);
     localStorage.setItem('workouts', JSON.stringify(workoutsList));
 
-    setQuestCompleted(true);
-    alert(`Quest Completed! Gained ${xpReward} XP. Check your level status!`);
+    setMissionCompleted(true);
+    alert(`Mission Completed! Gained ${xpReward} XP. Check your level status!`);
   };
 
   const getRankStyle = (rank) => {
     switch (rank) {
-      case 'S': return { border: 'border-red-600', text: 'text-red-500', bg: 'bg-red-950/20' };
-      case 'A': return { border: 'border-orange-500', text: 'text-orange-500', bg: 'bg-orange-950/20' };
-      case 'B': return { border: 'border-purple-500', text: 'text-purple-400', bg: 'bg-purple-950/20' };
-      case 'C': return { border: 'border-blue-500', text: 'text-blue-400', bg: 'bg-blue-950/20' };
-      case 'D': return { border: 'border-emerald-500', text: 'text-emerald-400', bg: 'bg-emerald-950/20' };
+      case 'Genesis': return { border: 'border-red-600', text: 'text-red-500', bg: 'bg-red-950/20' };
+      case 'Legend': return { border: 'border-orange-500', text: 'text-orange-500', bg: 'bg-orange-950/20' };
+      case 'Grandmaster': return { border: 'border-purple-500', text: 'text-purple-400', bg: 'bg-purple-950/20' };
+      case 'Master': return { border: 'border-blue-500', text: 'text-blue-400', bg: 'bg-blue-950/20' };
+      case 'Champion': return { border: 'border-emerald-500', text: 'text-emerald-400', bg: 'bg-emerald-950/20' };
       default: return { border: 'border-gray-500', text: 'text-gray-400', bg: 'bg-gray-950/10' };
     }
   };
@@ -181,7 +181,7 @@ const Planner = () => {
     <div className="max-w-7xl mx-auto py-12 px-4">
       <div className="mb-6">
         <h1 className="text-4xl font-bold text-center gradient-text animate-pulse-red mb-2">
-          Daily Quest Planner
+          Daily Mission Planner
         </h1>
         <p className="text-center text-sl-gray-light max-w-2xl mx-auto">
           Establish your weekly training trials. The System rewards those who show absolute devotion.
@@ -224,12 +224,12 @@ const Planner = () => {
                     {plan ? (
                       <div className="flex items-center gap-2">
                         <span className={`text-xs font-bold px-2 py-0.5 rounded border ${getRankStyle(plan.rank).border} ${getRankStyle(plan.rank).text} ${getRankStyle(plan.rank).bg}`}>
-                          {plan.rank}-Rank
+                          {plan.rank}
                         </span>
                         <span className="text-sm font-semibold text-sl-gray-light/95">{plan.name}</span>
                       </div>
                     ) : (
-                      <span className="text-sm text-sl-gray-light/45 italic">No quest assigned</span>
+                      <span className="text-sm text-sl-gray-light/45 italic">No Mission assigned</span>
                     )}
                   </div>
 
@@ -238,13 +238,13 @@ const Planner = () => {
                       onClick={() => setActiveDay(day)}
                       className="bg-sl-red/10 hover:bg-sl-red/25 text-sl-red-light border border-sl-red/20 px-3 py-1.5 rounded-sl-lg text-xs font-semibold transition"
                     >
-                      {plan ? 'Reassign' : 'Assign Quest'}
+                      {plan ? 'Reassign' : 'Assign Mission'}
                     </button>
                     {plan && (
                       <button
                         onClick={() => handleRemovePlan(day)}
                         className="text-red-500 hover:text-red-400 p-1.5 rounded-lg border border-transparent hover:border-red-500/10 transition"
-                        title="Remove Quest"
+                        title="Remove Mission"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -271,21 +271,21 @@ const Planner = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <p className="text-sl-gray-light font-medium">No Quest Scheduled for Today!</p>
+              <p className="text-sl-gray-light font-medium">No Mission Scheduled for Today!</p>
               <p className="text-xs text-sl-gray-light/50 mt-1 max-w-xs">
-                To trigger the level progression system, assign a daily quest to {todayName} in the Trial Board.
+                To trigger the level progression system, assign a Daily Mission to {todayName} in the Trial Board.
               </p>
             </div>
-          ) : questCompleted ? (
+          ) : MissionCompleted ? (
             <div className="flex flex-col items-center justify-center flex-grow text-center py-12">
               <div className="w-16 h-16 bg-emerald-950/20 rounded-full flex items-center justify-center border border-emerald-500/30 mb-4 animate-bounce">
                 <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-emerald-400 font-bold text-lg">DAILY QUEST CLEARED!</p>
+              <p className="text-emerald-400 font-bold text-lg">Daily Mission CLEARED!</p>
               <p className="text-xs text-sl-gray-light/60 mt-1">
-                You have finished today's training session. Relax and recover for tomorrow's quest.
+                You have finished today's training session. Relax and recover for tomorrow's Mission.
               </p>
             </div>
           ) : (
@@ -334,10 +334,10 @@ const Planner = () => {
 
               <div className="mt-8">
                 <button
-                  onClick={handleCompleteQuest}
+                  onClick={handleCompleteMission}
                   className="holo-button w-full py-3 text-center"
                 >
-                  Verify Quest Completion
+                  Verify Mission Completion
                 </button>
               </div>
             </div>
@@ -345,19 +345,19 @@ const Planner = () => {
         </div>
       </div>
 
-      {/* Quest Selection Modal */}
+      {/* Mission Selection Modal */}
       {activeDay && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-sl-dark border border-sl-red/30 p-6 rounded-sl-xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-sl-glow-red">
             <h3 className="text-2xl font-bold text-sl-red-light mb-4 border-b border-sl-red/25 pb-2">
-              Select Quest for {activeDay}
+              Select Mission for {activeDay}
             </h3>
 
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-sl-red/60 uppercase tracking-widest font-bold mb-2">System Quests</p>
+                <p className="text-xs text-sl-red/60 uppercase tracking-widest font-bold mb-2">System Missions</p>
                 <div className="space-y-2">
-                  {SYSTEM_QUESTS.map(q => (
+                  {SYSTEM_MissionS.map(q => (
                     <button
                       key={q.id}
                       onClick={() => handleAssignPlan(activeDay, q.id)}

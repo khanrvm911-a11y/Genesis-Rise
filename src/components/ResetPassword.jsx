@@ -1,27 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
 
-const Register = () => {
-  const { register } = useAuth();
+const ResetPassword = () => {
+  const { updateUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [formState, setFormState] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    username: '',
-  });
-
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
+  // Extract access_token from URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const accessToken = searchParams.get('access_token');
+    setAccessToken(accessToken);
+  }, [location.search]);
+
+  const [accessToken, setAccessToken] = useState('');
+
+  const handleChangePassword = (e) => {
+    setPassword(e.target.value);
+    setError('');
+    setSuccess(false);
+  };
+
+  const handleChangeConfirmPassword = (e) => {
+    setConfirmPassword(e.target.value);
     setError('');
     setSuccess(false);
   };
@@ -31,31 +42,43 @@ const Register = () => {
     setError('');
     setSuccess(false);
 
-    if (!formState.email || !formState.password || !formState.confirmPassword || !formState.username) {
+    if (!password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
 
-    if (formState.password !== formState.confirmPassword) {
+    if (password !== confirmPassword) {
       setError('Passwords do not match');
+      return;
+    }
+
+    if (!accessToken) {
+      setError('Invalid or expired link');
       return;
     }
 
     setLoading(true);
     try {
-      await register(formState.email, formState.password, formState.username);
+      // First verify the OTP (recovery token)
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token: accessToken,
+        type: 'recovery',
+      });
+      if (verifyError) throw verifyError;
+
+      // If verification successful, update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password,
+      });
+      if (updateError) throw updateError;
+
       setSuccess(true);
-      // Do not auto-login; wait for email verification
-      // Optionally, we can redirect to a verification page or show message
-      // We'll show success message and allow user to go to login
+      // Optionally, redirect to login after a delay
     } catch (err) {
-      // Handle specific errors
-      if (err.message.includes('User already registered')) {
-        setError('Email already exists. Please login or use a different email.');
-      } else if (err.message.includes('Password should be at least 6 characters')) {
-        setError('Password should be at least 6 characters');
+      if (err.message.includes('invalid token') || err.message.includes('expired')) {
+        setError('Invalid or expired link. Please request a new reset link.');
       } else {
-        setError('Registration failed. Please try again.');
+        setError('Failed to reset password. Please try again.');
       }
       console.error(err);
     } finally {
@@ -71,53 +94,22 @@ const Register = () => {
             Genesis Rise
           </h2>
           <p className="text-center text-sl-gray-light">
-            Create your Champion profile
+            Reset your password
           </p>
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-semibold text-sl-red-light/85 mb-2">
-              Username
-            </label>
-            <input
-              type="text"
-              name="username"
-              value={formState.username}
-              onChange={handleChange}
-              className="holo-input w-full text-white bg-sl-gray/30 placeholder:text-gray-600 focus:text-white"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-sl-red-light/85 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formState.email}
-              onChange={handleChange}
-              className="holo-input w-full text-white bg-sl-gray/30 placeholder:text-gray-600 focus:text-white"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-sl-red-light/85 mb-2">
-              Password
+              New Password
             </label>
             <div className="relative">
               <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formState.password}
-                onChange={handleChange}
+                type="password"
+                value={password}
+                onChange={handleChangePassword}
                 className="holo-input w-full text-white bg-sl-gray/30 placeholder:text-gray-600 focus:text-white pr-10"
-                placeholder="Create password"
+                placeholder="Enter new password"
                 required
                 minLength="6"
               />
@@ -148,11 +140,10 @@ const Register = () => {
             <div className="relative">
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                value={formState.confirmPassword}
-                onChange={handleChange}
+                value={confirmPassword}
+                onChange={handleChangeConfirmPassword}
                 className="holo-input w-full text-white bg-sl-gray/30 placeholder:text-gray-600 focus:text-white pr-10"
-                placeholder="Confirm your password"
+                placeholder="Confirm new password"
                 required
                 minLength="6"
               />
@@ -184,7 +175,7 @@ const Register = () => {
 
           {success && (
             <p className="text-emerald-400 text-center text-sm">
-              Genesis System Activated. Verify your email to continue.
+              Password has been reset successfully. You can now log in.
             </p>
           )}
 
@@ -193,13 +184,13 @@ const Register = () => {
             disabled={loading}
             className={`holo-button w-full py-3 ${loading ? 'opacity-70' : ''}`}
           >
-            {loading ? 'Creating Account...' : 'Awaken Your Power'}
+            {loading ? 'Resetting...' : 'Reset Password'}
           </button>
         </form>
 
-        <div className="text-center text-sl-gray-light/50 mt-6">
+        <div className="text-center text-sl-gray-light/50">
           <p>
-            Already have an account?{' '}
+            Remember your password?{' '}
             <Link to="/login" className="text-sl-purple-light hover:text-sl-purple/70 transition">
               Login here
             </Link>
@@ -210,4 +201,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default ResetPassword;

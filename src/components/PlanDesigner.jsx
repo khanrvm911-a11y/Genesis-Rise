@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const PLAN_RANKS = ['E', 'D', 'C', 'B', 'A', 'S'];
+const PLAN_RANKS = ['Novice', 'Rookie', 'Warrior', 'Champion', 'Master', 'Grandmaster', 'Legend', 'Genesis'];
 
 const PlanDesigner = () => {
   const [plans, setPlans] = useState(() => {
@@ -10,7 +10,7 @@ const PlanDesigner = () => {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [rank, setRank] = useState('E');
+  const [rank, setRank] = useState('Novice');
   const [exercises, setExercises] = useState([
     { id: 1, name: 'Push-ups', sets: 3, reps: 10, type: 'reps' }
   ]);
@@ -66,7 +66,7 @@ const PlanDesigner = () => {
     // Reset Form
     setName('');
     setDescription('');
-    setRank('E');
+    setRank('Novice');
     setExercises([{ id: 1, name: 'Push-ups', sets: 3, reps: 10, type: 'reps' }]);
   };
 
@@ -79,11 +79,11 @@ const PlanDesigner = () => {
   // Helper to get rank-specific styling
   const getRankStyle = (rank) => {
     switch (rank) {
-      case 'S': return { border: 'border-red-500', text: 'text-red-400', glow: 'shadow-[0_0_15px_rgba(239,68,68,0.4)]', bg: 'bg-red-950/35' };
-      case 'A': return { border: 'border-amber-500', text: 'text-amber-400', glow: 'shadow-[0_0_12px_rgba(245,158,11,0.3)]', bg: 'bg-amber-950/30' };
-      case 'B': return { border: 'border-fuchsia-500', text: 'text-fuchsia-400', glow: 'shadow-[0_0_12px_rgba(217,70,239,0.3)]', bg: 'bg-fuchsia-950/30' };
-      case 'C': return { border: 'border-violet-500', text: 'text-violet-400', glow: 'shadow-[0_0_12px_rgba(139,92,246,0.3)]', bg: 'bg-violet-950/30' };
-      case 'D': return { border: 'border-blue-500', text: 'text-blue-400', glow: 'shadow-[0_0_10px_rgba(59,130,246,0.25)]', bg: 'bg-blue-950/30' };
+      case 'Genesis': return { border: 'border-red-500', text: 'text-red-400', glow: 'shadow-[0_0_15px_rgba(239,68,68,0.4)]', bg: 'bg-red-950/35' };
+      case 'Legend': return { border: 'border-amber-500', text: 'text-amber-400', glow: 'shadow-[0_0_12px_rgba(245,158,11,0.3)]', bg: 'bg-amber-950/30' };
+      case 'Grandmaster': return { border: 'border-fuchsia-500', text: 'text-fuchsia-400', glow: 'shadow-[0_0_12px_rgba(217,70,239,0.3)]', bg: 'bg-fuchsia-950/30' };
+      case 'Master': return { border: 'border-violet-500', text: 'text-violet-400', glow: 'shadow-[0_0_12px_rgba(139,92,246,0.3)]', bg: 'bg-violet-950/30' };
+      case 'Champion': return { border: 'border-blue-500', text: 'text-blue-400', glow: 'shadow-[0_0_10px_rgba(59,130,246,0.25)]', bg: 'bg-blue-950/30' };
       default: return { border: 'border-slate-500', text: 'text-slate-400', glow: '', bg: 'bg-slate-900/20' };
     }
   };
@@ -105,7 +105,7 @@ const PlanDesigner = () => {
           <h2 className="text-xl font-bold text-sl-purple-light mb-6 flex items-center justify-between border-b border-sl-purple/15 pb-3">
             <span className="tracking-wider uppercase">Blueprint Parameters</span>
             <span className={`text-xs font-bold px-3 py-1 rounded-full border ${getRankStyle(rank).border} ${getRankStyle(rank).text} ${getRankStyle(rank).bg} ${getRankStyle(rank).glow}`}>
-              Tier: {rank}-Rank
+              Rank: {rank}
             </span>
           </h2>
 
@@ -124,14 +124,14 @@ const PlanDesigner = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-sl-purple-light/85 mb-2">Plan Tier</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-sl-purple-light/85 mb-2">Plan Rank</label>
                 <select
                   value={rank}
                   onChange={e => setRank(e.target.value)}
                   className="holo-input bg-sl-dark text-sl-purple-light select-dark cursor-pointer font-bold border-sl-purple/30"
                 >
                   {PLAN_RANKS.map(r => (
-                    <option key={r} value={r} className="bg-sl-dark text-white font-bold">{r}-Rank</option>
+                    <option key={r} value={r} className="bg-sl-dark text-white font-bold">{r}</option>
                   ))}
                 </select>
               </div>
@@ -231,7 +231,7 @@ const PlanDesigner = () => {
             <div className="flex justify-between items-center mb-3">
               <span className="text-xxs uppercase tracking-widest text-sl-purple-light/50 font-bold">Blueprint Draft Preview</span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded border ${getRankStyle(rank).border} ${getRankStyle(rank).text} ${getRankStyle(rank).bg}`}>
-                {rank}-Rank
+                {rank}
               </span>
             </div>
             <h3 className="font-extrabold text-white text-xl uppercase tracking-wide truncate">{name || 'Unnamed Regimen'}</h3>
@@ -270,7 +270,7 @@ const PlanDesigner = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1.5">
                           <span className={`text-xxs font-bold px-1.5 py-0.5 rounded border ${styles.border} ${styles.text} ${styles.bg}`}>
-                            {p.rank}-Rank
+                            {p.rank}
                           </span>
                           <h3 className="font-bold text-white text-base truncate max-w-[150px]">{p.name}</h3>
                         </div>

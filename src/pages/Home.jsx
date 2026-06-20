@@ -36,10 +36,10 @@ const Home = () => {
         <div className="max-w-7xl mx-auto py-12 px-4">
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-extrabold tracking-wide uppercase gradient-text mb-2">
-              Welcome Back, {user.name || 'Hunter'}
+              Welcome Back, {user.name || 'Champion'}
             </h1>
             <p className="text-sl-gray-light max-w-2xl mx-auto text-sm md:text-base">
-              Your Solo Leveling journey continues. Track your progress, plan your workouts, and level up.
+              Your Genesis Rise journey continues. Track your progress, plan your workouts, and level up.
             </p>
           </div>
 
@@ -97,7 +97,7 @@ const Home = () => {
               Log Workout
             </Link>
             <Link to="/planner" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
-              Plan Quest
+              Plan Mission
             </Link>
             <Link to="/adviser" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
               Ask Adviser
@@ -121,27 +121,27 @@ const Home = () => {
   return (
     <>
       <Helmet>
-        <title>Solo Leveling Workout Tracker - Level Up Your Fitness Journey</title>
-        <meta name="description" content="Transform your workout routine into an epic leveling journey inspired by Solo Leveling. Track workouts, earn XP, complete quests, and become the strongest version of yourself." />
+        <title>Genesis Rise Tracker - Level Up Your Fitness Journey</title>
+        <meta name="description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://yourdomain.com/" />
-        <meta property="og:title" content="Solo Leveling Workout Tracker - Level Up Your Fitness Journey" />
-        <meta property="og:description" content="Transform your workout routine into an epic leveling journey inspired by Solo Leveling. Track workouts, earn XP, complete quests, and become the strongest version of yourself." />
+        <meta property="og:title" content="Genesis Rise Tracker - Level Up Your Fitness Journey" />
+        <meta property="og:description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
         <meta property="og:image" content="https://yourdomain.com/igris_shadow_face.png" />
-        <meta property="og:image:alt" content="Solo Leveling Igris Logo" />
+        <meta property="og:image:alt" content="Genesis Rise Igris Logo" />
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://yourdomain.com/" />
-        <meta property="twitter:title" content="Solo Leveling Workout Tracker - Level Up Your Fitness Journey" />
-        <meta property="twitter:description" content="Transform your workout routine into an epic leveling journey inspired by Solo Leveling. Track workouts, earn XP, complete quests, and become the strongest version of yourself." />
+        <meta property="twitter:title" content="Genesis Rise Tracker - Level Up Your Fitness Journey" />
+        <meta property="twitter:description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
         <meta property="twitter:image" content="https://yourdomain.com/igris_shadow_face.png" />
         {/* Structured Data / JSON-LD */}
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebSite",
-          "name": "Solo Leveling Workout Tracker",
-          "description": "A fitness application that transforms your workout routine into an epic leveling journey inspired by Solo Leveling.",
+          "name": "Genesis Rise Tracker",
+          "description": "A fitness application that transforms your workout routine into an epic leveling journey inspired by Genesis Rise.",
           "url": "https://yourdomain.com/",
           "potentialAction": {
             "@type": "SearchAction",
@@ -165,7 +165,7 @@ const Home = () => {
             Level Up Your Fitness Journey
           </h1>
           <p className="text-sl-gray-light max-w-3xl mx-auto text-lg">
-            Inspired by the Solo Leveling anime, transform your workouts into a quest for strength. Track progress, earn XP, unlock achievements, and become the strongest version of yourself.
+            Transform your workouts into a mission for strength. Track progress, earn XP, unlock achievements, and become the strongest version of yourself.
           </p>
           <div className="flex justify-center mt-8 space-x-4">
             <Link to="/register" className="holo-button px-6 py-3">
@@ -198,8 +198,8 @@ const Home = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-3">Quest Planner</h3>
-              <p className="text-sl-gray-light text-center">Schedule weekly training using System Quests (E-S rank) or create custom plans with personalized rewards.</p>
+              <h3 className="text-xl font-bold text-sl-purple-light mb-3">Mission Planner</h3>
+              <p className="text-sl-gray-light text-center">Schedule weekly training using System Missions (E-S rank) or create custom plans with personalized rewards.</p>
             </div>
             <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-sl-purple/20 rounded-full flex items-center justify-center mb-4">
@@ -239,8 +239,8 @@ const Home = () => {
               <div className="w-14 h-14 bg-sl-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-sl-purple-light font-bold text-2xl">2</span>
               </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-4">Complete Quests</h3>
-              <p className="text-sl-gray-light">Follow daily quests or custom plans to earn bonus XP and level up faster.</p>
+              <h3 className="text-xl font-bold text-sl-purple-light mb-4">Complete Missions</h3>
+              <p className="text-sl-gray-light">Follow Daily Missions or custom plans to earn bonus XP and level up faster.</p>
             </div>
             <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
               <div className="w-14 h-14 bg-sl-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -258,7 +258,7 @@ const Home = () => {
             Ready to begin your transformation?
           </h2>
           <p className="text-sl-gray-light mb-8">
-            Create your hunter profile and start earning XP today. No credit card required.
+            Create your Champion profile and start earning XP today. No credit card required.
           </p>
           <Link to="/register" className="holo-button px-8 py-3">
             Awaken Your Power
@@ -268,7 +268,7 @@ const Home = () => {
 
       {/* Footer */}
       <footer className="mt-20 text-center text-sl-gray-light/50">
-        <p>© 2026 Solo Leveling System. All rights reserved.</p>
+        <p>© 2026 Genesis Rise System. All rights reserved.</p>
       </footer>
     </div>
     </>
