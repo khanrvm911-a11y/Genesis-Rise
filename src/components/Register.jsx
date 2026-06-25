@@ -6,7 +6,7 @@ import VideoBackground from './VideoBackground';
 const hasSpecialChar = (p) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(p);
 
 const PASSWORD_REQUIREMENTS = [
-  { label: 'At least 12 characters', test: (p) => p.length >= 12 },
+  { label: 'At least 8 characters', test: (p) => p.length >= 12 },
   { label: 'At least one uppercase letter', test: (p) => /[A-Z]/.test(p) },
   { label: 'At least one lowercase letter', test: (p) => /[a-z]/.test(p) },
   { label: 'At least one number', test: (p) => /[0-9]/.test(p) },

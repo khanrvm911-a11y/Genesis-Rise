@@ -157,7 +157,9 @@ export const AuthProvider = ({ children }) => {
   const forgotPassword = async (email) => {
     setError(null);
     try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
       if (error) throw error;
       return data;
     } catch (err) {
