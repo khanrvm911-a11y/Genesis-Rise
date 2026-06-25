@@ -3,6 +3,7 @@ import { useWorkout } from '../../context/WorkoutContext';
 import { usePowerLevel } from '../../context/PowerLevelContext';
 import { getWorkoutStats } from '../../utils/workoutUtils';
 import TodayMission from './TodayMission';
+import { BarChart3, Dumbbell, Zap } from 'lucide-react';
 
 export default function WorkoutTypeSelector({ onSelect, onViewAnalytics }) {
   const { level, xp, progress, title } = useLevel();
@@ -12,82 +13,93 @@ export default function WorkoutTypeSelector({ onSelect, onViewAnalytics }) {
   const stats = getWorkoutStats(workoutHistory);
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="sl-card text-center">
-          <p className="text-xs uppercase tracking-widest text-sl-gray-light mb-1">Level</p>
-          <p className="text-4xl font-bold text-sl-purple-light">{level}</p>
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 gap-2">
+        <div className="mobile-card text-center p-3">
+          <p className="text-[10px] uppercase tracking-widest text-sl-gray-light mb-0.5 font-semibold">Level</p>
+          <p className="text-2xl font-bold text-sl-purple-light">{level}</p>
         </div>
-        <div className="sl-card text-center">
-          <p className="text-xs uppercase tracking-widest text-sl-gray-light mb-1">Title</p>
-          <p className="text-lg font-bold text-white">{title}</p>
+        <div className="mobile-card text-center p-3">
+          <p className="text-[10px] uppercase tracking-widest text-sl-gray-light mb-0.5 font-semibold">Title</p>
+          <p className="text-sm font-bold text-white truncate">{title}</p>
         </div>
-        <div className="sl-card text-center">
-          <p className="text-xs uppercase tracking-widest text-sl-gray-light mb-1">XP</p>
-          <p className="text-xl font-bold text-sl-purple-light">{xp.toLocaleString()}</p>
-          <div className="w-full bg-sl-gray/40 rounded-full h-1.5 mt-2 overflow-hidden">
+        <div className="mobile-card text-center p-3">
+          <p className="text-[10px] uppercase tracking-widest text-sl-gray-light mb-0.5 font-semibold">XP</p>
+          <p className="text-lg font-bold text-sl-purple-light">{xp.toLocaleString()}</p>
+          <div className="w-full bg-sl-gray/40 rounded-full h-1 mt-1 overflow-hidden">
             <div className="h-full bg-gradient-to-r from-sl-purple to-sl-red transition-all duration-1000" style={{ width: `${Math.min(100, progress * 100)}%` }}></div>
           </div>
         </div>
-        <div className="sl-card text-center">
-          <p className="text-xs uppercase tracking-widest text-sl-gray-light mb-1">Power Level</p>
-          <p className="text-2xl font-bold text-sl-red-light">{powerLevel}</p>
-          <p className={`text-xs ${weeklyChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {weeklyChange >= 0 ? '+' : ''}{weeklyChange} this week
+        <div className="mobile-card text-center p-3">
+          <p className="text-[10px] uppercase tracking-widest text-sl-gray-light mb-0.5 font-semibold">Power</p>
+          <p className="text-lg font-bold text-sl-red-light">{powerLevel}</p>
+          <p className={`text-[10px] ${weeklyChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {weeklyChange >= 0 ? '+' : ''}{weeklyChange}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-sl-gray/20 rounded-xl p-3 text-center">
-          <p className="text-xs text-sl-gray-light">Workouts</p>
-          <p className="text-xl font-bold text-white">{stats.totalWorkouts}</p>
+      <div className="grid grid-cols-5 gap-2">
+        <div className="bg-sl-gray/20 rounded-xl p-2 text-center">
+          <p className="text-[9px] text-sl-gray-light font-semibold">Workouts</p>
+          <p className="text-base font-bold text-white">{stats.totalWorkouts}</p>
         </div>
-        <div className="bg-sl-gray/20 rounded-xl p-3 text-center">
-          <p className="text-xs text-sl-gray-light">Volume</p>
-          <p className="text-xl font-bold text-white">{(stats.totalVolume / 1000).toFixed(1)}k</p>
+        <div className="bg-sl-gray/20 rounded-xl p-2 text-center">
+          <p className="text-[9px] text-sl-gray-light font-semibold">Volume</p>
+          <p className="text-base font-bold text-white">{(stats.totalVolume / 1000).toFixed(1)}k</p>
         </div>
-        <div className="bg-sl-gray/20 rounded-xl p-3 text-center">
-          <p className="text-xs text-sl-gray-light">Calories</p>
-          <p className="text-xl font-bold text-white">{stats.totalCalories.toLocaleString()}</p>
+        <div className="bg-sl-gray/20 rounded-xl p-2 text-center">
+          <p className="text-[9px] text-sl-gray-light font-semibold">Calories</p>
+          <p className="text-base font-bold text-white">{stats.totalCalories.toLocaleString()}</p>
         </div>
-        <div className="bg-sl-gray/20 rounded-xl p-3 text-center">
-          <p className="text-xs text-sl-gray-light">Streak</p>
-          <p className="text-xl font-bold text-white">{stats.currentStreak} days</p>
+        <div className="bg-sl-gray/20 rounded-xl p-2 text-center">
+          <p className="text-[9px] text-sl-gray-light font-semibold">Streak</p>
+          <p className="text-base font-bold text-white">{stats.currentStreak}d</p>
         </div>
-        <div className="bg-sl-gray/20 rounded-xl p-3 text-center">
-          <p className="text-xs text-sl-gray-light">Training</p>
-          <p className="text-xl font-bold text-white">{Math.floor(stats.totalTime / 60)}h</p>
+        <div className="bg-sl-gray/20 rounded-xl p-2 text-center">
+          <p className="text-[9px] text-sl-gray-light font-semibold">Time</p>
+          <p className="text-base font-bold text-white">{Math.floor(stats.totalTime / 60)}h</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <button onClick={() => onSelect('prebuilt')} className="sl-card text-center group hover:border-sl-purple/40 transition-all p-8">
-          <div className="text-5xl mb-4">🏋️</div>
-          <h2 className="text-2xl font-bold text-white mb-2">Prebuilt Workout</h2>
-          <p className="text-sl-gray-light text-base">Choose from curated workout plans organized by muscle group. Select your target area and start training.</p>
-          <div className="mt-4 holo-button holo-button-primary inline-block">
-            Select
+      <div className="space-y-3">
+        <button onClick={() => onSelect('prebuilt')} className="mobile-card w-full text-left group hover:border-sl-purple/40 active:scale-[0.98] transition-all p-5 cursor-pointer">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-sl-purple/20 rounded-2xl flex items-center justify-center shrink-0">
+              <Dumbbell className="w-7 h-7 text-sl-purple-light" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-white mb-1">Prebuilt Workout</h2>
+              <p className="text-sm text-sl-gray-light">Curated plans by muscle group</p>
+            </div>
+            <div className="holo-button holo-button-primary text-sm px-5 py-2 shrink-0">
+              Select
+            </div>
           </div>
         </button>
 
-        <button onClick={() => onSelect('custom')} className="sl-card text-center group hover:border-sl-purple/40 transition-all p-8">
-          <div className="text-5xl mb-4">⚡</div>
-          <h2 className="text-2xl font-bold text-white mb-2">Custom Workout</h2>
-          <p className="text-sl-gray-light text-base">Build your own workout from scratch. Name it, pick exercises, set targets, and save as a template.</p>
-          <div className="mt-4 holo-button holo-button-primary inline-block">
-            Create
+        <button onClick={() => onSelect('custom')} className="mobile-card w-full text-left group hover:border-sl-purple/40 active:scale-[0.98] transition-all p-5 cursor-pointer">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-sl-purple/20 rounded-2xl flex items-center justify-center shrink-0">
+              <Zap className="w-7 h-7 text-sl-purple-light" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-white mb-1">Custom Workout</h2>
+              <p className="text-sm text-sl-gray-light">Build your own from scratch</p>
+            </div>
+            <div className="holo-button holo-button-primary text-sm px-5 py-2 shrink-0">
+              Create
+            </div>
           </div>
         </button>
       </div>
 
       <TodayMission missionProgress={missionProgress} />
 
-      <div className="text-center">
-        <button onClick={onViewAnalytics} className="holo-button">
-          View Analytics Dashboard
-        </button>
-      </div>
+      <button onClick={onViewAnalytics} className="holo-button w-full text-center py-3">
+        <BarChart3 className="w-4 h-4 inline mr-2" />
+        View Analytics Dashboard
+      </button>
     </div>
   );
 }

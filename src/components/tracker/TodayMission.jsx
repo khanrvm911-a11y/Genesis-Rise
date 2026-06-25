@@ -11,41 +11,30 @@ export default function TodayMission({ missionProgress }) {
   ];
 
   return (
-    <div className="sl-card">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white">Daily Missions</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-sl-gray-light">Streak</span>
-          <span className="text-lg font-bold text-yellow-400">🔥 {streak || 0}</span>
+    <div className="mobile-card">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold text-white">Daily Missions</h2>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-sl-gray-light font-semibold">Streak</span>
+          <span className="text-base font-bold text-yellow-400">🔥 {streak || 0}</span>
         </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         {missions.map(mission => {
           const completed = mission.current >= mission.target;
           const pct = Math.min(100, (mission.current / mission.target) * 100);
           return (
-            <div
-              key={mission.key}
-              className={`rounded-xl p-3 transition-all ${
-                completed
-                  ? 'bg-green-500/10 border border-green-500/30'
-                  : 'bg-sl-gray/20 border border-sl-gray/30'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">{mission.icon}</span>
-                <span className={`text-xs font-semibold ${completed ? 'text-green-400' : 'text-sl-gray-light'}`}>
+            <div key={mission.key} className={`rounded-xl p-3 transition-all ${completed ? 'bg-green-500/10 border border-green-500/30' : 'bg-sl-gray/20 border border-sl-gray/30'}`}>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-lg">{mission.icon}</span>
+                <span className={`text-[10px] font-semibold ${completed ? 'text-green-400' : 'text-sl-gray-light'}`}>
                   {completed ? 'DONE' : `${mission.current}/${mission.target}`}
                 </span>
               </div>
-              <p className="text-sm text-white">{mission.label}</p>
-              <div className="w-full bg-sl-gray/40 rounded-full h-1.5 mt-2 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    completed ? 'bg-green-500' : 'bg-sl-purple'
-                  }`}
-                  style={{ width: `${pct}%` }}
-                ></div>
+              <p className="text-xs text-white font-medium">{mission.label}</p>
+              <div className="w-full bg-sl-gray/40 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-500 ${completed ? 'bg-green-500' : 'bg-sl-purple'}`}
+                     style={{ width: `${pct}%` }}></div>
               </div>
             </div>
           );

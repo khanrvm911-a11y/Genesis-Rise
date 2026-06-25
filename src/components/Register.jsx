@@ -135,7 +135,7 @@ const Register = () => {
             Genesis Rise
           </h2>
           <p className="text-center text-sl-gray-light">
-            Create your Champion profile
+            Create your profile
           </p>
         </div>
 

@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "start /B node backend.js && vite",
+    "dev:backend": "node backend.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -21,6 +22,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "framer-motion": "^12.41.0",
+    "groq-sdk": "^1.3.0",
     "helmet": "^8.2.0",
     "lucide-react": "^1.21.0",
     "morgan": "^1.11.0",

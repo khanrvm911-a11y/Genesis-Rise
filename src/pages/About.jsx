@@ -12,19 +12,19 @@ const About = () => {
             About Genesis Rise Tracker
           </h1>
           <p className="text-sl-gray-light max-w-3xl mx-auto text-lg">
-            A fitness application that transforms your workout routine into an epic leveling journey.
+            A premium AI-powered fitness platform designed to help you build consistent habits, track measurable progress, and achieve your health and fitness goals.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Left: Story */}
           <div className="space-y-8">
-            <h2 className="text-3xl font-bold text-sl-purple-light">Our Inspiration</h2>
+            <h2 className="text-3xl font-bold text-sl-purple-light">Our Mission</h2>
             <p className="text-sl-gray-light">
-              Drawing inspiration from Sung Jin-Woo's journey from the weakest Champion to the strongest shadow monarch, this app encourages users to view their fitness journey as a series of Missions and challenges. Each workout is a step toward becoming stronger, both physically and mentally.
+              Genesis Rise is a premium AI-powered fitness platform designed to help you build consistent habits, track measurable progress, and achieve your health and fitness goals. Whether you're a beginner starting your journey or an experienced athlete looking to optimize your training, Genesis Rise provides the tools, insights, and coaching you need.
             </p>
             <p className="text-sl-gray-light">
-              Just as the System assigns Daily Missions to Champions in the Genesis Rise universe, our Mission Planner helps you schedule your training trials. Complete them to earn XP, level up, and unlock new ranks—mirroring the progression system that makes the story so compelling.
+              Our mission is simple: make evidence-based fitness guidance accessible to everyone. By combining workout tracking, intelligent planning, health monitoring, and AI-powered coaching, we've created a comprehensive ecosystem that adapts to your goals and helps you stay on track.
             </p>
           </div>
 
@@ -33,9 +33,9 @@ const About = () => {
             <div className="w-24 h-24 bg-sl-purple/20 rounded-full flex items-center justify-center mb-6 mx-auto">
               <img src="/igris.png" alt="Illustration" className="w-full h-full object-contain" />
             </div>
-            <h3 className="text-xl font-bold text-sl-purple-light text-center">Train Like a Champion</h3>
+            <h3 className="text-xl font-bold text-sl-purple-light text-center">Train Smarter, Not Harder</h3>
             <p className="text-sl-gray-light text-center">
-              Track workouts, plan Missions, monitor health, and get advice—all within a immersive Genesis Rise-themed interface.
+              Track workouts, plan training schedules, monitor health metrics, and get AI-powered coaching — all within a premium, immersive fitness platform.
             </p>
           </div>
         </div>
@@ -59,9 +59,9 @@ const About = () => {
                 2
               </div>
               <div>
-                <h3 className="text-xl font-bold text-sl-purple-light">Mission Planner</h3>
+                <h3 className="text-xl font-bold text-sl-purple-light">Training Planner</h3>
                 <p className="text-sl-gray-light">
-                  Schedule weekly training using predefined System Missions (E-S rank) or create custom plans with personalized exercise sequences and rewards.
+                  Schedule weekly training sessions using popular split templates or create custom plans with personalized exercise sequences.
                 </p>
               </div>
             </div>
@@ -70,9 +70,9 @@ const About = () => {
                 3
               </div>
               <div>
-                <h3 className="text-xl font-bold text-sl-purple-light">System Adviser</h3>
+                <h3 className="text-xl font-bold text-sl-purple-light">Genesis Coach</h3>
                 <p className="text-sl-gray-light">
-                  Get AI-powered fitness and health advice from the System Advisor terminal, powered by Gemini API.
+                  Get AI-powered fitness and health advice from your personal coach, covering training, nutrition, recovery, and more.
                 </p>
               </div>
             </div>
@@ -81,9 +81,9 @@ const About = () => {
                 4
               </div>
               <div>
-                <h3 className="text-xl font-bold text-sl-purple-light">Health Monitor</h3>
+                <h3 className="text-xl font-bold text-sl-purple-light">Health Tracking</h3>
                 <p className="text-sl-gray-light">
-                  Track weight, height, age, and sleep metrics to maintain your vessel in peak condition.
+                  Track weight, height, age, sleep, and other health metrics to monitor your overall well-being.
                 </p>
               </div>
             </div>
@@ -95,7 +95,7 @@ const About = () => {
             Join the Journey
           </h2>
           <p className="text-sl-gray-light mb-6">
-            Whether you're a beginner starting your fitness journey or an experienced athlete looking for extra motivation, Genesis Rise Tracker provides the tools and motivation to level up your life.
+            Whether you're a beginner starting your fitness journey or an experienced athlete looking for extra motivation, Genesis Rise provides the tools and coaching to help you reach your goals.
           </p>
           <Link to="/register" className="holo-button px-6 py-3">
             Start Your Adventure

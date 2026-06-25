@@ -91,7 +91,7 @@ const Login = () => {
             Genesis Rise
           </h2>
           <p className="text-center text-sl-gray-light text-xl font-semibold">
-            Welcome Champion
+            Welcome
           </p>
         </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import RestTimer from './RestTimer';
 import PersonalRecords from './PersonalRecords';
 import { calculateExerciseCalories, calculateCaloriesPerMinute } from '../../utils/calorieUtils';
+import { ArrowLeft, SkipForward, Trophy } from 'lucide-react';
 
 export default function ActiveWorkoutMode({
   exercise,
@@ -112,97 +113,91 @@ export default function ActiveWorkoutMode({
   const hasMoreExercises = totalExercises > 1 && exerciseIndex < totalExercises - 1;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-4">
       {recentPR && (
-        <div className="fixed top-20 right-4 z-50 animate-slide-up bg-gradient-to-r from-yellow-500/20 to-sl-red/20 border border-yellow-500/40 rounded-xl p-4 shadow-lg max-w-xs">
+        <div className="fixed top-20 right-4 z-50 animate-slide-up bg-gradient-to-r from-yellow-500/20 to-sl-red/20 border border-yellow-500/40 rounded-xl p-4 shadow-lg max-w-[280px] backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">🏆</span>
+            <Trophy className="w-4 h-4 text-yellow-400" />
             <span className="text-xs font-bold text-yellow-400 uppercase tracking-widest">NEW PR</span>
           </div>
-          <p className="text-white font-bold">{exercise.name}</p>
-          <p className="text-yellow-300">{recentPR.newValue}{recentPR.unit} ({recentPR.type})</p>
-          <p className="text-xs text-yellow-400">+50 XP</p>
+          <p className="text-white font-bold text-sm">{exercise.name}</p>
+          <p className="text-yellow-300 text-xs">{recentPR.newValue}{recentPR.unit} ({recentPR.type})</p>
         </div>
       )}
 
       <div className="flex items-center justify-between">
-        <button onClick={onSkipExercise} className="text-sl-gray-light hover:text-white text-sm">
-          ← Skip
+        <button onClick={onSkipExercise} className="flex items-center gap-1 text-sl-gray-light hover:text-white text-sm touch-target">
+          <ArrowLeft className="w-4 h-4" />
+          Skip
         </button>
         <div className="text-center">
-          <p className="text-xs text-sl-gray-light">Workout Timer</p>
+          <p className="text-[10px] text-sl-gray-light font-semibold uppercase tracking-wider">Timer</p>
           <p className="text-2xl font-bold text-white tabular-nums">
             {elapsedMinutes}:{String(elapsedSeconds).padStart(2, '0')}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-sl-gray-light">Calories</p>
+          <p className="text-[10px] text-sl-gray-light font-semibold uppercase tracking-wider">Calories</p>
           <p className="text-lg font-bold text-sl-red-light">{totalCalories}</p>
         </div>
       </div>
 
-      <div className="text-center py-2">
-        <p className="text-sm text-sl-gray-light uppercase tracking-wider">
-          {workoutName || 'Workout'} · Exercise {exerciseIndex + 1} of {totalExercises}
+      <div className="text-center">
+        <p className="text-[10px] text-sl-gray-light uppercase tracking-wider font-semibold">
+          {workoutName || 'Workout'} &middot; {exerciseIndex + 1}/{totalExercises}
         </p>
       </div>
 
-      <div className="sl-card text-center">
-        <h2 className="text-3xl font-bold text-white mb-2">{exercise.name}</h2>
-        <p className="text-sl-gray-light text-base">{exercise.muscleGroup} · {exercise.equipment}</p>
-        <div className="flex justify-center gap-6 mt-3">
+      <div className="mobile-card text-center">
+        <h2 className="text-2xl font-bold text-white mb-1">{exercise.name}</h2>
+        <p className="text-sm text-sl-gray-light">{exercise.muscleGroup} &middot; {exercise.equipment}</p>
+        <div className="flex justify-center gap-4 mt-3">
           <div>
-            <p className="text-xs text-sl-gray-light">Sets</p>
-            <p className="text-xl font-bold text-white">{sets.length}</p>
+            <p className="text-[10px] text-sl-gray-light font-semibold">Sets</p>
+            <p className="text-lg font-bold text-white">{sets.length}</p>
           </div>
           <div>
-            <p className="text-xs text-sl-gray-light">Volume</p>
-            <p className="text-xl font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</p>
+            <p className="text-[10px] text-sl-gray-light font-semibold">Volume</p>
+            <p className="text-lg font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</p>
           </div>
           <div>
-            <p className="text-xs text-sl-gray-light">Cal/min</p>
-            <p className="text-xl font-bold text-sl-red-light">{calcPerMin}</p>
+            <p className="text-[10px] text-sl-gray-light font-semibold">Cal/min</p>
+            <p className="text-lg font-bold text-sl-red-light">{calcPerMin}</p>
           </div>
         </div>
       </div>
 
-      <div className="sl-card">
-        <h3 className="text-xl font-bold text-white mb-4">Set {sets.length + 1}</h3>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="mobile-card">
+        <h3 className="text-lg font-bold text-white mb-3">Set {sets.length + 1}</h3>
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-sm text-sl-gray-light mb-2">Weight (kg)</label>
+            <label className="block text-xs text-sl-gray-light mb-1.5 font-semibold">Weight (kg)</label>
             <input
               ref={weightRef}
-              type="number"
-              step="0.5"
-              min="0"
+              type="number" step="0.5" min="0"
               value={weight}
               onChange={e => setWeight(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && repsRef.current?.focus()}
-              className="holo-input text-center text-2xl font-bold py-4"
+              className="holo-input text-center text-xl font-bold py-3"
               placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm text-sl-gray-light mb-2">Reps</label>
+            <label className="block text-xs text-sl-gray-light mb-1.5 font-semibold">Reps</label>
             <input
               ref={repsRef}
-              type="number"
-              min="0"
+              type="number" min="0"
               value={reps}
               onChange={e => setReps(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCompleteSet()}
-              className="holo-input text-center text-2xl font-bold py-4"
+              className="holo-input text-center text-xl font-bold py-3"
               placeholder="0"
             />
           </div>
         </div>
 
-        <button
-          onClick={handleCompleteSet}
-          disabled={!weight && !reps}
-          className="w-full holo-button holo-button-success text-lg py-4 font-bold"
-        >
+        <button onClick={handleCompleteSet} disabled={!weight && !reps}
+          className="w-full holo-button holo-button-success text-base py-4 font-bold">
           Complete Set
         </button>
       </div>
@@ -217,38 +212,26 @@ export default function ActiveWorkoutMode({
       )}
 
       {sets.length > 0 && (
-        <div className="sl-card">
-          <h3 className="text-xl font-bold text-white mb-3">Completed Sets</h3>
+        <div className="mobile-card">
+          <h3 className="text-lg font-bold text-white mb-3">Completed Sets</h3>
           <div className="space-y-2">
             {sets.map((set, i) => {
               const vol = set.weight * set.reps;
               return (
-                <div key={i} className="flex items-center gap-3 bg-sl-gray/20 rounded-xl p-3 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-                  <span className="text-sl-gray-light font-bold w-6">#{i + 1}</span>
-                  <div className="flex-1 grid grid-cols-3 gap-2">
-                    <div>
-                      <input
-                        type="number"
-                        value={set.weight}
-                        onChange={e => handleEditSet(i, 'weight', e.target.value)}
-                        className="holo-input text-center text-sm py-1 px-2"
-                      />
-                      <p className="text-xs text-sl-gray-light text-center mt-1">kg</p>
-                    </div>
-                    <div>
-                      <input
-                        type="number"
-                        value={set.reps}
-                        onChange={e => handleEditSet(i, 'reps', e.target.value)}
-                        className="holo-input text-center text-sm py-1 px-2"
-                      />
-                      <p className="text-xs text-sl-gray-light text-center mt-1">reps</p>
-                    </div>
+                <div key={i} className="flex items-center gap-2 bg-sl-gray/20 rounded-xl p-3 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                  <span className="text-sl-gray-light font-bold text-xs w-5 shrink-0">#{i + 1}</span>
+                  <div className="flex-1 grid grid-cols-3 gap-1.5">
+                    <input type="number" value={set.weight}
+                      onChange={e => handleEditSet(i, 'weight', e.target.value)}
+                      className="holo-input text-center text-sm py-1.5 px-1" />
+                    <input type="number" value={set.reps}
+                      onChange={e => handleEditSet(i, 'reps', e.target.value)}
+                      className="holo-input text-center text-sm py-1.5 px-1" />
                     <div className="flex items-center justify-center">
-                      <p className="text-sm font-semibold text-sl-purple-light">{(vol / 1000).toFixed(2)}k</p>
+                      <p className="text-xs font-semibold text-sl-purple-light">{(vol / 1000).toFixed(2)}k</p>
                     </div>
                   </div>
-                  <button onClick={() => handleDeleteSet(i)} className="text-red-400 hover:text-red-300 text-sm ml-2">
+                  <button onClick={() => handleDeleteSet(i)} className="text-red-400 hover:text-red-300 text-sm shrink-0 px-1 touch-target">
                     ✕
                   </button>
                 </div>
@@ -260,26 +243,28 @@ export default function ActiveWorkoutMode({
 
       <PersonalRecords prs={newPRs} exerciseName={exercise.name} />
 
-      <div className="flex gap-3">
-        <button onClick={handleFinish} className="flex-1 holo-button holo-button-primary text-lg py-4 font-bold text-center">
-          {hasMoreExercises ? 'Finish & Next Exercise' : 'Complete Workout'}
-        </button>
-      </div>
+      <button onClick={handleFinish} className="w-full holo-button holo-button-primary text-base py-4 font-bold text-center">
+        {hasMoreExercises ? (
+          <span className="flex items-center justify-center gap-2">
+            Next Exercise <SkipForward className="w-4 h-4" />
+          </span>
+        ) : 'Complete Workout'}
+      </button>
 
       <div className="text-center">
-        <button onClick={() => setShowResetConfirm(true)} className="text-red-400 hover:text-red-300 text-sm underline underline-offset-2">
+        <button onClick={() => setShowResetConfirm(true)} className="text-red-400 hover:text-red-300 text-sm underline underline-offset-2 touch-target inline-flex">
           Reset Workout
         </button>
       </div>
 
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}>
-          <div className="bg-sl-dark border border-sl-red/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-sl-glow" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowResetConfirm(false)}>
+          <div className="bg-sl-dark border border-sl-red/30 rounded-xl p-6 max-w-sm w-full shadow-sl-glow" onClick={e => e.stopPropagation()}>
             <h3 className="text-xl font-bold text-white mb-2">Reset Workout?</h3>
             <p className="text-sl-gray-light text-sm mb-6">This will clear the current workout.</p>
             <div className="flex gap-3">
-              <button onClick={() => setShowResetConfirm(false)} className="flex-1 holo-button text-center">Cancel</button>
-              <button onClick={() => { setShowResetConfirm(false); onReset && onReset(); }} className="flex-1 holo-button holo-button-danger text-center">Reset</button>
+              <button onClick={() => setShowResetConfirm(false)} className="holo-button flex-1 text-center">Cancel</button>
+              <button onClick={() => { setShowResetConfirm(false); onReset && onReset(); }} className="holo-button holo-button-danger flex-1 text-center">Reset</button>
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ import CustomWorkoutBuilder from './tracker/CustomWorkoutBuilder';
 import ActiveWorkoutMode from './tracker/ActiveWorkoutMode';
 import WorkoutCompleteScreen from './tracker/WorkoutCompleteScreen';
 import AnalyticsDashboard from './tracker/AnalyticsDashboard';
+import { ArrowLeft } from 'lucide-react';
 
 const MUSCLE_GROUPS = [
   { id: 'Chest', name: 'Chest Arsenal' },
@@ -303,34 +304,34 @@ export default function Tracker() {
 
   const stepTitle = () => {
     switch (workflowStep) {
-      case 'workoutType': return 'Genesis Rise Tracker';
+      case 'workoutType': return 'Tracker';
       case 'exerciseSelection': return selectedMuscleGroup ? `${selectedMuscleGroup} Exercises` : 'Select Muscle Group';
-      case 'customWorkout': return 'Custom Workout Builder';
+      case 'customWorkout': return 'Custom Workout';
       case 'activeWorkout': return workoutName || 'Active Workout';
       case 'complete': return 'Workout Complete';
-      case 'analytics': return 'Analytics Dashboard';
-      default: return 'Genesis Rise Tracker';
+      case 'analytics': return 'Analytics';
+      default: return 'Tracker';
     }
   };
 
   const showBackButton = workflowStep !== 'workoutType' && workflowStep !== 'analytics';
 
   return (
-    <div className="min-h-screen bg-sl-gradient pb-24">
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-sl-gradient">
+      <div className="mobile-container py-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
             {showBackButton && (
-              <button onClick={handleBackToHome} className="text-sl-gray-light hover:text-white text-sm hoverable">
-                ←
+              <button onClick={handleBackToHome} className="flex items-center gap-1 text-sl-gray-light hover:text-white text-sm touch-target">
+                <ArrowLeft className="w-4 h-4" />
               </button>
             )}
-            <h1 className="text-2xl md:text-3xl font-bold gradient-text">
+            <h1 className="text-xl font-bold gradient-text">
               {stepTitle()}
             </h1>
           </div>
           {workflowStep === 'complete' && (
-            <button onClick={handleNewWorkout} className="holo-button holo-button-primary px-3 py-1.5 text-xs">
+            <button onClick={handleNewWorkout} className="holo-button holo-button-primary px-4 py-2 text-sm">
               New Workout
             </button>
           )}
@@ -347,13 +348,13 @@ export default function Tracker() {
         )}
 
         {workflowStep === 'exerciseSelection' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 overflow-x-auto py-2">
+          <div className="space-y-3">
+            <div className="flex gap-2 overflow-x-auto py-1 scrollbar-none -mx-1 px-1">
               {MUSCLE_GROUPS.map(group => (
                 <button
                   key={group.id}
                   onClick={() => setSelectedMuscleGroup(group.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap touch-target ${
                     selectedMuscleGroup === group.id
                       ? 'bg-sl-purple text-white shadow-lg'
                       : 'bg-sl-gray/20 text-sl-gray-light hover:bg-sl-gray/30'

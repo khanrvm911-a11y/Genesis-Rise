@@ -50,9 +50,9 @@ export const getLevelProgress = (totalXP, currentLevel) => {
 export const getLevelTitle = (level) => {
   const titles = [
     { min: 1, max: 10, title: 'Initiate' },
-    { min: 11, max: 20, title: 'Warrior' },
+    { min: 11, max: 20, title: 'Bronze' },
     { min: 21, max: 30, title: 'Elite' },
-    { min: 31, max: 40, title: 'Champion' },
+    { min: 31, max: 40, title: 'Diamond' },
     { min: 41, max: 50, title: 'Ascendant' },
     { min: 51, max: 70, title: 'Genesis' },
     { min: 71, max: 90, title: 'Mythic' },

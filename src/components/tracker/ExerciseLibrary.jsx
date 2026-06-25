@@ -15,13 +15,8 @@ export default function ExerciseLibrary({ muscleGroup, onSelectExercise, onBack,
     return exercises.filter(ex => ex.name.toLowerCase().includes(q) || ex.equipment?.toLowerCase().includes(q));
   }, [exercises, search]);
 
-  const muscleEmoji = {
-    Chest: '💪', Back: '🔥', Shoulders: '⚡', Arms: '🤜',
-    Legs: '🦵', Core: '🎯', Cardio: '🏃', 'Full Body': '💯'
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <input
         type="text"
         placeholder="Search exercises..."
@@ -30,7 +25,7 @@ export default function ExerciseLibrary({ muscleGroup, onSelectExercise, onBack,
         className="holo-input"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-3">
         {filtered.map(ex => {
           const lastPerf = getLastPerformance ? getLastPerformance(ex.id) : null;
           let lastText = 'No data';
@@ -42,30 +37,30 @@ export default function ExerciseLibrary({ muscleGroup, onSelectExercise, onBack,
           }
 
           return (
-            <div key={ex.id} className="sl-card hover:border-sl-red/30 transition-all">
+            <div key={ex.id} className="mobile-card hover:border-sl-red/30 transition-all p-4 animate-slide-up">
               <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-xl font-bold text-white">{ex.name}</h3>
-                  <p className="text-sm text-sl-gray-light">{ex.equipment}</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-white truncate">{ex.name}</h3>
+                  <p className="text-xs text-sl-gray-light">{ex.equipment}</p>
                 </div>
-                <span className="text-xs bg-sl-purple/20 text-sl-purple-light px-2 py-1 rounded-full">
+                <span className="text-[10px] bg-sl-purple/20 text-sl-purple-light px-2 py-1 rounded-full font-semibold shrink-0 ml-2">
                   +{ex.xpReward} XP
                 </span>
               </div>
 
-              <div className="flex items-center space-x-1 text-yellow-400 text-sm mb-2">
+              <div className="flex items-center gap-1 text-yellow-400 text-xs mb-3">
                 {difficultyStars(ex.difficulty)}
-                <span className="text-sl-gray-light text-xs ml-2">{ex.difficulty}</span>
+                <span className="text-sl-gray-light text-[10px] ml-1">{ex.difficulty}</span>
               </div>
 
-              <div className="bg-sl-gray/20 rounded-lg p-3 mb-4">
-                <p className="text-xs text-sl-gray-light uppercase tracking-wider mb-1">Last Performance</p>
-                <p className="text-base font-semibold text-white">{lastText}</p>
+              <div className="bg-sl-gray/20 rounded-lg p-3 mb-3">
+                <p className="text-[10px] text-sl-gray-light uppercase tracking-wider mb-0.5 font-semibold">Last Performance</p>
+                <p className="text-sm font-semibold text-white">{lastText}</p>
               </div>
 
               <button
                 onClick={() => onSelectExercise(ex)}
-                className="w-full holo-button holo-button-primary text-center"
+                className="w-full holo-button holo-button-primary text-center py-3"
               >
                 Start Exercise
               </button>
@@ -76,7 +71,7 @@ export default function ExerciseLibrary({ muscleGroup, onSelectExercise, onBack,
 
       {filtered.length === 0 && (
         <div className="text-center py-12 text-sl-gray-light">
-          <p className="text-xl">No exercises found for "{search}"</p>
+          <p className="text-base">No exercises found for "{search}"</p>
         </div>
       )}
     </div>

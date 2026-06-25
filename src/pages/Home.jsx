@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLevel } from '../context/LevelContext';
-import '../App.css';
+import { Activity, Calendar, Sparkles, Heart, Info } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
 const Home = () => {
   const { user } = useAuth();
   const { level, xp, progress } = useLevel();
+  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
 
   useEffect(() => {
@@ -16,58 +17,65 @@ const Home = () => {
   }, []);
 
   if (user) {
-    const recentWorkouts = Array.isArray(workouts) ? [...workouts].reverse().slice(0, 3) : [];
+    const recentWorkouts = Array.isArray(workouts) ? [...workouts].reverse().slice(0, 5) : [];
     return (
       <div className="min-h-screen bg-sl-gradient">
-        <div className="max-w-7xl mx-auto py-12 px-4">
-          <div className="mb-8 text-center">
-            <h1 className="text-4xl font-extrabold tracking-wide uppercase gradient-text mb-2">
-              Welcome Back, {user.user_metadata?.username || user.email?.split('@')[0] || 'Champion'}
+        <div className="mobile-container py-6">
+          <div className="mb-6 text-center animate-slide-up">
+            <h1 className="text-2xl font-extrabold tracking-wide uppercase gradient-text mb-1">
+              Welcome Back
             </h1>
-            <p className="text-sl-gray-light max-w-2xl mx-auto text-sm md:text-base">
-              Your Genesis Rise journey continues. Track your progress, plan your workouts, and level up.
+            <p className="text-base text-sl-gray-light">
+               {user.user_metadata?.username || user.email?.split('@')[0] || 'Athlete'}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-10">
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
-              <h3 className="text-xl font-bold text-sl-purple-light mb-2">Level</h3>
-              <p className="text-4xl font-bold text-sl-purple-light">{level}</p>
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="mobile-card text-center p-4">
+              <div className="text-2xl font-bold text-sl-purple-light">{level}</div>
+              <div className="text-[10px] text-sl-gray-light uppercase tracking-wider mt-0.5 font-semibold">Level</div>
             </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
-              <h3 className="text-xl font-bold text-sl-purple-light mb-2">XP</h3>
-              <p className="text-4xl font-bold text-sl-purple-light">{xp}</p>
+            <div className="mobile-card text-center p-4">
+              <div className="text-2xl font-bold text-sl-purple-light">{xp}</div>
+              <div className="text-[10px] text-sl-gray-light uppercase tracking-wider mt-0.5 font-semibold">XP</div>
             </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
-              <h3 className="text-xl font-bold text-sl-purple-light mb-2">Workouts</h3>
-              <p className="text-4xl font-bold text-sl-purple-light">{workouts.length}</p>
-            </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
-              <h3 className="text-xl font-bold text-sl-purple-light mb-2">Progress to Next Level</h3>
-              <div className="w-full h-2 bg-sl-gray/40 rounded-full overflow-hidden border border-sl-purple/10 mt-2">
-                <div className={`h-full bg-gradient-to-r from-sl-purple to-sl-red transition-all duration-1000`} style={{ width: `${progress * 100}%` }}></div>
-              </div>
-              <p className="text-xs text-sl-purple-light mt-1">{Math.floor(progress * 100)}%</p>
+            <div className="mobile-card text-center p-4">
+              <div className="text-2xl font-bold text-sl-purple-light">{workouts.length}</div>
+              <div className="text-[10px] text-sl-gray-light uppercase tracking-wider mt-0.5 font-semibold">Workouts</div>
             </div>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-sl-red-light mb-4">
+          <div className="mobile-card mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-sl-purple-light uppercase tracking-wider">Progress to Next Level</span>
+              <span className="text-xs text-sl-purple-light font-semibold">{Math.floor(progress * 100)}%</span>
+            </div>
+            <div className="w-full h-2.5 bg-sl-gray/40 rounded-full overflow-hidden border border-sl-purple/10">
+              <div className="h-full bg-gradient-to-r from-sl-purple to-sl-red transition-all duration-1000 rounded-full" style={{ width: `${progress * 100}%` }}></div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-sl-red-light mb-3 flex items-center gap-2">
+              <Activity className="w-5 h-5" />
               Recent Activity
             </h2>
             {recentWorkouts.length === 0 ? (
-              <p className="text-sl-gray-light text-center py-8">No workouts logged yet. Start your first training session!</p>
+              <div className="mobile-card text-center py-8">
+                <p className="text-sl-gray-light">No workouts logged yet.</p>
+                <p className="text-sm text-sl-purple-light mt-1">Start your first training session!</p>
+              </div>
             ) : (
-              <div className="space-y-4">
-                {recentWorkouts.map((w) => (
-                  <div key={w.id} className="p-4 bg-sl-gray/20 backdrop-blur-sm rounded-sl-xl border border-sl-red/20 shadow-sl-glow flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-white">{w.name || w.workout_name || 'Workout'}</h3>
-                      <p className="text-sl-gray-light text-sm">{new Date(w.date || w.created_at).toLocaleDateString()}</p>
+              <div className="space-y-3">
+                {recentWorkouts.map((w, i) => (
+                  <div key={w.id} className="mobile-card flex items-center justify-between animate-slide-up" style={{ animationDelay: `${i * 80}ms` }}>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-white text-sm truncate">{w.name || w.workout_name || 'Workout'}</h3>
+                      <p className="text-xs text-sl-gray-light mt-0.5">{new Date(w.date || w.created_at).toLocaleDateString()}</p>
                     </div>
-                    <div className="flex items-center gap-3 text-sl-gray-light">
-                      <span>{w.duration || w.total_duration || 0} min</span>
-                      <span>{w.calories || w.total_calories || 0} kcal</span>
+                    <div className="flex items-center gap-3 text-xs text-sl-gray-light shrink-0 ml-3">
+                      <span className="font-semibold">{w.duration || w.total_duration || 0} min</span>
+                      <span className="font-semibold text-sl-red-light">{w.calories || w.total_calories || 0} kcal</span>
                     </div>
                   </div>
                 ))}
@@ -75,171 +83,156 @@ const Home = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link to="/tracker" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
-              Tracker
-            </Link>
-            <Link to="/planner" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
-              Plan Mission
-            </Link>
-            <Link to="/adviser" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
-              Ask Adviser
-            </Link>
-            <Link to="/health" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
-              Health Metrics
-            </Link>
-            <Link to="/about" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
-              About
-            </Link>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => navigate('/tracker')} className="mobile-card flex flex-col items-center justify-center p-5 border-sl-purple/30 hover:border-sl-purple/60 active:scale-[0.97] cursor-pointer">
+              <Activity className="w-7 h-7 text-sl-purple-light mb-2" />
+              <span className="text-sm font-bold text-white">Tracker</span>
+            </button>
+            <button onClick={() => navigate('/planner')} className="mobile-card flex flex-col items-center justify-center p-5 border-sl-purple/30 hover:border-sl-purple/60 active:scale-[0.97] cursor-pointer">
+              <Calendar className="w-7 h-7 text-sl-purple-light mb-2" />
+              <span className="text-sm font-bold text-white">Planner</span>
+            </button>
+            <button onClick={() => navigate('/adviser')} className="mobile-card flex flex-col items-center justify-center p-5 border-sl-purple/30 hover:border-sl-purple/60 active:scale-[0.97] cursor-pointer">
+              <Sparkles className="w-7 h-7 text-sl-purple-light mb-2" />
+              <span className="text-sm font-bold text-white">Coach</span>
+            </button>
+            <button onClick={() => navigate('/health')} className="mobile-card flex flex-col items-center justify-center p-5 border-sl-purple/30 hover:border-sl-purple/60 active:scale-[0.97] cursor-pointer">
+              <Heart className="w-7 h-7 text-sl-purple-light mb-2" />
+              <span className="text-sm font-bold text-white">Health</span>
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  // Guest view (landing page) - unchanged
   return (
     <>
       <Helmet>
         <title>Genesis Rise Tracker - Level Up Your Fitness Journey</title>
-        <meta name="description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
+        <meta name="description" content="Track workouts, earn XP, and reach your fitness goals with Genesis Rise — a premium AI-powered fitness platform with personalized coaching, training plans, and health tracking." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://yourdomain.com/" />
-        <meta property="og:title" content="Genesis Rise Tracker - Level Up Your Fitness Journey" />
-        <meta property="og:description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
+        <meta property="og:title" content="Genesis Rise - AI-Powered Fitness Platform" />
+        <meta property="og:description" content="Track workouts, earn XP, and reach your fitness goals with Genesis Rise — a premium AI-powered fitness platform with personalized coaching, training plans, and health tracking." />
         <meta property="og:image" content="https://yourdomain.com/igris_shadow_face.png" />
-        <meta property="og:image:alt" content="Genesis Rise Igris Logo" />
+        <meta property="og:image:alt" content="Genesis Rise Logo" />
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://yourdomain.com/" />
-        <meta property="twitter:title" content="Genesis Rise Tracker - Level Up Your Fitness Journey" />
-        <meta property="twitter:description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
+        <meta property="twitter:title" content="Genesis Rise - AI-Powered Fitness Platform" />
+        <meta property="twitter:description" content="Track workouts, earn XP, and reach your fitness goals with Genesis Rise — a premium AI-powered fitness platform with personalized coaching, training plans, and health tracking." />
         <meta property="twitter:image" content="https://yourdomain.com/igris_shadow_face.png" />
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "name": "Genesis Rise Tracker",
-          "description": "A fitness application that transforms your workout routine into an epic leveling journey inspired by Genesis Rise.",
-          "url": "https://yourdomain.com/",
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://yourdomain.com/?s={search_term_string}",
-            "query-input": "required name=search_term_string"
-          }
-        }, null, 2)}</script>
       </Helmet>
       <div className="min-h-screen bg-sl-gradient">
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-sl-pattern opacity-10"></div>
-      </div>
-
-      <div className="max-w-7xl mx-auto py-20 px-4">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-extrabold tracking-wider uppercase gradient-text mb-6">
-            Level Up Your Fitness Journey
-          </h1>
-          <p className="text-sl-gray-light max-w-3xl mx-auto text-lg">
-            Transform your workouts into a mission for strength. Track progress, earn XP, unlock achievements, and become the strongest version of yourself.
-          </p>
-          <div className="flex justify-center mt-8 space-x-4">
-            <Link to="/register" className="holo-button px-6 py-3">
-              Start Your Journey
-            </Link>
-            <Link to="/login" className="holo-button px-6 py-3 text-sl-purple-light border border-sl-purple/30 hover:border-sl-purple/50">
-              Already have an account?
-            </Link>
-          </div>
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-sl-pattern opacity-10"></div>
         </div>
 
-        <section className="mb-20">
-          <h2 className="text-3xl font-bold text-center gradient-text mb-12">
-            Features
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-sl-purple/20 rounded-full flex items-center justify-conten mb-4">
-                <svg className="w-8 h-8 text-sl-purple-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+        <div className="mobile-container py-8">
+          <div className="text-center mb-10 pt-8">
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 flex items-center justify-center bg-sl-purple/20 rounded-full border-2 border-sl-purple shadow-sl-glow-purple overflow-hidden">
+                <img src="/igris_shadow_face.png" alt="Genesis Rise" className="w-full h-full object-cover" />
               </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-3">Workout Tracker</h3>
-              <p className="text-sl-gray-light text-center">Log your daily workouts, track duration, calories, and earn XP based on intensity.</p>
             </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-sl-purple/20 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-sl-purple-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-3">Mission Planner</h3>
-              <p className="text-sl-gray-light text-center">Schedule weekly training using System Missions (E-S rank) or create custom plans with personalized rewards.</p>
-            </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-sl-purple/20 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-sl-purple-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-3">System Adviser</h3>
-              <p className="text-sl-gray-light text-center">Get AI-powered fitness and health advice from the System Advisor terminal.</p>
-            </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-sl-purple/20 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-8 h-8 text-sl-purple-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-3">Health Monitor</h3>
-              <p className="text-sl-gray-light text-center">Track weight, height, age, and sleep to maintain your vessel in peak condition.</p>
+            <h1 className="text-3xl font-extrabold tracking-wider uppercase gradient-text mb-3">
+              Achieve Your Fitness Goals
+            </h1>
+            <p className="text-sl-gray-light text-base max-w-lg mx-auto">
+              Track workouts, earn XP, and build consistent habits with personalized coaching, training plans, and health insights.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-3 mt-6">
+              <Link to="/register" className="holo-button holo-button-primary px-8 py-3 text-center w-full sm:w-auto">
+                Start Your Journey
+              </Link>
+              <Link to="/login" className="holo-button px-8 py-3 text-center w-full sm:w-auto">
+                Sign In
+              </Link>
             </div>
           </div>
-        </section>
 
-        <section className="mb-20">
-          <h2 className="text-3xl font-bold text-center gradient-text mb-12">
-            How It Works
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
-              <div className="w-14 h-14 bg-sl-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-sl-purple-light font-bold text-2xl">1</span>
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-center gradient-text mb-6">Features</h2>
+            <div className="space-y-4">
+              <div className="mobile-card flex items-start gap-4 p-5">
+                <div className="w-12 h-12 bg-sl-purple/20 rounded-full flex items-center justify-center shrink-0">
+                  <Activity className="w-6 h-6 text-sl-purple-light" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-sl-purple-light mb-1">Workout Tracker</h3>
+                  <p className="text-sm text-sl-gray-light">Log your daily workouts, track duration, calories, and earn XP based on intensity.</p>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-4">Log Your Training</h3>
-              <p className="text-sl-gray-light">Record each workout with duration and calories burned to earn XP.</p>
-            </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
-              <div className="w-14 h-14 bg-sl-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-sl-purple-light font-bold text-2xl">2</span>
+              <div className="mobile-card flex items-start gap-4 p-5">
+                <div className="w-12 h-12 bg-sl-purple/20 rounded-full flex items-center justify-center shrink-0">
+                  <Calendar className="w-6 h-6 text-sl-purple-light" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-sl-purple-light mb-1">Mission Planner</h3>
+                   <p className="text-sm text-sl-gray-light">Schedule weekly training plans or create custom routines with personalized exercise sequences.</p>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-4">Complete Missions</h3>
-              <p className="text-sl-gray-light">Follow Daily Missions or custom plans to earn bonus XP and level up faster.</p>
-            </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
-              <div className="w-14 h-14 bg-sl-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-sl-purple-light font-bold text-2xl">3</span>
+              <div className="mobile-card flex items-start gap-4 p-5">
+                <div className="w-12 h-12 bg-sl-purple/20 rounded-full flex items-center justify-center shrink-0">
+                  <Sparkles className="w-6 h-6 text-sl-purple-light" />
+                </div>
+                <div>
+                   <h3 className="text-lg font-bold text-sl-purple-light mb-1">Genesis Coach</h3>
+                   <p className="text-sm text-sl-gray-light">Get AI-powered fitness and health advice from your personal AI fitness coach.</p>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-sl-purple-light mb-4">Level Up</h3>
-              <p className="text-sl-gray-light">Watch your level increase as you accumulate XP, unlocking new ranks and rewards.</p>
+              <div className="mobile-card flex items-start gap-4 p-5">
+                <div className="w-12 h-12 bg-sl-purple/20 rounded-full flex items-center justify-center shrink-0">
+                  <Heart className="w-6 h-6 text-sl-purple-light" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-sl-purple-light mb-1">Health Monitor</h3>
+                  <p className="text-sm text-sl-gray-light">Track weight, height, age, and sleep to maintain your vessel in peak condition.</p>
+                </div>
+              </div>
             </div>
+          </section>
+
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-center gradient-text mb-6">How It Works</h2>
+            <div className="space-y-4">
+              <div className="mobile-card p-5 text-center">
+                <div className="w-12 h-12 bg-sl-purple/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-sl-purple-light font-bold text-xl">1</span>
+                </div>
+                <h3 className="text-lg font-bold text-sl-purple-light mb-2">Log Your Training</h3>
+                <p className="text-sm text-sl-gray-light">Record each workout with duration and calories burned to earn XP.</p>
+              </div>
+              <div className="mobile-card p-5 text-center">
+                <div className="w-12 h-12 bg-sl-purple/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-sl-purple-light font-bold text-xl">2</span>
+                </div>
+                <h3 className="text-lg font-bold text-sl-purple-light mb-2">Complete Missions</h3>
+                <p className="text-sm text-sl-gray-light">Follow Daily Missions or custom plans to earn bonus XP and level up faster.</p>
+              </div>
+              <div className="mobile-card p-5 text-center">
+                <div className="w-12 h-12 bg-sl-purple/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-sl-purple-light font-bold text-xl">3</span>
+                </div>
+                <h3 className="text-lg font-bold text-sl-purple-light mb-2">Level Up</h3>
+                <p className="text-sm text-sl-gray-light">Watch your level increase as you accumulate XP, unlocking new titles and rewards.</p>
+              </div>
+            </div>
+          </section>
+
+          <div className="mobile-card p-6 text-center border-sl-purple/30 mb-8">
+            <h2 className="text-xl font-bold text-sl-purple-light mb-3">Ready to begin your transformation?</h2>
+            <p className="text-sm text-sl-gray-light mb-5">Create your profile and start earning XP today. No credit card required.</p>
+            <Link to="/register" className="holo-button holo-button-primary w-full text-center">
+              Start Your Transformation
+            </Link>
           </div>
-        </section>
 
-        <div className="bg-sl-dark/40 backdrop-blur-sm rounded-sl-xl p-12 text-center border border-sl-purple/20 shadow-sl-glow">
-          <h2 className="text-3xl font-bold text-sl-purple-light mb-6">
-            Ready to begin your transformation?
-          </h2>
-          <p className="text-sl-gray-light mb-8">
-            Create your Champion profile and start earning XP today. No credit card required.
-          </p>
-          <Link to="/register" className="holo-button px-8 py-3">
-            Awaken Your Power
-          </Link>
+          <footer className="text-center text-sl-gray-light/50 text-xs pb-8">
+            <p>&copy; 2026 Genesis Rise System. All rights reserved.</p>
+          </footer>
         </div>
       </div>
-
-      <footer className="mt-20 text-center text-sl-gray-light/50">
-        <p>© 2026 Genesis Rise System. All rights reserved.</p>
-      </footer>
-    </div>
     </>
   );
 };

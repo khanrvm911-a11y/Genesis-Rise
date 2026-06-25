@@ -95,70 +95,64 @@ export default function CustomWorkoutBuilder({ onComplete, onBack, onReset, exer
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-end">
-        <button onClick={() => setShowResetConfirm(true)} className="text-red-400 hover:text-red-300 text-sm">
-          Reset Workout
+        <button onClick={() => setShowResetConfirm(true)} className="text-red-400 hover:text-red-300 text-sm touch-target">
+          Reset
         </button>
       </div>
 
-      <div className="sl-card">
-        <label className="block text-sm text-sl-gray-light mb-2">Workout Name</label>
+      <div className="mobile-card">
+        <label className="block text-xs text-sl-gray-light mb-2 font-semibold">Workout Name</label>
         <input
           type="text"
           placeholder="e.g. Push Day, Chest Blast, Leg Destroyer"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="holo-input text-lg font-semibold"
+          className="holo-input text-base font-semibold"
         />
       </div>
 
       {selectedExercises.length > 0 && (
-        <div className="sl-card">
-          <h3 className="text-xl font-bold text-white mb-4">
-            Selected Exercises ({selectedExercises.length})
+        <div className="mobile-card">
+          <h3 className="text-lg font-bold text-white mb-3">
+            Selected ({selectedExercises.length})
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {selectedExercises.map(ex => (
-              <div key={ex.exerciseId} className="bg-sl-gray/20 rounded-xl p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <h4 className="text-lg font-semibold text-white">{ex.name}</h4>
-                  <button onClick={() => removeExercise(ex.exerciseId)} className="text-red-400 hover:text-red-300 text-sm">
+              <div key={ex.exerciseId} className="bg-sl-gray/20 rounded-xl p-3">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="text-sm font-semibold text-white">{ex.name}</h4>
+                  <button onClick={() => removeExercise(ex.exerciseId)} className="text-red-400 hover:text-red-300 text-xs touch-target px-2">
                     Remove
                   </button>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="text-xs text-sl-gray-light block mb-1">Sets</label>
+                    <label className="text-[10px] text-sl-gray-light block mb-0.5 font-semibold">Sets</label>
                     <input
-                      type="number"
-                      min="1"
-                      max="20"
+                      type="number" min="1" max="20"
                       value={ex.sets}
                       onChange={e => updateExercise(ex.exerciseId, 'sets', parseInt(e.target.value) || 1)}
-                      className="holo-input text-center"
+                      className="holo-input text-center text-sm py-2"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-sl-gray-light block mb-1">Reps</label>
+                    <label className="text-[10px] text-sl-gray-light block mb-0.5 font-semibold">Reps</label>
                     <input
-                      type="number"
-                      min="1"
-                      max="100"
+                      type="number" min="1" max="100"
                       value={ex.reps}
                       onChange={e => updateExercise(ex.exerciseId, 'reps', parseInt(e.target.value) || 1)}
-                      className="holo-input text-center"
+                      className="holo-input text-center text-sm py-2"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-sl-gray-light block mb-1">Weight (kg)</label>
+                    <label className="text-[10px] text-sl-gray-light block mb-0.5 font-semibold">Weight</label>
                     <input
-                      type="number"
-                      min="0"
-                      max="999"
+                      type="number" min="0" max="999"
                       value={ex.weight}
                       onChange={e => updateExercise(ex.exerciseId, 'weight', parseFloat(e.target.value) || 0)}
-                      className="holo-input text-center"
+                      className="holo-input text-center text-sm py-2"
                     />
                   </div>
                 </div>
@@ -166,28 +160,28 @@ export default function CustomWorkoutBuilder({ onComplete, onBack, onReset, exer
             ))}
           </div>
 
-          <div className="flex gap-3 mt-4">
-            <button onClick={handleSave} disabled={!name.trim()} className="holo-button flex-1 text-center">
-              {saving ? 'Saving...' : 'Save Template'}
+          <div className="flex gap-2 mt-3">
+            <button onClick={handleSave} disabled={!name.trim()} className="holo-button flex-1 text-center py-3 text-sm">
+              {saving ? 'Saving...' : 'Save'}
             </button>
-            <button onClick={startWorkout} disabled={selectedExercises.length === 0} className="holo-button holo-button-primary flex-1 text-center">
-              Start Workout
+            <button onClick={startWorkout} className="holo-button holo-button-primary flex-1 text-center py-3 text-sm">
+              Start
             </button>
           </div>
         </div>
       )}
 
       {templates && templates.length > 0 && (
-        <div className="sl-card">
-          <h3 className="text-xl font-bold text-white mb-4">Saved Templates ({templates.length})</h3>
+        <div className="mobile-card">
+          <h3 className="text-lg font-bold text-white mb-3">Saved Templates ({templates.length})</h3>
           <div className="space-y-2">
             {templates.map(t => (
               <div key={t.id} className="flex items-center justify-between bg-sl-gray/20 rounded-xl p-3">
-                <div>
-                  <p className="font-semibold text-white">{t.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-white text-sm truncate">{t.name}</p>
                   <p className="text-xs text-sl-gray-light">{t.exercises?.length || 0} exercises</p>
                 </div>
-                <button onClick={() => setDeleteConfirmId(t.id)} className="text-red-400 hover:text-red-300 text-sm px-2 py-1">
+                <button onClick={() => setDeleteConfirmId(t.id)} className="text-red-400 hover:text-red-300 text-sm px-2 py-1 shrink-0">
                   Delete
                 </button>
               </div>
@@ -196,20 +190,20 @@ export default function CustomWorkoutBuilder({ onComplete, onBack, onReset, exer
         </div>
       )}
 
-      <div className="sl-card">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="mobile-card">
+        <div className="flex items-center gap-2 mb-3">
           <input
             type="text"
             placeholder="Search exercises..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="holo-input flex-1"
+            className="holo-input flex-1 text-sm"
           />
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setShowDropdown(prev => !prev)}
-              className="flex items-center gap-2 px-4 py-3 rounded-sl-xl border text-sm font-semibold transition-all whitespace-nowrap min-w-[160px]"
+              className="flex items-center gap-1.5 px-3 py-3 rounded-xl border text-sm font-semibold transition-all whitespace-nowrap touch-target"
               style={{
                 backgroundColor: '#120A1F',
                 borderColor: '#B56CFF',
@@ -217,52 +211,25 @@ export default function CustomWorkoutBuilder({ onComplete, onBack, onReset, exer
               }}
             >
               <span>{MUSCLE_GROUP_DISPLAY[filterMuscle]?.emoji || '📋'}</span>
-              <span className="flex-1 text-left">{MUSCLE_GROUP_DISPLAY[filterMuscle]?.display || filterMuscle}</span>
-              <svg
-                className={`w-4 h-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
+              <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {showDropdown && (
-              <div
-                className="absolute right-0 mt-2 z-50 rounded-xl border overflow-hidden min-w-[200px] animate-fade-slide"
-                style={{
-                  backgroundColor: '#1A1028',
-                  borderColor: '#7A3EFF',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => { setFilterMuscle('All'); setShowDropdown(false); }}
-                  className={`w-full text-left px-4 py-3 text-sm font-medium transition flex items-center gap-3 ${
-                    filterMuscle === 'All' ? 'text-white' : 'text-[#D9C2FF]'
-                  }`}
-                  style={filterMuscle === 'All' ? { backgroundColor: '#2A1744' } : {}}
-                  onMouseEnter={e => e.target.style.backgroundColor = '#2A1744'}
-                  onMouseLeave={e => { if (filterMuscle !== 'All') e.target.style.backgroundColor = 'transparent'; }}
-                >
-                  <span>📋</span>
-                  <span>All Groups</span>
+              <div className="absolute right-0 mt-2 z-50 rounded-xl border overflow-hidden min-w-[180px] animate-fade-slide"
+                   style={{ backgroundColor: '#1A1028', borderColor: '#7A3EFF', boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}>
+                <button type="button" onClick={() => { setFilterMuscle('All'); setShowDropdown(false); }}
+                  className="w-full text-left px-4 py-3 text-sm font-medium transition flex items-center gap-2"
+                  style={filterMuscle === 'All' ? { backgroundColor: '#2A1744', color: 'white' } : { color: '#D9C2FF' }}>
+                  <span>📋</span><span>All Groups</span>
                 </button>
                 <div style={{ height: '1px', backgroundColor: 'rgba(122,62,255,0.3)' }} />
                 {MUSCLE_GROUPS.map(g => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => { setFilterMuscle(g); setShowDropdown(false); }}
-                    className={`w-full text-left px-4 py-3 text-sm font-medium transition flex items-center gap-3 ${
-                      filterMuscle === g ? 'text-white' : 'text-[#D9C2FF]'
-                    }`}
-                    style={filterMuscle === g ? { backgroundColor: '#2A1744' } : {}}
-                    onMouseEnter={e => e.target.style.backgroundColor = '#2A1744'}
-                    onMouseLeave={e => { if (filterMuscle !== g) e.target.style.backgroundColor = 'transparent'; }}
-                  >
-                    <span>{MUSCLE_GROUP_DISPLAY[g]?.emoji || ''}</span>
-                    <span>{MUSCLE_GROUP_DISPLAY[g]?.display || g}</span>
+                  <button key={g} type="button" onClick={() => { setFilterMuscle(g); setShowDropdown(false); }}
+                    className="w-full text-left px-4 py-3 text-sm font-medium transition flex items-center gap-2"
+                    style={filterMuscle === g ? { backgroundColor: '#2A1744', color: 'white' } : { color: '#D9C2FF' }}>
+                    <span>{MUSCLE_GROUP_DISPLAY[g]?.emoji || ''}</span><span>{MUSCLE_GROUP_DISPLAY[g]?.display || g}</span>
                   </button>
                 ))}
               </div>
@@ -270,46 +237,43 @@ export default function CustomWorkoutBuilder({ onComplete, onBack, onReset, exer
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto">
+        <div className="space-y-2 max-h-72 overflow-y-auto">
           {filteredExercises.filter(ex => !selectedExercises.some(s => s.exerciseId === ex.id)).map(ex => (
-            <button
-              key={ex.id}
-              onClick={() => addExercise(ex)}
-              className="bg-sl-gray/20 hover:bg-sl-purple/20 rounded-xl p-4 text-left transition-all border border-transparent hover:border-sl-purple/30"
-            >
-              <p className="font-semibold text-white text-base">{ex.name}</p>
-              <p className="text-xs text-sl-gray-light">{ex.muscleGroup} · {ex.equipment}</p>
-              <p className="text-xs text-sl-purple-light mt-1">+{ex.xpReward} XP</p>
+            <button key={ex.id} onClick={() => addExercise(ex)}
+              className="w-full bg-sl-gray/20 hover:bg-sl-purple/20 rounded-xl p-3 text-left transition-all border border-transparent hover:border-sl-purple/30 cursor-pointer">
+              <p className="font-semibold text-white text-sm">{ex.name}</p>
+              <p className="text-[10px] text-sl-gray-light">{ex.muscleGroup} &middot; {ex.equipment}</p>
+              <p className="text-[10px] text-sl-purple-light mt-0.5">+{ex.xpReward} XP</p>
             </button>
           ))}
         </div>
 
         {filteredExercises.filter(ex => !selectedExercises.some(s => s.exerciseId === ex.id)).length === 0 && (
-          <p className="text-center text-sl-gray-light py-4">No exercises found</p>
+          <p className="text-center text-sl-gray-light py-4 text-sm">No exercises found</p>
         )}
       </div>
 
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}>
-          <div className="bg-sl-dark border border-sl-red/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-sl-glow" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowResetConfirm(false)}>
+          <div className="bg-sl-dark border border-sl-red/30 rounded-xl p-6 max-w-sm w-full shadow-sl-glow" onClick={e => e.stopPropagation()}>
             <h3 className="text-xl font-bold text-white mb-2">Reset Workout?</h3>
             <p className="text-sl-gray-light text-sm mb-6">This will clear the current workout.</p>
             <div className="flex gap-3">
-              <button onClick={() => setShowResetConfirm(false)} className="flex-1 holo-button text-center">Cancel</button>
-              <button onClick={() => { setShowResetConfirm(false); onReset && onReset(); }} className="flex-1 holo-button holo-button-danger text-center">Reset</button>
+              <button onClick={() => setShowResetConfirm(false)} className="holo-button flex-1 text-center">Cancel</button>
+              <button onClick={() => { setShowResetConfirm(false); onReset && onReset(); }} className="holo-button holo-button-danger flex-1 text-center">Reset</button>
             </div>
           </div>
         </div>
       )}
 
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setDeleteConfirmId(null)}>
-          <div className="bg-sl-dark border border-sl-red/30 rounded-xl p-6 max-w-sm w-full mx-4 shadow-sl-glow" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-white mb-2">Delete Workout?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setDeleteConfirmId(null)}>
+          <div className="bg-sl-dark border border-sl-red/30 rounded-xl p-6 max-w-sm w-full shadow-sl-glow" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-white mb-2">Delete Template?</h3>
             <p className="text-sl-gray-light text-sm mb-6">This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirmId(null)} className="flex-1 holo-button text-center">Cancel</button>
-              <button onClick={() => { removeWorkoutTemplate(deleteConfirmId); setDeleteConfirmId(null); }} className="flex-1 holo-button holo-button-danger text-center">Delete</button>
+              <button onClick={() => setDeleteConfirmId(null)} className="holo-button flex-1 text-center">Cancel</button>
+              <button onClick={() => { removeWorkoutTemplate(deleteConfirmId); setDeleteConfirmId(null); }} className="holo-button holo-button-danger flex-1 text-center">Delete</button>
             </div>
           </div>
         </div>
