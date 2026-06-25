@@ -1,37 +1,101 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
+
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState(null);
+  const inactivityTimer = useRef(null);
+  const sessionCheckTimer = useRef(null);
 
-  // Check for existing session and set up auth state listener
+  const clearTimers = () => {
+    if (inactivityTimer.current) {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = null;
+    }
+    if (sessionCheckTimer.current) {
+      clearInterval(sessionCheckTimer.current);
+      sessionCheckTimer.current = null;
+    }
+  };
+
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      if (session) {
+        setUser(session.user ?? null);
+        setSessionExpiresAt(session.expires_at ? session.expires_at * 1000 : null);
+      } else {
+        setUser(null);
+        setSessionExpiresAt(null);
+      }
       setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setSessionExpiresAt(session?.expires_at ? session.expires_at * 1000 : null);
       setLoading(false);
     });
 
-    // Clean up subscription on unmount
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimers();
+    };
   }, []);
 
-  // Monitor user email confirmation status
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimer.current) {
+      clearTimeout(inactivityTimer.current);
+    }
+    if (user) {
+      inactivityTimer.current = setTimeout(() => {
+        supabase.auth.signOut();
+        setUser(null);
+        setError('Session expired due to inactivity. Please log in again.');
+      }, INACTIVITY_TIMEOUT_MS);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      resetInactivityTimer();
+
+      const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
+      events.forEach(event => window.addEventListener(event, resetInactivityTimer));
+
+      sessionCheckTimer.current = setInterval(async () => {
+        if (sessionExpiresAt && Date.now() >= sessionExpiresAt - REFRESH_THRESHOLD_MS) {
+          const { data, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError || !data.session) {
+            await supabase.auth.signOut();
+            setUser(null);
+            setError('Session expired. Please log in again.');
+          } else {
+            setUser(data.session.user ?? null);
+            setSessionExpiresAt(data.session.expires_at ? data.session.expires_at * 1000 : null);
+          }
+        }
+      }, 60000);
+
+      return () => {
+        events.forEach(event => window.removeEventListener(event, resetInactivityTimer));
+        clearTimers();
+      };
+    } else {
+      clearTimers();
+    }
+  }, [user, sessionExpiresAt, resetInactivityTimer]);
+
   useEffect(() => {
     if (user && !user.email_confirmed_at) {
-      // Email not confirmed, log out user
       supabase.auth.signOut().then(() => {
         setUser(null);
         setError('Please verify your email before logging in. A verification link has been sent to your email.');
@@ -47,15 +111,14 @@ export const AuthProvider = ({ children }) => {
         password,
       });
       if (error) throw error;
-      // If user exists but email not confirmed, log out and throw error
       if (data.user && !data.user.email_confirmed_at) {
         await supabase.auth.signOut();
         throw new Error('Please verify your email before logging in. A verification link has been sent to your email.');
       }
-      // Note: We don't set user here; it will be set via onAuthStateChange
       return data;
     } catch (err) {
-      setError(err.message);
+      const message = err.message || 'Login failed';
+      setError(message);
       throw err;
     }
   };
@@ -67,18 +130,14 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
         options: {
-          data: {
-            username: username,
-          },
+          data: { username },
         },
       });
       if (error) throw error;
-      // Note: We don't set user here; it will be set via onAuthStateChange
-      // After signUp, we need to send email verification
-      // Supabase sends verification email automatically if email confirmations are enabled
       return data;
     } catch (err) {
-      setError(err.message);
+      const message = err.message || 'Registration failed';
+      setError(message);
       throw err;
     }
   };
@@ -86,9 +145,9 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setError(null);
     try {
+      clearTimers();
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      // User will be set to null via onAuthStateChange
     } catch (err) {
       setError(err.message);
       throw err;
@@ -98,10 +157,7 @@ export const AuthProvider = ({ children }) => {
   const forgotPassword = async (email) => {
     setError(null);
     try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        // You can set redirectTo to a custom reset password page
-        // redirectTo: `${window.location.origin}/reset-password`,
-      });
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw error;
       return data;
     } catch (err) {
@@ -124,7 +180,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Function to send email verification link (if needed)
   const sendVerificationEmail = async () => {
     setError(null);
     try {
@@ -139,7 +194,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Function to update user metadata (e.g., username)
   const updateUser = async (userData) => {
     setError(null);
     try {
@@ -152,6 +206,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const clearError = () => setError(null);
+
   const value = {
     user,
     loading,
@@ -163,15 +219,8 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     sendVerificationEmail,
     updateUser,
+    clearError,
   };
-
-  if (loading) {
-    return (
-      <AuthContext.Provider value={value}>
-        {children}
-      </AuthContext.Provider>
-    );
-  }
 
   return (
     <AuthContext.Provider value={value}>
@@ -180,7 +229,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLevel } from '../context/LevelContext';
 import '../App.css';
@@ -8,57 +8,42 @@ import { Helmet } from 'react-helmet-async';
 const Home = () => {
   const { user } = useAuth();
   const { level, xp, progress } = useLevel();
-  const navigate = useNavigate();
-  const location = useLocation();
   const [workouts, setWorkouts] = useState([]);
 
-  // Load workouts from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('workouts');
+    const stored = localStorage.getItem('sl_workout_history') || localStorage.getItem('workouts');
     setWorkouts(stored ? JSON.parse(stored) : []);
   }, []);
 
-  // If user is logged in, redirect to tracker (or show dashboard)
-  // We'll show a dashboard view instead of redirecting for immediate value
-  // but we can also redirect. Let's show dashboard.
-
-  const handleGetStarted = () => {
-    navigate('/tracker');
-  };
-
   if (user) {
-    // Dashboard view for logged-in user
-    const recentWorkouts = workouts.slice().reverse().slice(0, 3);
+    const recentWorkouts = Array.isArray(workouts) ? [...workouts].reverse().slice(0, 3) : [];
     return (
       <div className="min-h-screen bg-sl-gradient">
-        {/* Header */}
-
         <div className="max-w-7xl mx-auto py-12 px-4">
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-extrabold tracking-wide uppercase gradient-text mb-2">
-              Welcome Back, {user.name || 'Champion'}
+              Welcome Back, {user.user_metadata?.username || user.email?.split('@')[0] || 'Champion'}
             </h1>
             <p className="text-sl-gray-light max-w-2xl mx-auto text-sm md:text-base">
               Your Genesis Rise journey continues. Track your progress, plan your workouts, and level up.
             </p>
           </div>
 
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow">
-              <h3 className="text-xl font-bold text-sl-purple-light mb-4">Level</h3>
-              <p className="text-3xl font-bold text-sl-purple-light">{level}</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-10">
+            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
+              <h3 className="text-xl font-bold text-sl-purple-light mb-2">Level</h3>
+              <p className="text-4xl font-bold text-sl-purple-light">{level}</p>
             </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow">
-              <h3 className="text-xl font-bold text-sl-purple-light mb-4">XP</h3>
-              <p className="text-3xl font-bold text-sl-purple-light">{xp}</p>
+            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
+              <h3 className="text-xl font-bold text-sl-purple-light mb-2">XP</h3>
+              <p className="text-4xl font-bold text-sl-purple-light">{xp}</p>
             </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow">
-              <h3 className="text-xl font-bold text-sl-purple-light mb-4">Workouts</h3>
-              <p className="text-3xl font-bold text-sl-purple-light">{workouts.length}</p>
+            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
+              <h3 className="text-xl font-bold text-sl-purple-light mb-2">Workouts</h3>
+              <p className="text-4xl font-bold text-sl-purple-light">{workouts.length}</p>
             </div>
-            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow">
-              <h3 className="text-xl font-bold text-sl-purple-light mb-4">Progress to Next Level</h3>
+            <div className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow text-center">
+              <h3 className="text-xl font-bold text-sl-purple-light mb-2">Progress to Next Level</h3>
               <div className="w-full h-2 bg-sl-gray/40 rounded-full overflow-hidden border border-sl-purple/10 mt-2">
                 <div className={`h-full bg-gradient-to-r from-sl-purple to-sl-red transition-all duration-1000`} style={{ width: `${progress * 100}%` }}></div>
               </div>
@@ -66,24 +51,23 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Recent Workouts */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-sl-red-light mb-4">
               Recent Activity
             </h2>
-            {workouts.length === 0 ? (
+            {recentWorkouts.length === 0 ? (
               <p className="text-sl-gray-light text-center py-8">No workouts logged yet. Start your first training session!</p>
             ) : (
               <div className="space-y-4">
                 {recentWorkouts.map((w) => (
                   <div key={w.id} className="p-4 bg-sl-gray/20 backdrop-blur-sm rounded-sl-xl border border-sl-red/20 shadow-sl-glow flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold text-white">{w.name}</h3>
-                      <p className="text-sl-gray-light text-sm">{new Date(w.date).toLocaleDateString()}</p>
+                      <h3 className="font-semibold text-white">{w.name || w.workout_name || 'Workout'}</h3>
+                      <p className="text-sl-gray-light text-sm">{new Date(w.date || w.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="flex items-center gap-3 text-sl-gray-light">
-                      <span>{w.duration} min</span>
-                      <span>{w.calories} kcal</span>
+                      <span>{w.duration || w.total_duration || 0} min</span>
+                      <span>{w.calories || w.total_calories || 0} kcal</span>
                     </div>
                   </div>
                 ))}
@@ -91,10 +75,9 @@ const Home = () => {
             )}
           </div>
 
-          {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Link to="/tracker" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
-              Log Workout
+              Tracker
             </Link>
             <Link to="/planner" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
               Plan Mission
@@ -105,9 +88,6 @@ const Home = () => {
             <Link to="/health" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
               Health Metrics
             </Link>
-            <Link to="/plan-designer" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
-              Design Plan
-            </Link>
             <Link to="/about" className="bg-sl-dark/40 backdrop-blur-sm p-6 rounded-sl-xl border border-sl-purple/20 shadow-sl-glow holo-button w-full">
               About
             </Link>
@@ -117,26 +97,23 @@ const Home = () => {
     );
   }
 
-  // Guest view (landing page)
+  // Guest view (landing page) - unchanged
   return (
     <>
       <Helmet>
         <title>Genesis Rise Tracker - Level Up Your Fitness Journey</title>
         <meta name="description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
-        {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://yourdomain.com/" />
         <meta property="og:title" content="Genesis Rise Tracker - Level Up Your Fitness Journey" />
         <meta property="og:description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
         <meta property="og:image" content="https://yourdomain.com/igris_shadow_face.png" />
         <meta property="og:image:alt" content="Genesis Rise Igris Logo" />
-        {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://yourdomain.com/" />
         <meta property="twitter:title" content="Genesis Rise Tracker - Level Up Your Fitness Journey" />
         <meta property="twitter:description" content="Transform your workout routine into an epic leveling journey inspired by Genesis Rise. Track workouts, earn XP, complete Missions, and become the strongest version of yourself." />
         <meta property="twitter:image" content="https://yourdomain.com/igris_shadow_face.png" />
-        {/* Structured Data / JSON-LD */}
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebSite",
@@ -151,15 +128,11 @@ const Home = () => {
         }, null, 2)}</script>
       </Helmet>
       <div className="min-h-screen bg-sl-gradient">
-      {/* Optional animated background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-sl-pattern opacity-10"></div>
       </div>
 
-      {/* Header */}
-
       <div className="max-w-7xl mx-auto py-20 px-4">
-        {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-extrabold tracking-wider uppercase gradient-text mb-6">
             Level Up Your Fitness Journey
@@ -177,7 +150,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Features */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold text-center gradient-text mb-12">
             Features
@@ -222,7 +194,6 @@ const Home = () => {
           </div>
         </section>
 
-        {/* How It Works */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold text-center gradient-text mb-12">
             How It Works
@@ -252,7 +223,6 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Call to Action */}
         <div className="bg-sl-dark/40 backdrop-blur-sm rounded-sl-xl p-12 text-center border border-sl-purple/20 shadow-sl-glow">
           <h2 className="text-3xl font-bold text-sl-purple-light mb-6">
             Ready to begin your transformation?
@@ -266,7 +236,6 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="mt-20 text-center text-sl-gray-light/50">
         <p>© 2026 Genesis Rise System. All rights reserved.</p>
       </footer>

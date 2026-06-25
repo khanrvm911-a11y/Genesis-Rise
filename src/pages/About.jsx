@@ -87,17 +87,6 @@ const About = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-start space-x-4">
-              <div className="w-8 h-8 flex items-center justify-center bg-sl-purple/20 rounded-full text-sl-purple-light font-bold">
-                5
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-sl-purple-light">Plan Designer</h3>
-                <p className="text-sl-gray-light">
-                  Create custom workout plans with specific exercises, sets, reps, and ranks to maximize XP scaling and tailor your training to your goals.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
 

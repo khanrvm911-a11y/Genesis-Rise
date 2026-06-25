@@ -1,127 +1,162 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
 import { DEFAULT_EXERCISES, getExerciseById } from '../data/exercises';
+import { calculateExerciseCalories, calculateWorkoutCalories } from '../utils/calorieUtils';
 
 const WorkoutContext = createContext();
 
-// Storage keys
-const STORAGE_KEY_EXERCISES = 'sl_exercises'; // all exercises (default + user)
+const STORAGE_KEY_EXERCISES = 'sl_exercises';
 const STORAGE_KEY_WORKOUT_HISTORY = 'sl_workout_history';
 const STORAGE_KEY_PERSONAL_RECORDS = 'sl_personal_records';
 const STORAGE_KEY_WORKOUT_TEMPLATES = 'sl_workout_templates';
+const STORAGE_KEY_USER_SETTINGS = 'sl_user_settings';
+const STORAGE_KEY_MISSION_PROGRESS = 'sl_mission_progress';
 
 export const WorkoutProvider = ({ children }) => {
-  // Function to get default workout templates
+  const { user } = useAuth();
+
   const getDefaultTemplates = () => {
     return [
       {
-        id: 'template_full_body',
-        name: 'Full Body Beginner',
+        id: 'template_push',
+        name: 'Push Day',
+        muscleGroup: 'Chest',
         exercises: [
-          { exerciseId: 'chest_pushup', defaultSets: 3, defaultReps: 10 },
-          { exerciseId: 'back_pullups', defaultSets: 3, defaultReps: 8 },
-          { exerciseId: 'legs_squat', defaultSets: 3, defaultReps: 12 },
-          { exerciseId: 'core_plank', defaultSets: 3, defaultReps: 30 }, // time in seconds
-          { exerciseId: 'cardio_jumping_rope', defaultSets: 3, defaultReps: 60 } // time in seconds
+          { exerciseId: 'chest_bench_press', sets: 4, reps: 8, weight: 60 },
+          { exerciseId: 'chest_incline_press', sets: 3, reps: 10, weight: 40 },
+          { exerciseId: 'chest_flyes', sets: 3, reps: 12, weight: 25 },
+          { exerciseId: 'shoulders_overhead_press', sets: 4, reps: 8, weight: 30 },
+          { exerciseId: 'arms_tricep_extension', sets: 3, reps: 12, weight: 20 }
         ]
       },
       {
-        id: 'template_upper_lower',
-        name: 'Upper/Lower Split (Day 1: Upper)',
+        id: 'template_pull',
+        name: 'Pull Day',
+        muscleGroup: 'Back',
         exercises: [
-          { exerciseId: 'chest_bench_press', defaultSets: 4, defaultReps: 10, defaultWeight: 20 },
-          { exerciseId: 'back_barbell_row', defaultSets: 4, defaultReps: 10, defaultWeight: 20 },
-          { exerciseId: 'shoulders_overhead_press', defaultSets: 3, defaultReps: 12, defaultWeight: 10 },
-          { exerciseId: 'arms_bicep_curl', defaultSets: 3, defaultReps: 15, defaultWeight: 8 },
-          { exerciseId: 'arms_tricep_extension', defaultSets: 3, defaultReps: 15, defaultWeight: 8 }
+          { exerciseId: 'back_pullups', sets: 4, reps: 'max' },
+          { exerciseId: 'back_barbell_row', sets: 4, reps: 8, weight: 50 },
+          { exerciseId: 'back_dumbbell_row', sets: 3, reps: 10, weight: 30 },
+          { exerciseId: 'arms_bicep_curl', sets: 3, reps: 12, weight: 20 },
+          { exerciseId: 'core_russian_twist', sets: 3, reps: 20, weight: 10 }
         ]
       },
       {
-        id: 'template_hiit',
-        name: 'HIIT Finisher',
+        id: 'template_legs',
+        name: 'Leg Day',
+        muscleGroup: 'Legs',
         exercises: [
-          { exerciseId: 'fullbody_burpee', defaultSets: 4, defaultReps: 15 },
-          { exerciseId: 'cardio_jumping_rope', defaultSets: 4, defaultReps: 45 }, // seconds
-          { exerciseId: 'core_mountain_climber', defaultSets: 4, defaultReps: 30 } // seconds
+          { exerciseId: 'legs_barbell_squat', sets: 4, reps: 8, weight: 80 },
+          { exerciseId: 'legs_leg_press', sets: 3, reps: 10, weight: 100 },
+          { exerciseId: 'legs_leg_curl', sets: 3, reps: 12, weight: 40 },
+          { exerciseId: 'legs_calf_raise', sets: 4, reps: 15, weight: 0 },
+          { exerciseId: 'core_plank', sets: 3, reps: 45 }
+        ]
+      },
+      {
+        id: 'template_chest_blast',
+        name: 'Chest Blast',
+        muscleGroup: 'Chest',
+        exercises: [
+          { exerciseId: 'chest_bench_press', sets: 5, reps: 5, weight: 70 },
+          { exerciseId: 'chest_incline_press', sets: 4, reps: 8, weight: 50 },
+          { exerciseId: 'chest_dumbbell_press', sets: 3, reps: 10, weight: 30 },
+          { exerciseId: 'chest_flyes', sets: 3, reps: 12, weight: 20 },
+          { exerciseId: 'chest_dips', sets: 3, reps: 'max' }
+        ]
+      },
+      {
+        id: 'template_leg_destroyer',
+        name: 'Leg Destroyer',
+        muscleGroup: 'Legs',
+        exercises: [
+          { exerciseId: 'legs_barbell_squat', sets: 5, reps: 5, weight: 100 },
+          { exerciseId: 'legs_leg_press', sets: 4, reps: 10, weight: 150 },
+          { exerciseId: 'legs_lunge', sets: 3, reps: 12 },
+          { exerciseId: 'legs_leg_curl', sets: 4, reps: 10, weight: 40 },
+          { exerciseId: 'legs_calf_raise', sets: 5, reps: 15, weight: 0 }
+        ]
+      },
+      {
+        id: 'template_shoulder_pump',
+        name: 'Shoulder Pump',
+        muscleGroup: 'Shoulders',
+        exercises: [
+          { exerciseId: 'shoulders_overhead_press', sets: 4, reps: 8, weight: 40 },
+          { exerciseId: 'shoulders_dumbbell_press', sets: 3, reps: 10, weight: 24 },
+          { exerciseId: 'shoulders_lateral_raise', sets: 4, reps: 12, weight: 10 },
+          { exerciseId: 'shoulders_front_raise', sets: 3, reps: 12, weight: 10 },
+          { exerciseId: 'shoulders_rear_delt_fly', sets: 3, reps: 15, weight: 8 }
         ]
       }
     ];
   };
 
-  // Initialize exercises from localStorage or defaults
   const [exercises, setExercises] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_EXERCISES);
     if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse exercises from localStorage', e);
-        return DEFAULT_EXERCISES;
-      }
+      try { return JSON.parse(saved); }
+      catch (e) { return DEFAULT_EXERCISES; }
     }
     return DEFAULT_EXERCISES;
   });
 
-  // Initialize workout history
   const [workoutHistory, setWorkoutHistory] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_WORKOUT_HISTORY);
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Initialize personal records
   const [personalRecords, setPersonalRecords] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PERSONAL_RECORDS);
     return saved ? JSON.parse(saved) : {};
   });
 
-  // Initialize workout templates
   const [workoutTemplates, setWorkoutTemplates] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_WORKOUT_TEMPLATES);
     return saved ? JSON.parse(saved) : getDefaultTemplates();
   });
 
-  // Persist exercises to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EXERCISES, JSON.stringify(exercises));
-  }, [exercises]);
+  const [userSettings, setUserSettings] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_USER_SETTINGS);
+    return saved ? JSON.parse(saved) : {
+      weight: 70,
+      height: 175,
+      age: 25,
+      gender: 'male'
+    };
+  });
 
-  // Persist workout history
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_WORKOUT_HISTORY, JSON.stringify(workoutHistory));
-  }, [workoutHistory]);
+  const [missionProgress, setMissionProgress] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_MISSION_PROGRESS);
+    return saved ? JSON.parse(saved) : {
+      daily: { workoutCompleted: false, waterIntake: 0, steps: 0, proteinGoalMet: false },
+      weekly: { workoutsCompleted: 0, volumeLifted: 0, totalCalories: 0 },
+      streak: 0,
+      lastReset: new Date().toISOString().split('T')[0]
+    };
+  });
 
-  // Persist personal records
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PERSONAL_RECORDS, JSON.stringify(personalRecords));
-  }, [personalRecords]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY_EXERCISES, JSON.stringify(exercises)); }, [exercises]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY_WORKOUT_HISTORY, JSON.stringify(workoutHistory)); }, [workoutHistory]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY_PERSONAL_RECORDS, JSON.stringify(personalRecords)); }, [personalRecords]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY_WORKOUT_TEMPLATES, JSON.stringify(workoutTemplates)); }, [workoutTemplates]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY_USER_SETTINGS, JSON.stringify(userSettings)); }, [userSettings]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY_MISSION_PROGRESS, JSON.stringify(missionProgress)); }, [missionProgress]);
 
-  // Persist workout templates
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_WORKOUT_TEMPLATES, JSON.stringify(workoutTemplates));
-  }, [workoutTemplates]);
-
-  // Function to add a user-defined exercise
   const addUserExercise = (exercise) => {
-    // Check if exercise with same id already exists (user exercise)
     const exists = exercises.some(ex => ex.id === exercise.id);
     if (exists) {
-      // Update existing exercise
       setExercises(prev => prev.map(ex => ex.id === exercise.id ? exercise : ex));
     } else {
-      // Add new exercise
-      setExercises(prev => [...prev, exercise]);
+      setExercises(prev => [...prev, { ...exercise, id: `user_${Date.now()}` }]);
     }
   };
 
-  // Function to remove a user-defined exercise (by id)
   const removeUserExercise = (id) => {
-    // Don't allow removing default exercises
     const isDefault = DEFAULT_EXERCISES.some(ex => ex.id === id);
-    if (isDefault) {
-      console.warn('Cannot remove default exercise');
-      return;
-    }
+    if (isDefault) return;
     setExercises(prev => prev.filter(ex => ex.id !== id));
-    // Also remove from personal records if exists
     setPersonalRecords(prev => {
       const newRecords = { ...prev };
       delete newRecords[id];
@@ -129,84 +164,71 @@ export const WorkoutProvider = ({ children }) => {
     });
   };
 
-  // Function to log a workout
   const logWorkout = (workout) => {
-    // Add workout to history
     const newWorkout = {
       ...workout,
       id: Date.now(),
-      date: workout.date || new Date().toISOString().split('T')[0]
+      date: workout.date || new Date().toISOString().split('T')[0],
+      timestamp: new Date().toISOString()
     };
-    setWorkoutHistory(prev => [newWorkout, ...prev]); // newest first
-
-    // Update personal records based on the workout
+    setWorkoutHistory(prev => [newWorkout, ...prev]);
     updatePersonalRecordsFromWorkout(newWorkout);
+    updateMissionProgress(newWorkout);
+    updateWeeklyProgress(newWorkout);
   };
 
-  // Function to update personal records from a logged workout
   const updatePersonalRecordsFromWorkout = (workout) => {
     setPersonalRecords(prev => {
       const newRecords = { ...prev };
 
-      workout.exercises.forEach(exerciseLog => {
+      (workout.exercises || []).forEach(exerciseLog => {
         const exerciseId = exerciseLog.exerciseId;
-        const exercise = getExerciseById(exerciseId, exercises);
+        const exercise = exerciseLog.exerciseData || getExerciseById(exerciseId, exercises);
         if (!exercise) return;
 
-        // Initialize record for this exercise if not exists
         if (!newRecords[exerciseId]) {
-          newRecords[exerciseId] = {
-            best: {},
-            history: []
-          };
+          newRecords[exerciseId] = { best: {}, history: [] };
         }
 
-        // Calculate volume or best value based on tracking type
         let volume = 0;
-        let bestValue = null;
+        let maxWeight = 0;
+        let maxReps = 0;
 
-        if (exercise.trackingType === 'weight') {
-          // For weight exercises, calculate max weight lifted in any set
-          const maxWeight = Math.max(...exerciseLog.sets.map(set => set.weight || 0));
-          volume = exerciseLog.sets.reduce((sum, set) => {
-            return sum + ((set.weight || 0) * (set.reps || 0));
-          }, 0);
-          bestValue = maxWeight;
-        } else if (exercise.trackingType === 'reps') {
-          // For rep exercises, calculate max reps in any set
-          const maxReps = Math.max(...exerciseLog.sets.map(set => set.reps || 0));
-          volume = exerciseLog.sets.reduce((sum, set) => sum + (set.reps || 0), 0);
-          bestValue = maxReps;
-        } else if (exercise.trackingType === 'time') {
-          // For time exercises, calculate max time in any set
-          const maxTime = Math.max(...exerciseLog.sets.map(set => set.duration || 0));
-          volume = exerciseLog.sets.reduce((sum, set) => sum + (set.duration || 0), 0);
-          bestValue = maxTime;
-        } else if (exercise.trackingType === 'distance') {
-          // For distance exercises, calculate total distance
-          volume = exerciseLog.sets.reduce((sum, set) => sum + (set.distance || 0), 0);
-          bestValue = volume; // total distance is the best value for cardio
-        }
+        (exerciseLog.sets || []).forEach(set => {
+          const weight = parseFloat(set.weight) || 0;
+          const reps = parseInt(set.reps) || 0;
+          volume += weight * reps;
+          if (weight > maxWeight) maxWeight = weight;
+          if (reps > maxReps) maxReps = reps;
+        });
 
-        // Update best value if this is better
-        if (bestValue !== null) {
-          const currentBest = newRecords[exerciseId].best[exercise.trackingType] || 0;
-          if (bestValue > currentBest) {
-            newRecords[exerciseId].best[exercise.trackingType] = bestValue;
+        const trackingType = exercise.trackingType || 'weight';
+
+        if (trackingType === 'weight') {
+          if (maxWeight > (newRecords[exerciseId].best.weight || 0)) {
+            newRecords[exerciseId].best.weight = maxWeight;
+            newRecords[exerciseId].best.weightDate = workout.date;
+          }
+          if (volume > (newRecords[exerciseId].best.volume || 0)) {
+            newRecords[exerciseId].best.volume = volume;
+            newRecords[exerciseId].best.volumeDate = workout.date;
+          }
+        } else if (trackingType === 'reps') {
+          if (maxReps > (newRecords[exerciseId].best.reps || 0)) {
+            newRecords[exerciseId].best.reps = maxReps;
+            newRecords[exerciseId].best.repsDate = workout.date;
           }
         }
 
-        // Add to history
         newRecords[exerciseId].history.push({
           date: workout.date,
-          volume: volume,
-          // Also store the specific metric for tracking type
-          [exercise.trackingType]: bestValue
+          volume,
+          weight: maxWeight,
+          reps: maxReps
         });
 
-        // Limit history to last 50 entries
-        if (newRecords[exerciseId].history.length > 50) {
-          newRecords[exerciseId].history = newRecords[exerciseId].history.slice(-50);
+        if (newRecords[exerciseId].history.length > 100) {
+          newRecords[exerciseId].history = newRecords[exerciseId].history.slice(-100);
         }
       });
 
@@ -214,7 +236,52 @@ export const WorkoutProvider = ({ children }) => {
     });
   };
 
-  // Function to get personal record for an exercise and tracking type
+  const updateMissionProgress = (workout) => {
+    setMissionProgress(prev => {
+      const today = new Date().toISOString().split('T')[0];
+      let dailyProgress = prev.daily;
+      if (prev.lastReset !== today) {
+        dailyProgress = { workoutCompleted: false, waterIntake: 0, steps: 0, proteinGoalMet: false };
+        setWorkoutHistory(prevHistory => prevHistory);
+      }
+      dailyProgress.workoutCompleted = true;
+
+      let newStreak = prev.streak;
+      if (prev.lastReset !== today) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        newStreak = prev.lastReset === yesterdayStr ? prev.streak + 1 : 1;
+      }
+
+      return { ...prev, daily: dailyProgress, lastReset: today, streak: newStreak };
+    });
+  };
+
+  const updateWeeklyProgress = (workout) => {
+    setMissionProgress(prev => {
+      const totalCalories = workout.totalCalories || workout.calories || 0;
+      let weeklyVolume = 0;
+      if (workout.exercises) {
+        workout.exercises.forEach(ex => {
+          if (ex.sets) {
+            ex.sets.forEach(set => {
+              weeklyVolume += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0);
+            });
+          }
+        });
+      }
+      return {
+        ...prev,
+        weekly: {
+          workoutsCompleted: (prev.weekly.workoutsCompleted || 0) + 1,
+          volumeLifted: (prev.weekly.volumeLifted || 0) + weeklyVolume,
+          totalCalories: (prev.weekly.totalCalories || 0) + totalCalories
+        }
+      };
+    });
+  };
+
   const getPersonalRecord = (exerciseId, trackingType) => {
     const record = personalRecords[exerciseId];
     if (record && record.best) {
@@ -223,95 +290,173 @@ export const WorkoutProvider = ({ children }) => {
     return 0;
   };
 
-  // Function to get workout history for an exercise
+  const getPersonalRecordDetail = (exerciseId, trackingType) => {
+    const record = personalRecords[exerciseId];
+    if (record && record.best) {
+      const value = record.best[trackingType];
+      if (value) {
+        let unit = 'kg';
+        if (trackingType === 'reps') unit = 'reps';
+        else if (trackingType === 'time') unit = 'seconds';
+        else if (trackingType === 'distance') unit = 'km';
+        return { value, unit, date: record.best[`${trackingType}Date`] };
+      }
+    }
+    return null;
+  };
+
+  const getPersonalRecordFull = (exerciseId) => {
+    return personalRecords[exerciseId] || null;
+  };
+
+  const checkForNewPR = (exerciseId, weight, reps) => {
+    const record = personalRecords[exerciseId];
+    const prs = [];
+
+    if (record) {
+      const currentWeight = record.best?.weight || 0;
+      const currentReps = record.best?.reps || 0;
+      const currentVolume = record.best?.volume || 0;
+
+      if (weight > currentWeight) {
+        prs.push({ type: 'weight', newValue: weight, oldValue: currentWeight, unit: 'kg' });
+      }
+      if (reps > currentReps) {
+        prs.push({ type: 'reps', newValue: reps, oldValue: currentReps, unit: 'reps' });
+      }
+      const volume = weight * reps;
+      if (volume > currentVolume) {
+        prs.push({ type: 'volume', newValue: volume, oldValue: currentVolume, unit: 'kg' });
+      }
+    } else {
+      if (weight > 0) prs.push({ type: 'weight', newValue: weight, oldValue: 0, unit: 'kg' });
+      if (reps > 0) prs.push({ type: 'reps', newValue: reps, oldValue: 0, unit: 'reps' });
+      const volume = weight * reps;
+      if (volume > 0) prs.push({ type: 'volume', newValue: volume, oldValue: 0, unit: 'kg' });
+    }
+
+    return prs;
+  };
+
   const getExerciseHistory = (exerciseId) => {
     const record = personalRecords[exerciseId];
     return record ? record.history : [];
   };
 
-  // Function to suggest progressive overload for an exercise
   const suggestProgressiveOverload = (exerciseId) => {
     const exercise = getExerciseById(exerciseId, exercises);
     if (!exercise) return null;
 
     const history = getExerciseHistory(exerciseId);
     if (history.length === 0) {
-      // No history, suggest starting point based on exercise type
       if (exercise.trackingType === 'weight') {
-        return { type: 'weight', value: 'Start with light weight (e.g., 5kg)' };
+        return { type: 'weight', value: 'Start with a weight you can control for 8 reps' };
       } else if (exercise.trackingType === 'reps') {
         return { type: 'reps', value: 'Start with 8-12 reps' };
-      } else if (exercise.trackingType === 'time') {
-        return { type: 'time', value: 'Start with 20-30 seconds' };
-      } else if (exercise.trackingType === 'distance') {
-        return { type: 'distance', value: 'Start with 1km' };
       }
       return null;
     }
 
-    // Get latest entry
     const latest = history[history.length - 1];
-    let suggestion = null;
+    const trackingType = exercise.trackingType || 'weight';
 
-    if (exercise.trackingType === 'weight') {
-      // Suggest adding 2.5kg or 5lb
-      suggestion = {
-        type: 'weight',
-        value: `Increase weight by 2.5kg (current: ${latest.weight || latest[exercise.trackingType]}kg)`
-      };
-    } else if (exercise.trackingType === 'reps') {
-      // Suggest adding 2 reps
-      suggestion = {
-        type: 'reps',
-        value: `Add 2 reps (current: ${latest.reps || latest[exercise.trackingType]} reps)`
-      };
-    } else if (exercise.trackingType === 'time') {
-      // Suggest adding 10 seconds
-      suggestion = {
-        type: 'time',
-        value: `Add 10 seconds (current: ${latest.duration || latest[exercise.trackingType]} seconds)`
-      };
-    } else if (exercise.trackingType === 'distance') {
-      // Suggest adding 0.5km
-      suggestion = {
-        type: 'distance',
-        value: `Add 0.5km (current: ${latest.distance || latest[exercise.trackingType]}km)`
-      };
+    if (trackingType === 'weight' && latest.weight) {
+      return { type: 'weight', value: `Try ${latest.weight + 2.5}kg (was ${latest.weight}kg)` };
+    } else if (trackingType === 'reps' && latest.reps) {
+      return { type: 'reps', value: `Try ${Math.round(latest.reps * 1.1)} reps (was ${latest.reps})` };
     }
 
-    return suggestion;
+    return null;
   };
 
-  // Function to add a workout template
+  const getLastPerformance = (exerciseId) => {
+    const record = personalRecords[exerciseId];
+    if (record && record.history && record.history.length > 0) {
+      const last = record.history[record.history.length - 1];
+      return last;
+    }
+    return null;
+  };
+
+  const calculateCaloriesBurned = (workout, userWeightKg) => {
+    return calculateWorkoutCalories(workout, userWeightKg);
+  };
+
   const addWorkoutTemplate = (template) => {
-    const newTemplate = {
-      ...template,
-      id: Date.now() // simple id generation
-    };
+    const newTemplate = { ...template, id: `template_${Date.now()}` };
     setWorkoutTemplates(prev => [...prev, newTemplate]);
   };
 
-  // Function to remove a workout template
   const removeWorkoutTemplate = (id) => {
     setWorkoutTemplates(prev => prev.filter(t => t.id !== id));
   };
 
+  const updateUserSettings = (settings) => {
+    setUserSettings(prev => ({ ...prev, ...settings }));
+  };
+
+  const resetDailyMission = () => {
+    setMissionProgress(prev => ({
+      ...prev,
+      daily: { workoutCompleted: false, waterIntake: 0, steps: 0, proteinGoalMet: false },
+      lastReset: new Date().toISOString().split('T')[0]
+    }));
+  };
+
+  const updateWaterIntake = (liters) => {
+    setMissionProgress(prev => ({
+      ...prev,
+      daily: { ...prev.daily, waterIntake: Math.min(10, prev.daily.waterIntake + liters) }
+    }));
+  };
+
+  const updateSteps = (steps) => {
+    setMissionProgress(prev => ({
+      ...prev,
+      daily: { ...prev.daily, steps: Math.min(50000, prev.daily.steps + steps) }
+    }));
+  };
+
+  const setProteinGoalMet = (met) => {
+    setMissionProgress(prev => ({
+      ...prev,
+      daily: { ...prev.daily, proteinGoalMet: met }
+    }));
+  };
+
+  const clearWorkoutHistory = () => {
+    setWorkoutHistory([]);
+    setPersonalRecords({});
+    localStorage.removeItem(STORAGE_KEY_WORKOUT_HISTORY);
+    localStorage.removeItem(STORAGE_KEY_PERSONAL_RECORDS);
+  };
+
   const value = {
-    // State
     exercises,
     workoutHistory,
     personalRecords,
     workoutTemplates,
-
-    // Actions
+    userSettings,
+    missionProgress,
     addUserExercise,
     removeUserExercise,
     logWorkout,
     getPersonalRecord,
+    getPersonalRecordDetail,
+    getPersonalRecordFull,
+    checkForNewPR,
     getExerciseHistory,
     suggestProgressiveOverload,
+    getLastPerformance,
+    calculateCaloriesBurned,
     addWorkoutTemplate,
-    removeWorkoutTemplate
+    removeWorkoutTemplate,
+    updateUserSettings,
+    resetDailyMission,
+    updateWaterIntake,
+    updateSteps,
+    setProteinGoalMet,
+    clearWorkoutHistory,
   };
 
   return (

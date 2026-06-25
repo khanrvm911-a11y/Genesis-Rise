@@ -7,7 +7,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Chest',
     equipment: 'Bodyweight',
     trackingType: 'reps', // reps, weight, time, distance
-    description: 'Standard push-up for chest, shoulders, and triceps'
+    description: 'Standard push-up for chest, shoulders, and triceps',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'chest_bench_press',
@@ -15,7 +17,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Chest',
     equipment: 'Barbell',
     trackingType: 'weight', // we'll track weight lifted
-    description: 'Barbell bench press for chest development'
+    description: 'Barbell bench press for chest development',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'chest_dumbbell_press',
@@ -23,7 +27,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Chest',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Dumbbell bench press for chest'
+    description: 'Dumbbell bench press for chest',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'chest_incline_press',
@@ -31,7 +37,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Chest',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Incline dumbbell press for upper chest'
+    description: 'Incline dumbbell press for upper chest',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'chest_flyes',
@@ -39,7 +47,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Chest',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Dumbbell flyes for chest stretch'
+    description: 'Dumbbell flyes for chest stretch',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'chest_dips',
@@ -47,7 +57,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Chest',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Parallel bar dips for chest and triceps'
+    description: 'Parallel bar dips for chest and triceps',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
 
   // Back
@@ -57,7 +69,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Back',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Standard pull-up for back and biceps'
+    description: 'Standard pull-up for back and biceps',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'back_chinups',
@@ -65,7 +79,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Back',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Chin-up with underhand grip for biceps and back'
+    description: 'Chin-up with underhand grip for biceps and back',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'back_barbell_row',
@@ -73,7 +89,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Back',
     equipment: 'Barbell',
     trackingType: 'weight',
-    description: 'Barbell bent-over row for back thickness'
+    description: 'Barbell bent-over row for back thickness',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'back_dumbbell_row',
@@ -81,7 +99,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Back',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'One-arm dumbbell row for back'
+    description: 'One-arm dumbbell row for back',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'back_lat_pulldown',
@@ -89,7 +109,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Back',
     equipment: 'Machine',
     trackingType: 'weight',
-    description: 'Cable lat pulldown for back width'
+    description: 'Cable lat pulldown for back width',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'back_deadlift',
@@ -97,7 +119,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Back',
     equipment: 'Barbell',
     trackingType: 'weight',
-    description: 'Barbell deadlift for posterior chain'
+    description: 'Barbell deadlift for posterior chain',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
 
   // Legs
@@ -107,7 +131,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Legs',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Bodyweight squat for quadriceps and glutes'
+    description: 'Bodyweight squat for quadriceps and glutes',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'legs_barbell_squat',
@@ -115,7 +141,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Legs',
     equipment: 'Barbell',
     trackingType: 'weight',
-    description: 'Barbell back squat for leg development'
+    description: 'Barbell back squat for leg development',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'legs_front_squat',
@@ -123,7 +151,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Legs',
     equipment: 'Barbell',
     trackingType: 'weight',
-    description: 'Barbell front squat for quadriceps'
+    description: 'Barbell front squat for quadriceps',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'legs_lunge',
@@ -131,7 +161,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Legs',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Walking lunge for legs and balance'
+    description: 'Walking lunge for legs and balance',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'legs_leg_press',
@@ -139,7 +171,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Legs',
     equipment: 'Machine',
     trackingType: 'weight',
-    description: 'Machine leg press for quadriceps'
+    description: 'Machine leg press for quadriceps',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'legs_leg_curl',
@@ -147,7 +181,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Legs',
     equipment: 'Machine',
     trackingType: 'weight',
-    description: 'Machine leg curl for hamstrings'
+    description: 'Machine leg curl for hamstrings',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'legs_calf_raise',
@@ -155,7 +191,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Legs',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Standing calf raise for calves'
+    description: 'Standing calf raise for calves',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
 
   // Shoulders
@@ -165,7 +203,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Shoulders',
     equipment: 'Barbell',
     trackingType: 'weight',
-    description: 'Barbell overhead press for shoulders'
+    description: 'Barbell overhead press for shoulders',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'shoulders_dumbbell_press',
@@ -173,7 +213,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Shoulders',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Dumbbell shoulder press for shoulders'
+    description: 'Dumbbell shoulder press for shoulders',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'shoulders_lateral_raise',
@@ -181,7 +223,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Shoulders',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Dumbbell lateral raise for shoulder width'
+    description: 'Dumbbell lateral raise for shoulder width',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'shoulders_front_raise',
@@ -189,7 +233,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Shoulders',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Dumbbell front raise for anterior shoulders'
+    description: 'Dumbbell front raise for anterior shoulders',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'shoulders_rear_delt_fly',
@@ -197,7 +243,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Shoulders',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Dumbbell rear delt fly for posterior shoulders'
+    description: 'Dumbbell rear delt fly for posterior shoulders',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'shoulders_shrugs',
@@ -205,7 +253,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Shoulders',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Dumbbell shrugs for traps'
+    description: 'Dumbbell shrugs for traps',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
 
   // Arms
@@ -215,7 +265,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Arms',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Dumbbell bicep curl for biceps'
+    description: 'Dumbbell bicep curl for biceps',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'arms_hammer_curl',
@@ -223,7 +275,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Arms',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Hammer curl for biceps and forearms'
+    description: 'Hammer curl for biceps and forearms',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'arms_tricep_extension',
@@ -231,7 +285,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Arms',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Overhead dumbbell tricep extension'
+    description: 'Overhead dumbbell tricep extension',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'arms_tricep_pushdown',
@@ -239,7 +295,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Arms',
     equipment: 'Cable',
     trackingType: 'weight',
-    description: 'Cable tricep pushdown for triceps'
+    description: 'Cable tricep pushdown for triceps',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'arms_close_grip_bench',
@@ -247,7 +305,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Arms',
     equipment: 'Barbell',
     trackingType: 'weight',
-    description: 'Close grip bench press for triceps'
+    description: 'Close grip bench press for triceps',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'arms_wrist_curl',
@@ -255,7 +315,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Arms',
     equipment: 'Dumbbells',
     trackingType: 'weight',
-    description: 'Wrist curl for forearms'
+    description: 'Wrist curl for forearms',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
 
   // Core
@@ -265,7 +327,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Core',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Standard sit-up for abdominals'
+    description: 'Standard sit-up for abdominals',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'core_crunch',
@@ -273,7 +337,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Core',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Abdominal crunch for core'
+    description: 'Abdominal crunch for core',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'core_plank',
@@ -281,7 +347,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Core',
     equipment: 'Bodyweight',
     trackingType: 'time', // seconds
-    description: 'Standard plank for core stability'
+    description: 'Standard plank for core stability',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'core_side_plank',
@@ -289,7 +357,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Core',
     equipment: 'Bodyweight',
     trackingType: 'time', // seconds per side
-    description: 'Side plank for obliques'
+    description: 'Side plank for obliques',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'core_leg_raise',
@@ -297,7 +367,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Core',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Hanging leg raise for lower abs'
+    description: 'Hanging leg raise for lower abs',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'core_russian_twist',
@@ -305,7 +377,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Core',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Russian twist for obliques'
+    description: 'Russian twist for obliques',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'core_bicycle_crunch',
@@ -313,7 +387,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Core',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Bicycle crunch for rectus abdominis and obliques'
+    description: 'Bicycle crunch for rectus abdominis and obliques',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
 
   // Cardio
@@ -323,7 +399,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Cardio',
     equipment: 'Bodyweight',
     trackingType: 'distance', // km or miles
-    description: 'Running for cardiovascular endurance'
+    description: 'Running for cardiovascular endurance',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'cardio_cycling',
@@ -331,7 +409,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Cardio',
     equipment: 'Bicycle',
     trackingType: 'distance', // km
-    description: 'Cycling for cardiovascular endurance'
+    description: 'Cycling for cardiovascular endurance',
+    difficulty: 'Advanced',
+    xpReward: 30,
   },
   {
     id: 'cardio_jumping_rope',
@@ -339,7 +419,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Cardio',
     equipment: 'Bodyweight',
     trackingType: 'time', // minutes
-    description: 'Jumping rope for cardio and coordination'
+    description: 'Jumping rope for cardio and coordination',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'cardio_swimming',
@@ -347,7 +429,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Cardio',
     equipment: 'Bodyweight',
     trackingType: 'distance', // meters or laps
-    description: 'Swimming for full-body cardio'
+    description: 'Swimming for full-body cardio',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'cardio_hiit',
@@ -355,7 +439,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Cardio',
     equipment: 'Bodyweight',
     trackingType: 'time', // minutes
-    description: 'High-Intensity Interval Training'
+    description: 'High-Intensity Interval Training',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
 
   // Full Body / Compound
@@ -365,7 +451,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Full Body',
     equipment: 'Bodyweight',
     trackingType: 'reps',
-    description: 'Burpee for full-body conditioning'
+    description: 'Burpee for full-body conditioning',
+    difficulty: 'Beginner',
+    xpReward: 10,
   },
   {
     id: 'fullbody_kettlebell_swing',
@@ -373,7 +461,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Full Body',
     equipment: 'Kettlebell',
     trackingType: 'weight',
-    description: 'Kettlebell swing for posterior chain and cardio'
+    description: 'Kettlebell swing for posterior chain and cardio',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   },
   {
     id: 'fullbody_medicine_ball_slam',
@@ -381,7 +471,9 @@ export const DEFAULT_EXERCISES = [
     muscleGroup: 'Full Body',
     equipment: 'Medicine Ball',
     trackingType: 'reps',
-    description: 'Medicine ball slam for power and core'
+    description: 'Medicine ball slam for power and core',
+    difficulty: 'Intermediate',
+    xpReward: 20,
   }
 ];
 

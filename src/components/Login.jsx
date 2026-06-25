@@ -1,19 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import LoginTransition from './LoginTransition';
+import VideoBackground from './VideoBackground';
 
 const Login = () => {
-  const { login, logout } = useAuth();
-  const navigate = useNavigate();
+  const { login } = useAuth();
+  const turnstileRef = useRef(null);
+  const turnstileWidgetId = useRef(null);
 
   const [formState, setFormState] = useState({
     email: '',
     password: '',
   });
-
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
+  const [cfToken, setCfToken] = useState(''); // eslint-disable-line no-unused-vars
+
+  useEffect(() => {
+    if (window.turnstile && turnstileRef.current) {
+      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA',
+        callback: (token) => setCfToken(token),
+        'expired-callback': () => setCfToken(''),
+      });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (turnstileRef.current && window.turnstile) {
+        turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+          sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA',
+          callback: (token) => setCfToken(token),
+          'expired-callback': () => setCfToken(''),
+        });
+      }
+    };
+    document.head.appendChild(script);
+
+      return () => {
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetId.current);
+      }
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,60 +64,71 @@ const Login = () => {
 
     try {
       await login(formState.email, formState.password);
-      // If login succeeded and email confirmed, user will be set via auth state
-      navigate('/', { replace: true });
+      setShowTransition(true);
     } catch (err) {
-      // Error already set in auth context by login method; we can show it
-      // But we also have local error state; we can set from err.message
-      setError(err.message);
-      console.error(err);
+      const msg = err.message || '';
+      if (msg.includes('Email not confirmed')) {
+        setError('Please verify your email before logging in.');
+      } else if (msg.includes('Invalid login credentials')) {
+        setError('Invalid email or password.');
+      } else if (msg.includes('rate limit') || msg.includes('429') || msg.includes('too many')) {
+        setError('Too many login attempts. Please wait before trying again.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-sl-gradient flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen bg-sl-gradient flex items-center justify-center px-4 py-8 relative overflow-hidden">
+      <VideoBackground src="/videos/genesis-bg.mp4" />
+      <div className="absolute inset-0 bg-black/75" />
+      <div className={`w-full max-w-md space-y-8 relative z-10 transition-all duration-500 ${showTransition ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
         <div>
-          <h2 className="text-3xl font-bold text-center gradient-text animate-pulse-red">
+          <h2 className="text-5xl font-bold text-center gradient-text animate-pulse-red">
             Genesis Rise
           </h2>
-          <p className="text-center text-sl-gray-light">
+          <p className="text-center text-sl-gray-light text-xl font-semibold">
             Welcome Champion
           </p>
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-semibold text-sl-red-light/85 mb-2">
+            <label htmlFor="login-email" className="block text-sm font-semibold text-sl-red-light/85 mb-2">
               Email
             </label>
             <input
+              id="login-email"
               type="email"
               name="email"
               value={formState.email}
               onChange={handleChange}
               className="holo-input w-full text-white bg-sl-gray/30 placeholder:text-gray-600 focus:text-white"
               placeholder="Enter your email"
+              autoComplete="email"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-sl-red-light/85 mb-2">
+            <label htmlFor="login-password" className="block text-sm font-semibold text-sl-red-light/85 mb-2">
               Password
             </label>
             <div className="relative">
               <input
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formState.password}
                 onChange={handleChange}
                 className="holo-input w-full text-white bg-sl-gray/30 placeholder:text-gray-600 focus:text-white pr-10"
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 required
-                minLength="6"
+                minLength="12"
               />
               <button
                 type="button"
@@ -102,6 +149,8 @@ const Login = () => {
               </button>
             </div>
           </div>
+
+          <div ref={turnstileRef} className="flex justify-center"></div>
 
           {error && (
             <p className="text-red-500 text-center text-sm">
@@ -136,6 +185,7 @@ const Login = () => {
           </p>
         </div>
       </div>
+      {showTransition && <LoginTransition onComplete={() => setShowTransition(false)} />}
     </div>
   );
 };

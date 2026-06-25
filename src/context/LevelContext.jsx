@@ -1,10 +1,11 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import {
   calculateLevelFromXP,
   getXPForNextLevel,
   getLevelProgress,
+  getLevelTitle,
 } from '../utils/workoutUtils';
 
 const LevelContext = createContext();
@@ -16,11 +17,11 @@ export const LevelProvider = ({ children }) => {
   const [progress, setProgress] = useState(0);
   const [xpForNext, setXpForNext] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [justLeveledUp, setJustLeveledUp] = useState(false);
+  const [newLevel, setNewLevel] = useState(null);
 
-  // Fetch user profile from Supabase
   useEffect(() => {
     if (!user) {
-      // No user, reset to defaults (could also load from localStorage as fallback)
       const savedXP = localStorage.getItem('sl_user_xp');
       const savedLevel = localStorage.getItem('sl_user_level');
       if (savedXP !== null && savedLevel !== null) {
@@ -52,31 +53,17 @@ export const LevelProvider = ({ children }) => {
           setXp(data.xp);
           setLevel(data.level);
         } else {
-          // Profile not found, create default profile
-          const { data: insertData, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email,
-              username: user.user_metadata?.username || '',
-              level: 1,
-              xp: 0,
-              rank: 'Novice',
-            })
-            .select();
-
-          if (insertError) {
-            console.error('Error creating profile:', insertError);
-          } else {
-            setXp(0);
-            setLevel(1);
-          }
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            username: user.user_metadata?.username || '',
+            level: 1,
+            xp: 0,
+            rank: 'Initiate',
+          });
+          setXp(0);
+          setLevel(1);
         }
-
-        // Calculate progress and XP for next level
-        const progress = getLevelProgress(xp, level);
-        setProgress(progress);
-        setXpForNext(getXPForNextLevel(level));
       } finally {
         setLoading(false);
       }
@@ -85,20 +72,18 @@ export const LevelProvider = ({ children }) => {
     fetchProfile();
   }, [user]);
 
-  // Persist XP and level to Supabase whenever they change
+  useEffect(() => {
+    const p = getLevelProgress(xp, level);
+    setProgress(p);
+    setXpForNext(getXPForNextLevel(level));
+  }, [xp, level]);
+
   useEffect(() => {
     if (!user) return;
 
     const updateProfile = async () => {
       try {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ xp, level })
-          .eq('id', user.id);
-
-        if (error) {
-          console.error('Error updating profile:', error);
-        }
+        await supabase.from('profiles').update({ xp, level, rank: getLevelTitle(level) }).eq('id', user.id);
       } catch (err) {
         console.error('Error updating profile:', err);
       }
@@ -107,25 +92,33 @@ export const LevelProvider = ({ children }) => {
     updateProfile();
   }, [xp, level, user]);
 
-  // Also persist to localStorage for backward compatibility and offline support
   useEffect(() => {
     if (!user) return;
     localStorage.setItem('sl_user_xp', xp);
     localStorage.setItem('sl_user_level', level);
   }, [xp, level, user]);
 
-  // Function to add XP
-  const addXP = (amount) => {
-    setXp(prev => prev + amount);
-  };
+  const addXP = useCallback((amount) => {
+    setXp(prev => {
+      const newXP = prev + amount;
+      const newLevel = calculateLevelFromXP(newXP);
+      const currentLevel = calculateLevelFromXP(prev);
 
-  // Function to get rank based on level (we can compute from level using thresholds)
-  // We'll create a simple ranking system based on level
-  const getRankFromLevel = (level) => {
-    const ranks = ['Novice', 'Iron', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Champion', 'Legend'];
-    const index = Math.min(Math.floor((level - 1) / 10), ranks.length - 1);
-    return ranks[index];
-  };
+      if (newLevel > currentLevel) {
+        setNewLevel(newLevel);
+        setJustLeveledUp(true);
+        setLevel(newLevel);
+        setTimeout(() => {
+          setJustLeveledUp(false);
+          setNewLevel(null);
+        }, 4000);
+      } else {
+        setLevel(newLevel);
+      }
+
+      return newXP;
+    });
+  }, []);
 
   const value = {
     xp,
@@ -134,7 +127,9 @@ export const LevelProvider = ({ children }) => {
     xpForNext,
     addXP,
     loading,
-    rank: getRankFromLevel(level),
+    title: getLevelTitle(level),
+    justLeveledUp,
+    newLevel,
   };
 
   if (loading) {

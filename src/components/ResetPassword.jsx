@@ -1,13 +1,26 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+
+const hasSpecialChar = (p) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(p);
+
+const PASSWORD_REQUIREMENTS = [
+  { label: 'At least 12 characters', test: (p) => p.length >= 12 },
+  { label: 'At least one uppercase letter', test: (p) => /[A-Z]/.test(p) },
+  { label: 'At least one lowercase letter', test: (p) => /[a-z]/.test(p) },
+  { label: 'At least one number', test: (p) => /[0-9]/.test(p) },
+  { label: 'At least one special character', test: hasSpecialChar },
+];
 
 const ResetPassword = () => {
-  const { updateUser } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
 
+  const getTokenFromUrl = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get('access_token') || '';
+  };
+
+  const [accessToken] = useState(getTokenFromUrl);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,27 +28,14 @@ const ResetPassword = () => {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState(null);
 
-  // Extract access_token from URL
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const accessToken = searchParams.get('access_token');
-    setAccessToken(accessToken);
-  }, [location.search]);
+  const passwordStrength = PASSWORD_REQUIREMENTS.map(req => ({
+    ...req,
+    met: req.test(password),
+  }));
 
-  const [accessToken, setAccessToken] = useState('');
-
-  const handleChangePassword = (e) => {
-    setPassword(e.target.value);
-    setError('');
-    setSuccess(false);
-  };
-
-  const handleChangeConfirmPassword = (e) => {
-    setConfirmPassword(e.target.value);
-    setError('');
-    setSuccess(false);
-  };
+  const isPasswordStrong = passwordStrength.every(r => r.met);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,6 +52,11 @@ const ResetPassword = () => {
       return;
     }
 
+    if (!isPasswordStrong) {
+      setError('Password does not meet all requirements');
+      return;
+    }
+
     if (!accessToken) {
       setError('Invalid or expired link');
       return;
@@ -59,28 +64,25 @@ const ResetPassword = () => {
 
     setLoading(true);
     try {
-      // First verify the OTP (recovery token)
       const { error: verifyError } = await supabase.auth.verifyOtp({
         token: accessToken,
         type: 'recovery',
       });
       if (verifyError) throw verifyError;
 
-      // If verification successful, update password
       const { error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
       if (updateError) throw updateError;
 
       setSuccess(true);
-      // Optionally, redirect to login after a delay
     } catch (err) {
-      if (err.message.includes('invalid token') || err.message.includes('expired')) {
+      const msg = err.message || '';
+      if (msg.includes('invalid token') || msg.includes('expired')) {
         setError('Invalid or expired link. Please request a new reset link.');
       } else {
         setError('Failed to reset password. Please try again.');
       }
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -105,13 +107,15 @@ const ResetPassword = () => {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={handleChangePassword}
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
                 className="holo-input w-full text-white bg-sl-gray/30 placeholder:text-gray-600 focus:text-white pr-10"
-                placeholder="Enter new password"
+                placeholder="Enter new password (min 12 chars)"
                 required
-                minLength="6"
+                minLength="12"
               />
               <button
                 type="button"
@@ -131,6 +135,22 @@ const ResetPassword = () => {
                 )}
               </button>
             </div>
+            {(focusedField === 'password' || password.length > 0) && (
+              <div className="mt-2 space-y-1">
+                {passwordStrength.map((req, idx) => (
+                  <div key={idx} className={`flex items-center gap-1.5 text-xs ${req.met ? 'text-emerald-400' : 'text-sl-gray-light/60'}`}>
+                    <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {req.met ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      )}
+                    </svg>
+                    {req.label}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -141,11 +161,11 @@ const ResetPassword = () => {
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
-                onChange={handleChangeConfirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="holo-input w-full text-white bg-sl-gray/30 placeholder:text-gray-600 focus:text-white pr-10"
                 placeholder="Confirm new password"
                 required
-                minLength="6"
+                minLength="12"
               />
               <button
                 type="button"
@@ -165,6 +185,9 @@ const ResetPassword = () => {
                 )}
               </button>
             </div>
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
+            )}
           </div>
 
           {error && (
@@ -181,8 +204,8 @@ const ResetPassword = () => {
 
           <button
             type="submit"
-            disabled={loading}
-            className={`holo-button w-full py-3 ${loading ? 'opacity-70' : ''}`}
+            disabled={loading || !isPasswordStrong}
+            className={`holo-button w-full py-3 ${(loading || !isPasswordStrong) ? 'opacity-70' : ''}`}
           >
             {loading ? 'Resetting...' : 'Reset Password'}
           </button>

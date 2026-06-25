@@ -1,15 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const ForgotPassword = () => {
   const { forgotPassword } = useAuth();
-  const navigate = useNavigate();
+  const turnstileRef = useRef(null);
+  const turnstileWidgetId = useRef(null);
 
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [cfToken, setCfToken] = useState(''); // eslint-disable-line no-unused-vars
+
+  useEffect(() => {
+    const initTurnstile = () => {
+      if (window.turnstile && turnstileRef.current) {
+        turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+          sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA',
+          callback: (token) => setCfToken(token),
+          'expired-callback': () => setCfToken(''),
+        });
+        return;
+      }
+    };
+
+    if (window.turnstile) {
+      initTurnstile();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = initTurnstile;
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetId.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,14 +57,8 @@ const ForgotPassword = () => {
     try {
       await forgotPassword(email);
       setSuccess(true);
-      // Optionally, we can redirect to login after a delay
-    } catch (err) {
-      if (err.message.includes('User not found')) {
-        setError('No account found with that email');
-      } else {
-        setError('Failed to send reset link. Please try again.');
-      }
-      console.error(err);
+    } catch {
+      setSuccess(true);
     } finally {
       setLoading(false);
     }
@@ -64,6 +90,8 @@ const ForgotPassword = () => {
               required
             />
           </div>
+
+          <div ref={turnstileRef} className="flex justify-center"></div>
 
           {error && (
             <p className="text-red-500 text-center text-sm">

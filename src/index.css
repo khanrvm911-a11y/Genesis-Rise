@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
-
-/* Keyframes */
 @keyframes glow {
   0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); }
   50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
@@ -19,20 +19,35 @@
 }
 
 @keyframes floatUp {
-  0% {
-    transform: translateY(100vh) scale(0);
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.3;
-  }
-  100% {
-    transform: translateY(-10vh) scale(1.5);
-    opacity: 0;
-  }
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  50% { opacity: 0.3; }
+  100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
 }
 
-/* ─── CSS Variables for App.css compatibility ─── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.6); }
+}
+
+@keyframes xp-fill {
+  from { width: 0%; }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
 :root {
   --accent: #8b5cf6;
   --accent-bg: #c084fc;
@@ -43,7 +58,6 @@
   --social-bg: #1e1b29;
 }
 
-/* ─── Custom base styles ─── */
 html {
   scroll-behavior: smooth;
 }
@@ -57,34 +71,25 @@ body {
     linear-gradient(to bottom, #0f051d, #07010f, #000000);
   background-blend-mode: overlay;
   min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
 }
 
-/* Global transitions */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
+}
+
 * {
-  transition-property: all;
+  transition-property: background-color, border-color, color, opacity, transform, box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
-/* ─── Custom scrollbar ─── */
-::-webkit-scrollbar {
-  width: 8px;
-}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background-color: #04010a; }
+::-webkit-scrollbar-thumb { background-color: rgba(139, 92, 246, 0.5); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background-color: rgba(139, 92, 246, 0.7); }
 
-::-webkit-scrollbar-track {
-  background-color: #04010a;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: rgba(139, 92, 246, 0.5);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(139, 92, 246, 0.7);
-}
-
-/* ─── Glassmorphism effect ─── */
 .glass-panel {
   background-color: rgba(30, 27, 41, 0.35);
   backdrop-filter: blur(4px);
@@ -93,7 +98,6 @@ body {
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.35);
 }
 
-/* ─── Holographic button ─── */
 .holo-button {
   position: relative;
   overflow: hidden;
@@ -108,6 +112,7 @@ body {
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
+  font-size: 16px;
 }
 
 .holo-button:hover {
@@ -117,9 +122,7 @@ body {
   border-color: rgba(139, 92, 246, 0.5);
 }
 
-.holo-button:active {
-  transform: scale(0.95);
-}
+.holo-button:active { transform: scale(0.95); }
 
 .holo-button::before {
   content: '';
@@ -131,11 +134,43 @@ body {
   pointer-events: none;
 }
 
-.holo-button:hover::before {
-  opacity: 0.1;
+.holo-button:hover::before { opacity: 0.1; }
+
+.holo-button-primary {
+  background: linear-gradient(135deg, #8b5cf6, #ef4444);
+  color: #fff;
+  border: none;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
 }
 
-/* ─── Input fields ─── */
+.holo-button-primary:hover {
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+  transform: translateY(-2px);
+}
+
+.holo-button-primary::before { display: none; }
+
+.holo-button-danger {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+.holo-button-active {
+  background-color: rgba(139, 92, 246, 0.3) !important;
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3) !important;
+  color: #c084fc !important;
+}
+
+.holo-button-success {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #fff;
+  border: none;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
 .holo-input {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -145,11 +180,10 @@ body {
   color: #c084fc;
   transition: all 300ms ease;
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  font-size: 16px;
 }
 
-.holo-input::placeholder {
-  color: rgba(167, 139, 250, 0.4);
-}
+.holo-input::placeholder { color: rgba(167, 139, 250, 0.4); }
 
 .holo-input:focus {
   outline: none;
@@ -157,11 +191,8 @@ body {
   border-color: rgba(139, 92, 246, 0.4);
 }
 
-.holo-input:hover {
-  background-color: rgba(30, 27, 41, 0.2);
-}
+.holo-input:hover { background-color: rgba(30, 27, 41, 0.2); }
 
-/* ─── Card styles ─── */
 .sl-card {
   background-color: rgba(30, 27, 41, 0.35);
   backdrop-filter: blur(4px);
@@ -179,13 +210,12 @@ body {
   background-color: rgba(30, 27, 41, 0.2);
 }
 
-/* ─── Level badge ─── */
 .level-badge {
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 700;
   background-color: rgba(139, 92, 246, 0.2);
   color: #c084fc;
@@ -193,14 +223,12 @@ body {
   box-shadow: 0 0 5px rgba(139, 92, 246, 0.35);
 }
 
-/* ─── Progress bar ─── */
 .progress-bar {
   width: 100%;
   height: 0.625rem;
   background-color: rgba(30, 27, 41, 0.5);
   border-radius: 9999px;
   overflow: hidden;
-  margin-bottom: 0.5rem;
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
 }
 
@@ -210,7 +238,6 @@ body {
   transition: width 1000ms ease-out;
 }
 
-/* ─── Animated gradient text ─── */
 .gradient-text {
   background: linear-gradient(to right, #8b5cf6, #c084fc, #ef4444);
   -webkit-background-clip: text;
@@ -219,17 +246,17 @@ body {
   color: transparent;
 }
 
-/* ─── Floating animation for icons ─── */
-.floating-icon {
-  animation: float 6s ease-in-out infinite;
+.gradient-text-red {
+  background: linear-gradient(to right, #ef4444, #f87171);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
-/* ─── Pulse animation for important elements ─── */
-.pulse-red {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
+.floating-icon { animation: float 6s ease-in-out infinite; }
+.pulse-red { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
-/* ─── Optional: floating particles for background ─── */
 .floating-particles {
   position: fixed;
   top: 0;
@@ -246,4 +273,64 @@ body {
   background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 70%);
   border-radius: 50%;
   animation: floatUp ease-in infinite;
+}
+
+.animate-slide-up { animation: slideUp 0.5s ease-out forwards; }
+.animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fade-slide { animation: fadeSlide 0.2s ease-out forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+.animate-xp-fill { animation: xp-fill 1.5s ease-out forwards; }
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.count-up {
+  animation: countUp 0.5s ease-out forwards;
+}
+
+/* ===== Login Transition ===== */
+@keyframes transitionOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-transition-overlay-in {
+  animation: transitionOverlayIn 0.3s ease-out forwards;
+}
+
+@keyframes samuraiAppear {
+  from { opacity: 0; transform: translateY(40px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-samurai-appear {
+  animation: samuraiAppear 0.5s ease-out 0.15s both;
+}
+
+@keyframes drawFlash {
+  0% { opacity: 0; transform: scale(0.3); }
+  25% { opacity: 1; transform: scale(1.3); }
+  50% { opacity: 0.6; }
+  100% { opacity: 0; transform: scale(2); }
+}
+.animate-draw-flash {
+  animation: drawFlash 0.4s ease-out 0.5s forwards;
+}
+
+@keyframes energySlash {
+  0% { clip-path: polygon(47% 38%, 53% 38%, 55% 62%, 45% 62%); opacity: 0; }
+  6% { opacity: 1; }
+  35% { clip-path: polygon(28% 0%, 72% 0%, 80% 100%, 20% 100%); }
+  65% { clip-path: polygon(3% 0%, 97% 0%, 100% 100%, 0% 100%); opacity: 1; }
+  82% { opacity: 0.85; }
+  100% { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); opacity: 0; }
+}
+.animate-energy-slash {
+  animation: energySlash 1.5s ease-in-out 0.7s both;
 }
