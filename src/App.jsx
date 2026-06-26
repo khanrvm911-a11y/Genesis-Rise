@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Home as HomeIcon, Activity, Calendar, Sparkles, Heart, LogOut, ChevronDown } from 'lucide-react';
+import { Home as HomeIcon, Activity, Calendar, Sparkles, Heart, BarChart3, LogOut, ChevronDown, Dumbbell, Flame, Zap, Shield, Crown, Star } from 'lucide-react';
 import Tracker from './components/Tracker';
 import Planner from './components/Planner';
 import Adviser from './components/Adviser';
 import Health from './components/Health';
+import Analysis from './components/Analysis';
 import Home from './pages/Home';
 import About from './pages/About';
 import { useLevel } from './context/LevelContext';
 import { useAuth } from './context/AuthContext';
+import { useAvatar } from './context/AvatarContext';
 import XPToast from './components/XPToast';
 import Login from './components/Login';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import Profile from './components/Profile';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
 const NAV_ITEMS = [
   { to: '/', icon: HomeIcon, label: 'Home' },
@@ -22,11 +26,26 @@ const NAV_ITEMS = [
   { to: '/planner', icon: Calendar, label: 'Planner' },
   { to: '/adviser', icon: Sparkles, label: 'Coach' },
   { to: '/health', icon: Heart, label: 'Health' },
+  { to: '/analysis', icon: BarChart3, label: 'Analysis' },
 ];
 
 function App() {
   const { level, xp, progress, title, xpForNext } = useLevel();
   const { user, logout } = useAuth();
+  const { avatar, avatarType } = useAvatar();
+
+  const AVATAR_PRESETS = [
+    { id: 'dumbbell', icon: Dumbbell, colors: 'from-sl-purple to-sl-red' },
+    { id: 'activity', icon: Activity, colors: 'from-blue-500 to-cyan-400' },
+    { id: 'heart', icon: Heart, colors: 'from-red-500 to-pink-400' },
+    { id: 'flame', icon: Flame, colors: 'from-orange-500 to-red-400' },
+    { id: 'zap', icon: Zap, colors: 'from-yellow-500 to-amber-400' },
+    { id: 'shield', icon: Shield, colors: 'from-emerald-500 to-teal-400' },
+    { id: 'crown', icon: Crown, colors: 'from-purple-500 to-pink-400' },
+    { id: 'star', icon: Star, colors: 'from-amber-500 to-orange-400' },
+  ];
+  const avatarPreset = AVATAR_PRESETS.find(p => p.id === avatar);
+  const AvatarIcon = avatarPreset?.icon;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -38,7 +57,7 @@ function App() {
     return () => window.removeEventListener('click', closeDropdown);
   }, []);
 
-  const publicPaths = ['/', '/about', '/login', '/register', '/forgot-password', '/reset-password'];
+  const publicPaths = ['/', '/about', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy'];
   const isPublicPage = publicPaths.includes(location.pathname);
 
   if (!user && !isPublicPage) {
@@ -108,9 +127,19 @@ function App() {
                   e.stopPropagation();
                   setDropdownOpen(!dropdownOpen);
                 }} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-sl-dark/60 border border-sl-purple/20 rounded-lg hover:bg-sl-purple/10 transition shadow-lg shadow-sl-purple/5">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sl-purple to-sl-red flex items-center justify-center text-white font-bold text-xs shadow-lg shrink-0">
-                    {getUserName().charAt(0).toUpperCase()}
-                  </div>
+                  {avatarType === 'custom' && avatar ? (
+                    <div className="w-7 h-7 rounded-full overflow-hidden shadow-lg shrink-0">
+                      <img src={avatar} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg shrink-0 ${avatarType === 'preset' && avatarPreset ? `bg-gradient-to-br ${avatarPreset.colors}` : 'bg-gradient-to-br from-sl-purple to-sl-red'}`}>
+                      {avatarType === 'preset' && AvatarIcon ? (
+                        <AvatarIcon className="w-4 h-4" />
+                      ) : (
+                        getUserName().charAt(0).toUpperCase()
+                      )}
+                    </div>
+                  )}
                   <span className="text-[13px] text-sl-purple-light font-semibold truncate max-w-[60px] hidden xs:inline">{getUserName()}</span>
                   <ChevronDown className="w-3 h-3 text-sl-purple-light shrink-0" />
                 </button>
@@ -177,7 +206,10 @@ function App() {
           <Route path="/planner" element={<Planner />} />
           <Route path="/adviser" element={<Adviser />} />
           <Route path="/health" element={<Health />} />
+          <Route path="/analysis" element={<Analysis />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<Navigate to="/" replace={true} />} />
         </Routes>
       </main>

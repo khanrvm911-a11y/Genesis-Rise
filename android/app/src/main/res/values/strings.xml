@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">genesis-rise</string>
+    <string name="title_activity_main">genesis-rise</string>
+    <string name="package_name">com.genesis.app</string>
+    <string name="custom_url_scheme">com.genesis.app</string>
+</resources>

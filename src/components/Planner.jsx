@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLevel } from '../context/LevelContext';
+import { useNotification } from '../context/NotificationContext';
 import { useWorkout } from '../context/WorkoutContext';
-import { ChevronDown, ChevronLeft, Check, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Check, X, Moon } from 'lucide-react';
+import { dispatchTodaysWorkoutChanged } from '../utils/syncEvents';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -28,7 +30,7 @@ const MUSCLE_GROUP_CARDS = [
 ];
 
 const POPULAR_SPLITS = [
-  { id: 'push', name: 'Push Day', groups: ['Chest', 'Shoulders', 'Arms'], icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z', desc: 'Chest, Shoulders, Triceps' },
+  { id: 'push', name: 'Push Day', groups: ['Chest', 'Shoulders'], icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z', desc: 'Chest, Shoulders, Triceps' },
   { id: 'pull', name: 'Pull Day', groups: ['Back', 'Arms'], icon: 'M5 10l7-7 7 7M5 19l7-7 7 7', desc: 'Back, Biceps' },
   { id: 'legs', name: 'Leg Day', groups: ['Legs'], icon: 'M17 2l4 4-4 4M7 2l-4 4 4 4M12 10v12M8 14l4-4 4 4', desc: 'Quads, Hamstrings, Glutes, Calves' },
   { id: 'ppl', name: 'Push Pull Legs', groups: ['Chest', 'Back', 'Legs'], icon: 'M12 2l3 7h7l-5 4 2 7-7-4-7 4 2-7-5-4h7z', desc: 'Full body split' },
@@ -42,11 +44,13 @@ const POPULAR_SPLITS = [
 const DAY_TYPES = [
   { id: 'workout', label: 'Workout Day', icon: 'M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' },
   { id: 'rest', label: 'Rest Day', icon: 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z' },
-  { id: 'recovery', label: 'Recovery Day', icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
-  { id: 'cardio', label: 'Cardio Day', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+  { id: 'recovery', label: 'Rest Day', icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z' },
+  { id: 'cardio', label: 'Rest Day', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
 ];
 
 const STORAGE_KEY_SCHEDULE = 'gr_workout_schedule';
+const STORAGE_KEY_COMPLETED = 'gr_completed_workouts';
+const STORAGE_KEY_TODAYS_WORKOUT = 'gr_todays_workout';
 
 const getWeekRange = () => {
   const now = new Date();
@@ -100,8 +104,8 @@ const getDifficultyColor = (diff) => {
 const getDayTypeStyle = (type) => {
   switch (type) {
     case 'rest': return { border: 'border-blue-500/30', bg: 'bg-blue-950/10', text: 'text-blue-400', label: 'Rest Day' };
-    case 'recovery': return { border: 'border-emerald-500/30', bg: 'bg-emerald-950/10', text: 'text-emerald-400', label: 'Recovery Day' };
-    case 'cardio': return { border: 'border-orange-500/30', bg: 'bg-orange-950/10', text: 'text-orange-400', label: 'Cardio Day' };
+    case 'recovery': return { border: 'border-emerald-500/30', bg: 'bg-emerald-950/10', text: 'text-emerald-400', label: 'Rest Day' };
+    case 'cardio': return { border: 'border-orange-500/30', bg: 'bg-orange-950/10', text: 'text-orange-400', label: 'Rest Day' };
     default: return null;
   }
 };
@@ -125,12 +129,81 @@ const Planner = () => {
   const [mgActiveGroup, setMgActiveGroup] = useState(null);
   const [mgSelectedExercises, setMgSelectedExercises] = useState([]);
   const [mgActiveSplit, setMgActiveSplit] = useState(null);
+  const [customExerciseName, setCustomExerciseName] = useState('');
+  const [customExerciseSets, setCustomExerciseSets] = useState(3);
+  const [editingExerciseId, setEditingExerciseId] = useState(null);
+  const [editExerciseName, setEditExerciseName] = useState('');
+
+  const [completedWorkouts, setCompletedWorkouts] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_COMPLETED);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completedWorkouts));
+  }, [completedWorkouts]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_SCHEDULE, JSON.stringify(schedule));
   }, [schedule]);
 
   const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+  const { addNotification } = useNotification();
+  const prevTodayRef = useRef(schedule[todayName]);
+  const isInitialMount = useRef(true);
+
+  const saveTodaysWorkout = (entry) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (entry && entry.type === 'workout') {
+      const todaysWorkout = {
+        date: todayStr,
+        name: entry.name,
+        exercises: entry.exercises.map(e => ({
+          exerciseId: e.exerciseId,
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps,
+          weight: e.weight,
+          difficulty: e.difficulty,
+          xpReward: e.xpReward,
+          muscleGroup: e.muscleGroup,
+          trackingType: e.trackingType,
+          equipment: e.equipment,
+        })),
+      };
+      localStorage.setItem(STORAGE_KEY_TODAYS_WORKOUT, JSON.stringify(todaysWorkout));
+    }
+  };
+
+  useEffect(() => {
+    const todayEntry = schedule[todayName];
+    const prevEntry = prevTodayRef.current;
+    prevTodayRef.current = todayEntry;
+
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      const prevType = prevEntry?.type;
+      const currType = todayEntry?.type;
+      if (currType && currType !== prevType) {
+        if (currType === 'workout') {
+          addNotification('Workout Assigned', `Today's workout: ${todayEntry.name}`, 'planner', 'planner', '/planner');
+        } else if (['rest', 'recovery', 'cardio'].includes(currType)) {
+          addNotification('Rest Day', 'Today is your scheduled rest day. Take time to recover.', 'rest_day', 'rest_day', '/planner');
+        }
+      } else if (currType === 'workout' && todayEntry.name !== prevEntry?.name) {
+        addNotification('Workout Changed', `Today's workout has been updated to: ${todayEntry.name}`, 'planner', 'planner', '/planner');
+      }
+    }
+
+    if (todayEntry && todayEntry.type === 'workout') {
+      saveTodaysWorkout(todayEntry);
+    } else {
+      localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
+    }
+    dispatchTodaysWorkoutChanged();
+  }, [schedule[todayName], addNotification]);
 
   const todaySchedule = schedule[todayName];
 
@@ -142,6 +215,8 @@ const Planner = () => {
   const todayExercises = getWorkoutExercises(todaySchedule);
 
   const todayWorkout = todaySchedule?.type === 'workout' ? todaySchedule : null;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayCompleted = completedWorkouts.includes(todayStr);
 
   const weeklyStats = useMemo(() => {
     const { monday, sunday } = getWeekRange();
@@ -185,6 +260,10 @@ const Planner = () => {
       setMgActiveGroup(null);
       setMgSelectedExercises([]);
       setMgActiveSplit(null);
+      setCustomExerciseName('');
+      setCustomExerciseSets(3);
+      setEditingExerciseId(null);
+      setEditExerciseName('');
     } else {
       setSchedule(prev => ({ ...prev, [day]: { type } }));
       setActiveDay(null);
@@ -203,10 +282,14 @@ const Planner = () => {
         difficulty: exData?.difficulty || 'Beginner',
         xpReward: exData?.xpReward || 10,
         muscleGroup: exData?.muscleGroup || template.muscleGroup || 'Other',
+        trackingType: exData?.trackingType || 'weight',
+        equipment: exData?.equipment || '',
       };
     });
 
-    setSchedule(prev => ({ ...prev, [day]: { type: 'workout', source: 'template', templateId: template.id, name: template.name, muscleGroup: template.muscleGroup || 'Full Body', exercises: exercisesWithDetails } }));
+    const entry = { type: 'workout', source: 'template', templateId: template.id, name: template.name, muscleGroup: template.muscleGroup || 'Full Body', exercises: exercisesWithDetails };
+    setSchedule(prev => ({ ...prev, [day]: entry }));
+    if (day === todayName) { saveTodaysWorkout(entry); dispatchTodaysWorkoutChanged(); }
     setActiveDay(null);
   };
 
@@ -214,8 +297,9 @@ const Planner = () => {
     setSchedule(prev => { const copy = { ...prev }; delete copy[day]; return copy; });
   };
 
-  const handleAddExercise = (ex) => {
+  const handleAssignExercise = (ex) => {
     if (selectedExercises.some(e => e.exerciseId === ex.id)) return;
+    if (selectedExercises.length >= 10) return;
     setSelectedExercises(prev => [...prev, { exerciseId: ex.id, name: ex.name, sets: 3, reps: 10, weight: ex.trackingType === 'weight' ? 20 : 0, difficulty: ex.difficulty || 'Beginner', xpReward: ex.xpReward || 10, muscleGroup: ex.muscleGroup || selectedMuscleGroup }]);
   };
 
@@ -227,21 +311,52 @@ const Planner = () => {
     setSelectedExercises(prev => prev.map(e => e.exerciseId === exerciseId ? { ...e, [field]: value } : e));
   };
 
+  const handleStartEdit = (ex) => {
+    setEditExerciseName(ex.name);
+    setEditingExerciseId(ex.exerciseId);
+  };
+
+  const handleSaveEdit = () => {
+    const name = editExerciseName.trim();
+    if (!name || !editingExerciseId) return;
+    handleUpdateExercise(editingExerciseId, 'name', name);
+    setEditingExerciseId(null);
+    setEditExerciseName('');
+  };
+
+  const handleAssignCustomExercise = () => {
+    const name = customExerciseName.trim();
+    if (!name || selectedExercises.length >= 10) return;
+    setSelectedExercises(prev => [...prev, {
+      exerciseId: `custom-${Date.now()}`,
+      name,
+      sets: customExerciseSets || 3,
+      reps: 10,
+      weight: 0,
+      difficulty: 'Beginner',
+      xpReward: 10,
+      muscleGroup: selectedMuscleGroup || 'Other',
+      trackingType: 'weight',
+      equipment: '',
+    }]);
+    setCustomExerciseName('');
+    setCustomExerciseSets(3);
+  };
+
   const handleAssignCustomWorkout = () => {
     if (selectedExercises.length === 0 || !activeDay) return;
     const name = customWorkoutName.trim() || `${selectedMuscleGroup || 'Full Body'} Workout`;
-    setSchedule(prev => ({ ...prev, [activeDay]: { type: 'workout', source: 'custom', name, muscleGroup: selectedMuscleGroup || 'Full Body', exercises: [...selectedExercises] } }));
+    const entry = { type: 'workout', source: 'custom', name, muscleGroup: selectedMuscleGroup || 'Full Body', exercises: [...selectedExercises] };
+    setSchedule(prev => ({ ...prev, [activeDay]: entry }));
+    if (activeDay === todayName) { saveTodaysWorkout(entry); dispatchTodaysWorkoutChanged(); }
     setActiveDay(null);
   };
 
   const handleStartWorkout = () => {
     if (!todayWorkout) return;
-    const bridgeData = {
-      name: todayWorkout.name,
-      exercises: todayWorkout.exercises.map(e => ({ exerciseId: e.exerciseId, name: e.name, sets: e.sets, reps: e.reps, weight: e.weight })),
-    };
-    localStorage.setItem('gr_today_workout', JSON.stringify(bridgeData));
-    localStorage.setItem('gr_auto_start_workout', 'true');
+    saveTodaysWorkout(todaySchedule);
+    dispatchTodaysWorkoutChanged();
+    localStorage.removeItem('gr_active_workout_session');
     navigate('/tracker');
   };
 
@@ -249,8 +364,24 @@ const Planner = () => {
     if (!todayWorkout) return;
     const xpGained = calcXPReward(todayExercises);
     addXP(xpGained);
+    addNotification('Workout Completed', `Great job! You earned ${xpGained} XP.`, 'workout', 'workout', '/tracker');
+    const todayStr = new Date().toISOString().split('T')[0];
+    setCompletedWorkouts(prev => prev.includes(todayStr) ? prev : [...prev, todayStr]);
+    localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
+    dispatchTodaysWorkoutChanged();
+    const completed = JSON.parse(localStorage.getItem(STORAGE_KEY_COMPLETED) || '[]');
+    if (!completed.includes(todayStr)) {
+      completed.push(todayStr);
+      localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(completed));
+    }
     setShowCompleted(true);
     setTimeout(() => setShowCompleted(false), 4000);
+  };
+
+  const handleRepeatWorkout = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    setCompletedWorkouts(prev => prev.filter(d => d !== todayStr));
+    handleStartWorkout();
   };
 
   const getDefaultExercisesForGroup = (groupId, count = 5) => {
@@ -261,7 +392,9 @@ const Planner = () => {
   const handleAssignMuscleGroupWorkout = (day, groupId, exercisesToAssign) => {
     const exList = exercisesToAssign && exercisesToAssign.length > 0 ? exercisesToAssign : getDefaultExercisesForGroup(groupId);
     const mgCard = MUSCLE_GROUP_CARDS.find(c => c.id === groupId);
-    setSchedule(prev => ({ ...prev, [day]: { type: 'workout', source: 'muscleGroup', name: mgCard?.name || groupId, muscleGroup: groupId, exercises: exList } }));
+    const entry = { type: 'workout', source: 'muscleGroup', name: mgCard?.name || groupId, muscleGroup: groupId, exercises: exList };
+    setSchedule(prev => ({ ...prev, [day]: entry }));
+    if (day === todayName) { saveTodaysWorkout(entry); dispatchTodaysWorkoutChanged(); }
     setActiveDay(null);
   };
 
@@ -273,7 +406,9 @@ const Planner = () => {
       const selected = groupExs.slice(0, maxPerGroup).map(ex => ({ exerciseId: ex.id, name: ex.name, sets: 3, reps: 10, weight: ex.trackingType === 'weight' ? 20 : 0, difficulty: ex.difficulty || 'Beginner', xpReward: ex.xpReward || 10, muscleGroup: ex.muscleGroup || groupId }));
       allExercises.push(...selected);
     });
-    setSchedule(prev => ({ ...prev, [day]: { type: 'workout', source: 'split', name: split.name, muscleGroup: split.groups.join(', '), exercises: allExercises } }));
+    const entry = { type: 'workout', source: 'split', name: split.name, muscleGroup: split.groups.join(', '), exercises: allExercises };
+    setSchedule(prev => ({ ...prev, [day]: entry }));
+    if (day === todayName) { saveTodaysWorkout(entry); dispatchTodaysWorkoutChanged(); }
     setActiveDay(null);
   };
 
@@ -355,14 +490,14 @@ const Planner = () => {
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     <button onClick={() => handleAssignDayType(day, 'workout')} className="bg-sl-purple/10 hover:bg-sl-purple/25 text-sl-purple-light border border-sl-purple/20 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition touch-target">
-                      {plan?.type === 'workout' ? 'Edit' : 'Add'}
+                      Assign
                     </button>
                     <div className="relative group">
                       <button className="bg-sl-gray/20 hover:bg-sl-gray/30 text-sl-gray-light border border-sl-gray/20 px-1.5 py-1.5 rounded-lg text-xs transition touch-target">
                         <ChevronDown className="w-3.5 h-3.5" />
                       </button>
                       <div className="absolute right-0 top-full mt-1 bg-sl-dark border border-sl-purple/30 rounded-xl shadow-xl z-30 hidden group-hover:block min-w-[140px]">
-                        {DAY_TYPES.filter(dt => dt.id !== 'workout').map(dt => (
+                        {DAY_TYPES.filter(dt => dt.id !== 'workout' && dt.id !== 'rest' && dt.id !== 'cardio').map(dt => (
                           <button key={dt.id} onClick={() => handleAssignDayType(day, dt.id)}
                             className="w-full text-left px-3 py-2 text-xs text-sl-gray-light hover:bg-sl-purple/10 transition flex items-center gap-2 first:rounded-t-xl last:rounded-b-xl">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={dt.icon} /></svg>
@@ -390,25 +525,49 @@ const Planner = () => {
 
         <div className="mobile-card p-4">
           <h2 className="text-base font-bold text-sl-purple-light mb-3 border-b border-sl-purple/15 pb-2">Today's Plan</h2>
-          {!todaySchedule || todaySchedule.type !== 'workout' ? (
+          {todaySchedule && todaySchedule.type !== 'workout' ? (
+            <div className="flex flex-col items-center text-center py-6">
+              <div className="w-16 h-16 rounded-full bg-sl-purple/5 flex items-center justify-center border border-sl-purple/20 mb-4">
+                <Moon className="w-8 h-8 text-sl-purple" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Rest Day</h3>
+              <p className="text-sm text-sl-gray-light max-w-xs leading-relaxed">
+                Today is your scheduled rest day. Take time to relax, stay hydrated, stretch lightly, and prepare for tomorrow's workout.
+              </p>
+            </div>
+          ) : !todaySchedule ? (
             <div className="flex flex-col items-center justify-center text-center py-6">
               <div className="w-12 h-12 bg-sl-purple/5 rounded-full flex items-center justify-center border border-sl-purple/20 mb-3">
                 <svg className="w-6 h-6 text-sl-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <p className="text-sm text-sl-gray-light font-medium">
-                {todaySchedule?.type === 'rest' ? 'Rest Day. Recover!' :
-                 todaySchedule?.type === 'recovery' ? 'Recovery Day. Mobility & light activity.' :
-                 todaySchedule?.type === 'cardio' ? 'Cardio Day. Get your heart pumping!' :
-                 'No workout planned.'}
-              </p>
+              <p className="text-sm text-sl-gray-light font-medium mb-4">No workout planned for today.</p>
+              <button onClick={() => {
+                setActiveDay(todayName);
+                setModalTab('templates');
+                setSelectedMuscleGroup(null);
+                setSelectedExercises([]);
+                setCustomWorkoutName('');
+                setMgActiveGroup(null);
+                setMgSelectedExercises([]);
+                setMgActiveSplit(null);
+                setCustomExerciseName('');
+                setCustomExerciseSets(3);
+                setEditingExerciseId(null);
+                setEditExerciseName('');
+              }} className="holo-button holo-button-primary px-6 py-3 text-sm">
+                Assign Today's Workout
+              </button>
             </div>
-          ) : showCompleted ? (
-            <div className="flex flex-col items-center justify-center text-center py-6">
-              <div className="w-12 h-12 bg-emerald-950/20 rounded-full flex items-center justify-center border border-emerald-500/30 mb-3">
-                <Check className="w-6 h-6 text-emerald-400" />
+          ) : todayCompleted || showCompleted ? (
+            <div className="flex flex-col items-center text-center py-4">
+              <div className="w-14 h-14 bg-emerald-950/20 rounded-full flex items-center justify-center border border-emerald-500/30 mb-3 animate-slide-up">
+                <Check className="w-7 h-7 text-emerald-400" />
               </div>
-              <p className="text-emerald-400 font-bold">Workout Complete!</p>
-              <p className="text-xs text-sl-gray-light mt-1">+{calcXPReward(todayExercises)} XP earned</p>
+              <p className="text-emerald-400 font-bold text-lg">Workout Complete!</p>
+              <p className="text-xs text-sl-gray-light mt-1 mb-4">+{calcXPReward(todayExercises)} XP earned</p>
+              <button onClick={handleRepeatWorkout} className="holo-button holo-button-primary w-full py-3 text-sm text-center">
+                Repeat Workout
+              </button>
             </div>
           ) : (
             <div>
@@ -454,9 +613,6 @@ const Planner = () => {
                 <button onClick={handleStartWorkout} className="holo-button holo-button-primary w-full py-3 text-sm text-center">
                   Start Workout
                 </button>
-                <button onClick={handleMarkCompleted} className="w-full py-2 text-xs text-sl-gray-light/60 hover:text-sl-gray-light/80 transition border border-sl-purple/10 rounded-xl">
-                  Mark as Completed
-                </button>
               </div>
             </div>
           )}
@@ -474,7 +630,7 @@ const Planner = () => {
             </div>
 
             <div className="flex gap-1.5 mb-4 overflow-x-auto">
-              {DAY_TYPES.map(dt => (
+              {DAY_TYPES.filter(dt => dt.id !== 'rest' && dt.id !== 'cardio').map(dt => (
                 <button key={dt.id} onClick={() => handleAssignDayType(activeDay, dt.id)}
                   className="flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-semibold transition bg-sl-gray/20 hover:bg-sl-gray/30 text-sl-gray-light border border-sl-gray/20 whitespace-nowrap touch-target">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={dt.icon} /></svg>
@@ -485,7 +641,7 @@ const Planner = () => {
 
             <div className="flex gap-3 mb-4 border-b border-sl-purple/15 pb-2">
               {['templates', 'custom', 'musclegroups'].map(tab => (
-                <button key={tab} onClick={() => { setModalTab(tab); setMgActiveGroup(null); setMgActiveSplit(null); }}
+                <button key={tab} onClick={() => { setModalTab(tab); setMgActiveGroup(null); setMgActiveSplit(null); setCustomExerciseName(''); setCustomExerciseSets(3); setEditingExerciseId(null); setEditExerciseName(''); }}
                   className={`text-xs font-semibold pb-2 border-b-2 transition -mb-[10px] capitalize ${modalTab === tab ? 'text-sl-purple-light border-sl-purple' : 'text-sl-gray-light border-transparent hover:text-white'}`}>
                   {tab === 'musclegroups' ? 'Groups' : tab}
                 </button>
@@ -595,7 +751,7 @@ const Planner = () => {
                       {filteredExercises.map(ex => {
                         const isSelected = selectedExercises.some(e => e.exerciseId === ex.id);
                         return (
-                          <button key={ex.id} onClick={() => isSelected ? handleRemoveExercise(ex.id) : handleAddExercise(ex)}
+                          <button key={ex.id} onClick={() => isSelected ? handleRemoveExercise(ex.id) : handleAssignExercise(ex)}
                             className={`w-full text-left p-2 rounded-xl border transition flex items-center justify-between ${isSelected ? 'bg-sl-purple/15 border-sl-purple/40' : 'bg-sl-gray/10 border-sl-purple/10'}`}>
                             <div className="min-w-0 flex-1">
                               <span className="text-xs font-medium text-white truncate block">{ex.name}</span>
@@ -616,23 +772,57 @@ const Planner = () => {
                     <div className="space-y-1.5 max-h-40 overflow-y-auto">
                       {selectedExercises.map(ex => (
                         <div key={ex.exerciseId} className="p-2 rounded-xl bg-sl-gray/10 border border-sl-purple/10">
-                          <div className="flex justify-between items-center mb-1.5">
-                            <span className="text-xs font-semibold text-white">{ex.name}</span>
-                            <button onClick={() => handleRemoveExercise(ex.exerciseId)} className="text-red-400 text-[10px]">Remove</button>
+                          <div className="flex items-center gap-1 mb-1.5">
+                            {editingExerciseId === ex.exerciseId ? (
+                              <input type="text" value={editExerciseName}
+                                onChange={e => setEditExerciseName(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
+                                onBlur={handleSaveEdit}
+                                className="holo-input text-xs py-1 flex-1 min-w-0"
+                                autoFocus />
+                            ) : (
+                              <span className="text-xs font-semibold text-white truncate flex-1">{ex.name}</span>
+                            )}
+                            <div className="flex gap-1 shrink-0">
+                              {editingExerciseId === ex.exerciseId ? (
+                                <button onClick={handleSaveEdit} className="text-emerald-400 text-[10px]">Save</button>
+                              ) : (
+                                <button onClick={() => handleStartEdit(ex)} className="text-sl-purple-light text-[10px]">Edit</button>
+                              )}
+                              <button onClick={() => handleRemoveExercise(ex.exerciseId)} className="text-red-400 text-[10px]">Remove</button>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-3 gap-1.5">
+                          <div className="grid grid-cols-1 gap-1.5">
                             <div><label className="text-[8px] text-sl-gray-light block font-semibold">Sets</label>
                               <input type="number" min="1" max="20" value={ex.sets} onChange={e => handleUpdateExercise(ex.exerciseId, 'sets', parseInt(e.target.value) || 1)} className="holo-input text-center text-xs py-1" /></div>
-                            <div><label className="text-[8px] text-sl-gray-light block font-semibold">Reps</label>
-                              <input type="number" min="1" max="100" value={ex.reps} onChange={e => handleUpdateExercise(ex.exerciseId, 'reps', parseInt(e.target.value) || 1)} className="holo-input text-center text-xs py-1" /></div>
-                            <div><label className="text-[8px] text-sl-gray-light block font-semibold">Weight</label>
-                              <input type="number" min="0" max="999" value={ex.weight} onChange={e => handleUpdateExercise(ex.exerciseId, 'weight', parseFloat(e.target.value) || 0)} className="holo-input text-center text-xs py-1" /></div>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
+
+                <div>
+                  <p className="text-[10px] text-sl-purple/60 uppercase tracking-widest font-bold mb-2">
+                    Assign Custom Exercise {selectedExercises.length > 0 && <span className="text-sl-gray-light/50">({selectedExercises.length}/10)</span>}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input type="text" placeholder="Exercise name" value={customExerciseName}
+                      onChange={e => setCustomExerciseName(e.target.value)}
+                      className="holo-input text-sm flex-1" />
+                    <div className="w-16 shrink-0">
+                      <input type="number" min="1" max="20" value={customExerciseSets}
+                        onChange={e => setCustomExerciseSets(parseInt(e.target.value) || 3)}
+                        className="holo-input text-center text-xs py-2" />
+                    </div>
+                    <button onClick={handleAssignCustomExercise}
+                      disabled={!customExerciseName.trim() || selectedExercises.length >= 10}
+                      className="bg-sl-purple/20 hover:bg-sl-purple/30 text-sl-purple-light border border-sl-purple/30 px-3 py-2 rounded-xl text-xs font-semibold transition disabled:opacity-50 shrink-0">
+                      Assign
+                    </button>
+                  </div>
+                  <p className="text-[8px] text-sl-gray-light/50 mt-1">Type any exercise name and set the number of sets</p>
+                </div>
               </div>
             )}
 

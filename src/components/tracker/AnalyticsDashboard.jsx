@@ -154,7 +154,6 @@ export default function AnalyticsDashboard({ workoutHistory, personalRecords, us
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
-        <h2 className="text-lg font-bold gradient-text">Analytics</h2>
       </div>
 
       {showPlaceholder ? (

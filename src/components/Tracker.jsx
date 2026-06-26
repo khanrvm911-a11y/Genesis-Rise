@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLevel } from '../context/LevelContext';
 import { usePowerLevel } from '../context/PowerLevelContext';
 import { useWorkout } from '../context/WorkoutContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
+import { TODAYS_WORKOUT_CHANGED } from '../utils/syncEvents';
 import {
   calculateWorkoutXP,
   calculatePRXP,
@@ -15,58 +18,60 @@ import {
   calculateWorkoutCalories,
   calculateExerciseCalories,
 } from '../utils/calorieUtils';
-import WorkoutTypeSelector from './tracker/WorkoutTypeSelector';
-import ExerciseLibrary from './tracker/ExerciseLibrary';
-import CustomWorkoutBuilder from './tracker/CustomWorkoutBuilder';
 import ActiveWorkoutMode from './tracker/ActiveWorkoutMode';
 import WorkoutCompleteScreen from './tracker/WorkoutCompleteScreen';
 import AnalyticsDashboard from './tracker/AnalyticsDashboard';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Moon } from 'lucide-react';
 
-const MUSCLE_GROUPS = [
-  { id: 'Chest', name: 'Chest Arsenal' },
-  { id: 'Back', name: 'Back Arsenal' },
-  { id: 'Shoulders', name: 'Shoulders' },
-  { id: 'Arms', name: 'Arms' },
-  { id: 'Legs', name: 'Legion Training (Legs)' },
-  { id: 'Core', name: 'Core' },
-  { id: 'Cardio', name: 'Cardio' },
-];
+const STORAGE_KEY_SESSION = 'gr_active_workout_session';
+const STORAGE_KEY_TODAYS_WORKOUT = 'gr_todays_workout';
+const STORAGE_KEY_SCHEDULE = 'gr_workout_schedule';
 
 export default function Tracker() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { level, xp, progress, addXP, title } = useLevel();
-  const { powerLevel, weeklyChange, addPowerLevel } = usePowerLevel();
+  const { powerLevel, addPowerLevel } = usePowerLevel();
+  const { addNotification } = useNotification();
   const {
     exercises,
     logWorkout,
     workoutHistory,
     personalRecords,
-    getPersonalRecord,
-    getPersonalRecordDetail,
-    getPersonalRecordFull,
     checkForNewPR,
-    suggestProgressiveOverload,
     updateUserSettings,
-    getLastPerformance,
     missionProgress,
     resetDailyMission,
-    workoutTemplates,
-    addWorkoutTemplate,
-    removeWorkoutTemplate,
     userSettings,
   } = useWorkout();
 
-  const [workflowStep, setWorkflowStep] = useState('workoutType');
-  const [workoutType, setWorkoutType] = useState(null);
-  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState(null);
-  const [selectedExercise, setSelectedExercise] = useState(null);
+  const [workflowStep, setWorkflowStep] = useState('idle');
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [workoutExercises, setWorkoutExercises] = useState([]);
-  const [workoutStartTime, setWorkoutStartTime] = useState(null);
   const [workoutName, setWorkoutName] = useState('');
   const [workoutCompleteData, setWorkoutCompleteData] = useState(null);
-  const [showAnalytics, setShowAnalytics] = useState(false);
+
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [sessionActiveTime, setSessionActiveTime] = useState(0);
+  const [sessionIsResting, setSessionIsResting] = useState(false);
+  const [isTodayCompleted, setIsTodayCompleted] = useState(false);
+  const [todayDayType, setTodayDayType] = useState(null);
+  const [syncKey, setSyncKey] = useState(0);
+
+  useEffect(() => {
+    const handler = () => setSyncKey(k => k + 1);
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') setSyncKey(k => k + 1);
+    };
+    window.addEventListener(TODAYS_WORKOUT_CHANGED, handler);
+    document.addEventListener('visibilitychange', refreshOnFocus);
+    window.addEventListener('focus', refreshOnFocus);
+    return () => {
+      window.removeEventListener(TODAYS_WORKOUT_CHANGED, handler);
+      document.removeEventListener('visibilitychange', refreshOnFocus);
+      window.removeEventListener('focus', refreshOnFocus);
+    };
+  }, []);
 
   useEffect(() => {
     if (user && (!userSettings.weight || userSettings.weight <= 0)) {
@@ -81,71 +86,99 @@ export default function Tracker() {
     }
   }, [missionProgress.lastReset]);
 
-  const resetWorkoutState = () => {
-    setWorkoutType(null);
-    setSelectedMuscleGroup(null);
-    setSelectedExercise(null);
-    setWorkoutExercises([]);
-    setCurrentExerciseIndex(0);
-    setWorkoutStartTime(null);
-    setWorkoutName('');
-    setWorkoutCompleteData(null);
-  };
-
-  const handleWorkoutTypeSelect = (type) => {
-    setWorkoutType(type);
-    if (type === 'prebuilt') {
-      setSelectedMuscleGroup(MUSCLE_GROUPS[0].id);
-      setWorkflowStep('exerciseSelection');
-    } else {
-      setWorkflowStep('customWorkout');
-    }
-  };
-
-  const handleBackToHome = () => {
-    resetWorkoutState();
-    setWorkflowStep('workoutType');
-  };
-
-  const handleMuscleGroupSelect = (group) => {
-    setSelectedMuscleGroup(group);
-  };
-
-  const handleExerciseSelect = (exercise) => {
-    setSelectedExercise(exercise);
-    setWorkoutExercises([exercise]);
-    setCurrentExerciseIndex(0);
-    setWorkoutStartTime(Date.now());
-    setWorkoutName(exercise.name);
-    setWorkflowStep('activeWorkout');
-  };
-
-  const handleCustomWorkoutComplete = (workout) => {
-    if (!workout.exercises || workout.exercises.length === 0) return;
-
-    const exercisesWithData = workout.exercises.map(e => {
+  const loadExercisesWithData = (data) => {
+    return data.exercises.map(e => {
       const exData = exercises.find(ex => ex.id === e.exerciseId);
-      const data = exData || { id: e.exerciseId, name: e.name || 'Unknown', trackingType: 'weight', difficulty: 'Intermediate', xpReward: 20, muscleGroup: 'Other', equipment: 'Free Weight' };
+      const fallback = {
+        id: e.exerciseId,
+        name: e.name || 'Unknown',
+        trackingType: e.trackingType || 'weight',
+        difficulty: e.difficulty || 'Intermediate',
+        xpReward: e.xpReward || 20,
+        muscleGroup: e.muscleGroup || 'Other',
+        equipment: e.equipment || '',
+      };
       return {
-        ...e,
-        id: data.id,
-        name: data.name,
-        trackingType: data.trackingType,
-        muscleGroup: data.muscleGroup,
-        equipment: data.equipment,
-        difficulty: data.difficulty,
-        xpReward: data.xpReward,
-        exerciseData: data,
-        _sets: [],
+        exerciseId: e.exerciseId,
+        name: (exData || fallback).name,
+        sets: e.sets,
+        reps: e.reps,
+        weight: e.weight,
+        trackingType: (exData || fallback).trackingType,
+        muscleGroup: (exData || fallback).muscleGroup,
+        equipment: (exData || fallback).equipment,
+        difficulty: (exData || fallback).difficulty,
+        xpReward: (exData || fallback).xpReward,
+        exerciseData: exData || fallback,
+        _sets: e._sets || [],
       };
     });
+  };
 
-    setWorkoutExercises(exercisesWithData);
-    setWorkoutName(workout.name || 'Custom Workout');
+  useEffect(() => {
+    const activeSession = localStorage.getItem(STORAGE_KEY_SESSION);
+    if (activeSession) {
+      try {
+        const data = JSON.parse(activeSession);
+        const age = Date.now() - (data.lastUpdated || 0);
+        if (age < 86400000 && data.exercises?.length > 0) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          const loaded = loadExercisesWithData(data);
+          setWorkoutExercises(loaded);
+          setWorkoutName(data.workoutName || 'Workout');
+          setCurrentExerciseIndex(data.currentExerciseIndex || 0);
+          setSessionStarted(data.started || false);
+          setSessionActiveTime(data.activeTime || 0);
+          setSessionIsResting(data.isResting || false);
+          setWorkflowStep('activeWorkout');
+          return;
+        }
+        localStorage.removeItem(STORAGE_KEY_SESSION);
+      } catch { /* invalid session data */ }
+    }
+
+    const todayWorkout = localStorage.getItem(STORAGE_KEY_TODAYS_WORKOUT);
+    if (todayWorkout) {
+      try {
+        const data = JSON.parse(todayWorkout);
+        const today = new Date().toISOString().split('T')[0];
+        if (data.date === today && data.exercises?.length > 0) {
+          const loaded = loadExercisesWithData(data);
+          setWorkoutExercises(loaded);
+          setWorkoutName(data.name || "Today's Workout");
+          setWorkflowStep('idle');
+          return;
+        }
+      } catch { /* invalid today workout data */ }
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const completed = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
+    if (completed.includes(todayStr)) {
+      setIsTodayCompleted(true);
+    }
+
+    const schedule = JSON.parse(localStorage.getItem(STORAGE_KEY_SCHEDULE) || '{}');
+    const todayPlan = schedule[todayStr];
+    if (todayPlan && todayPlan.type !== 'workout' && !completed.includes(todayStr)) {
+      setTodayDayType(todayPlan.type);
+    } else {
+      setTodayDayType(null);
+    }
+  }, [syncKey]);
+
+  const resetWorkoutState = () => {
     setCurrentExerciseIndex(0);
-    setSelectedExercise(exercisesWithData[0]);
-    setWorkoutStartTime(Date.now());
-    setWorkflowStep('activeWorkout');
+    setWorkoutExercises([]);
+    setWorkoutName('');
+    setWorkoutCompleteData(null);
+    setSessionStarted(false);
+    setSessionActiveTime(0);
+    setSessionIsResting(false);
+  };
+
+  const handleBack = () => {
+    navigate('/planner');
   };
 
   const handleUpdateExerciseSets = (index, sets) => {
@@ -156,24 +189,27 @@ export default function Tracker() {
 
   const handleGoToNextExercise = () => {
     if (currentExerciseIndex < workoutExercises.length - 1) {
-      const nextIndex = currentExerciseIndex + 1;
-      setCurrentExerciseIndex(nextIndex);
-      setSelectedExercise(workoutExercises[nextIndex]);
+      setCurrentExerciseIndex(prev => prev + 1);
+      setSessionIsResting(false);
     } else {
       handleCompleteWorkout();
     }
   };
 
-  const handleCompleteWorkout = () => {
-    const endTime = Date.now();
-    const durationMs = workoutStartTime ? (endTime - workoutStartTime) : 0;
-    const durationMinutes = Math.max(1, Math.floor(durationMs / 60000));
+  const handleCompleteWorkout = (finalActiveTime) => {
+    setSessionStarted(false);
+    setSessionIsResting(false);
 
-    const exerciseLogs = workoutExercises.map(ex => ({
+    const finalExercises = workoutExercises;
+
+    const exerciseLogs = finalExercises.map(ex => ({
       exerciseId: ex.exerciseId || ex.id,
       exerciseData: ex.exerciseData || ex,
       sets: ex._sets || [],
     }));
+
+    const durationSeconds = finalActiveTime || 0;
+    const durationMinutes = Math.max(1, Math.floor(durationSeconds / 60));
 
     const workoutForCalories = { exercises: exerciseLogs };
     const userWeight = userSettings.weight || 70;
@@ -182,7 +218,7 @@ export default function Tracker() {
     let totalVolume = 0;
     let totalSets = 0;
 
-    workoutExercises.forEach(ex => {
+    finalExercises.forEach(ex => {
       (ex._sets || []).forEach(set => {
         totalVolume += (parseFloat(set.weight) || 0) * (parseInt(set.reps) || 0);
         totalSets++;
@@ -193,12 +229,12 @@ export default function Tracker() {
       duration: durationMinutes,
       calories: totalCalories,
       totalVolume,
-      exercisesCount: workoutExercises.length,
+      exercisesCount: finalExercises.length,
       totalSets,
     });
 
     const prsFound = [];
-    workoutExercises.forEach(ex => {
+    finalExercises.forEach(ex => {
       (ex._sets || []).forEach(set => {
         const weight = parseFloat(set.weight) || 0;
         const reps = parseInt(set.reps) || 0;
@@ -230,16 +266,35 @@ export default function Tracker() {
       xpGained: totalXP,
       prs: prsFound,
       totalSets,
-      exercisesCount: workoutExercises.length,
+      exercisesCount: finalExercises.length,
     };
 
     logWorkout(workoutToLog);
     addXP(totalXP);
 
+    addNotification(
+      'Workout Completed',
+      `Great job! You earned ${totalXP} XP ${prsFound.length > 0 ? `and set ${prsFound.length} new PR${prsFound.length > 1 ? 's' : ''}` : ''}.`,
+      'workout',
+      'workout',
+      '/tracker'
+    );
+
+    const levelAfter = calculateLevelFromXP(xp + totalXP);
+    if (levelAfter > level) {
+      addNotification(
+        'Level Up!',
+        `Congratulations! You reached Level ${levelAfter}.`,
+        'achievement',
+        'achievement',
+        '/profile'
+      );
+    }
+
     const powerGain = Math.floor(totalVolume * 0.005) + Math.floor(durationMinutes / 5) + prsFound.length * 10;
     addPowerLevel(powerGain);
 
-    const calorieBreakdown = workoutExercises.map(ex => {
+    const calorieBreakdown = finalExercises.map(ex => {
       const sets = ex._sets || [];
       const exCalories = calculateExerciseCalories(
         ex.exerciseId || ex.id,
@@ -260,8 +315,7 @@ export default function Tracker() {
       xpGained: totalXP,
       prXP,
       powerGain,
-      exerciseName: workoutExercises.map(e => e.name).join(', '),
-      exercisesCompleted: workoutExercises.filter(ex => (ex._sets || []).length > 0).length,
+      exercisesCompleted: finalExercises.filter(ex => (ex._sets || []).length > 0).length,
       totalSets,
       newPRs: prsFound,
       progressBefore: progress,
@@ -280,33 +334,48 @@ export default function Tracker() {
     });
 
     setWorkflowStep('complete');
+    localStorage.removeItem(STORAGE_KEY_SESSION);
+    localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const completed = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
+    if (!completed.includes(todayStr)) {
+      completed.push(todayStr);
+      localStorage.setItem('gr_completed_workouts', JSON.stringify(completed));
+    }
   };
 
   const handleNewWorkout = () => {
+    localStorage.removeItem(STORAGE_KEY_SESSION);
+    localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
     resetWorkoutState();
-    setWorkflowStep('workoutType');
+    setWorkflowStep('idle');
   };
 
   const handleViewAnalytics = () => {
-    setShowAnalytics(true);
     setWorkflowStep('analytics');
   };
 
-  const handleBackFromAnalytics = () => {
-    setShowAnalytics(false);
-    setWorkflowStep(workoutCompleteData ? 'complete' : 'workoutType');
+  const handleReturnToPlanner = () => {
+    localStorage.removeItem(STORAGE_KEY_SESSION);
+    localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
+    resetWorkoutState();
+    navigate('/planner');
   };
 
-  const getExercisesByGroup = (group) => {
-    if (!group || !exercises) return [];
-    return exercises.filter(ex => ex.muscleGroup === group);
+  const handleBackFromAnalytics = () => {
+    setWorkflowStep(workoutCompleteData ? 'complete' : 'idle');
+  };
+
+  const handleWorkoutStarted = () => {
+    setSessionStarted(true);
+    setSessionActiveTime(0);
+    setSessionIsResting(false);
   };
 
   const stepTitle = () => {
     switch (workflowStep) {
-      case 'workoutType': return 'Tracker';
-      case 'exerciseSelection': return selectedMuscleGroup ? `${selectedMuscleGroup} Exercises` : 'Select Muscle Group';
-      case 'customWorkout': return 'Custom Workout';
+      case 'idle': return 'Tracker';
       case 'activeWorkout': return workoutName || 'Active Workout';
       case 'complete': return 'Workout Complete';
       case 'analytics': return 'Analytics';
@@ -314,7 +383,8 @@ export default function Tracker() {
     }
   };
 
-  const showBackButton = workflowStep !== 'workoutType' && workflowStep !== 'analytics';
+  const showBackButton = workflowStep === 'activeWorkout';
+  const todaysWorkoutName = workoutExercises.length > 0 ? workoutName : null;
 
   return (
     <div className="min-h-screen bg-sl-gradient">
@@ -322,7 +392,7 @@ export default function Tracker() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             {showBackButton && (
-              <button onClick={handleBackToHome} className="flex items-center gap-1 text-sl-gray-light hover:text-white text-sm touch-target">
+              <button onClick={handleBack} className="flex items-center gap-1 text-sl-gray-light hover:text-white text-sm touch-target">
                 <ArrowLeft className="w-4 h-4" />
               </button>
             )}
@@ -331,76 +401,100 @@ export default function Tracker() {
             </h1>
           </div>
           {workflowStep === 'complete' && (
-            <button onClick={handleNewWorkout} className="holo-button holo-button-primary px-4 py-2 text-sm">
-              New Workout
+            <button onClick={handleReturnToPlanner} className="holo-button px-4 py-2 text-sm">
+              Return to Planner
             </button>
           )}
         </div>
 
-        {workflowStep === 'workoutType' && (
-          <WorkoutTypeSelector
-            onSelect={handleWorkoutTypeSelect}
-            onViewAnalytics={() => {
-              setShowAnalytics(true);
-              setWorkflowStep('analytics');
-            }}
-          />
-        )}
-
-        {workflowStep === 'exerciseSelection' && (
-          <div className="space-y-3">
-            <div className="flex gap-2 overflow-x-auto py-1 scrollbar-none -mx-1 px-1">
-              {MUSCLE_GROUPS.map(group => (
-                <button
-                  key={group.id}
-                  onClick={() => setSelectedMuscleGroup(group.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap touch-target ${
-                    selectedMuscleGroup === group.id
-                      ? 'bg-sl-purple text-white shadow-lg'
-                      : 'bg-sl-gray/20 text-sl-gray-light hover:bg-sl-gray/30'
-                  }`}
-                >
-                  {group.name}
+        {workflowStep === 'idle' && (
+          <>
+            {todaysWorkoutName ? (
+              <div className="flex flex-col items-center justify-center text-center py-12">
+                <div className="w-20 h-20 bg-sl-purple/10 rounded-full flex items-center justify-center border border-sl-purple/30 mb-5">
+                  <Dumbbell className="w-10 h-10 text-sl-purple-light" />
+                </div>
+                <h2 className="text-lg font-bold text-white mb-1">Today's Workout</h2>
+                <p className="text-sm text-sl-gray-light mb-6">{todaysWorkoutName}</p>
+                <div className="w-full max-w-xs space-y-2 mb-4">
+                  {workoutExercises.map((ex, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-sl-gray/20 rounded-xl px-4 py-2.5">
+                      <span className="text-sm font-medium text-white">{ex.name}</span>
+                      <span className="text-xs text-sl-gray-light font-semibold">{ex.sets}x{ex.reps}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="w-full max-w-xs">
+                  <button onClick={() => { setWorkflowStep('activeWorkout'); handleWorkoutStarted(); }} className="w-full holo-button holo-button-primary text-lg py-4 font-bold">
+                    Start Workout
+                  </button>
+                  <p className="text-[10px] text-red-400/80 text-center mt-2 leading-relaxed">
+                    Warning!: If you close, minimize or visit any other page during set the set will be deleted..!! STAY FOCUSED..
+                  </p>
+                </div>
+              </div>
+            ) : isTodayCompleted ? (
+              <div className="flex flex-col items-center justify-center text-center py-16">
+                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/30 mb-4">
+                  <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-bold text-emerald-400 mb-2">Workout Complete</h2>
+                <p className="text-sm text-sl-gray-light mb-6 max-w-xs leading-relaxed">
+                  Your assigned workout has been completed. To start a new session, please assign a workout in the Planner.
+                </p>
+                <button onClick={() => navigate('/planner')} className="holo-button holo-button-primary px-6 py-3 text-sm">
+                  Go to Planner
                 </button>
-              ))}
-            </div>
-
-            <ExerciseLibrary
-              muscleGroup={selectedMuscleGroup}
-              onSelectExercise={handleExerciseSelect}
-              onBack={handleBackToHome}
-              exercises={getExercisesByGroup(selectedMuscleGroup)}
-              getLastPerformance={getLastPerformance}
-            />
-          </div>
+              </div>
+            ) : todayDayType ? (
+              <div className="flex flex-col items-center text-center py-16">
+                <div className="w-20 h-20 rounded-full bg-sl-purple/5 flex items-center justify-center border border-sl-purple/20 mb-4">
+                  <Moon className="w-10 h-10 text-sl-purple" />
+                </div>
+                <h2 className="text-lg font-bold text-white mb-3">Rest Day</h2>
+                <p className="text-sm text-sl-gray-light max-w-xs leading-relaxed">
+                  Today is your scheduled rest day. Take time to relax, stay hydrated, stretch lightly, and prepare for tomorrow's workout.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center py-16">
+                <div className="w-20 h-20 bg-sl-purple/5 rounded-full flex items-center justify-center border border-sl-purple/20 mb-4">
+                  <svg className="w-10 h-10 text-sl-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-bold text-white mb-2">No Workout Assigned</h2>
+                <p className="text-sm text-sl-gray-light mb-6 max-w-xs">
+                  Head to the Planner to assign a workout for today.
+                </p>
+                <button onClick={() => navigate('/planner')} className="holo-button holo-button-primary px-6 py-3 text-sm">
+                  Go to Planner
+                </button>
+              </div>
+            )}
+          </>
         )}
 
-        {workflowStep === 'customWorkout' && (
-          <CustomWorkoutBuilder
-            onComplete={handleCustomWorkoutComplete}
-            onBack={handleBackToHome}
-            onReset={handleBackToHome}
-            exercises={exercises}
-            templates={workoutTemplates}
-            addWorkoutTemplate={addWorkoutTemplate}
-            removeWorkoutTemplate={removeWorkoutTemplate}
-          />
-        )}
-
-        {workflowStep === 'activeWorkout' && selectedExercise && (
+        {workflowStep === 'activeWorkout' && workoutExercises.length > 0 && (
           <ActiveWorkoutMode
             key={`exercise-${currentExerciseIndex}`}
-            exercise={selectedExercise}
+            exercise={workoutExercises[currentExerciseIndex]}
             exerciseIndex={currentExerciseIndex}
             totalExercises={workoutExercises.length}
             workoutName={workoutName}
-            onSkipExercise={handleGoToNextExercise}
+            workoutExercises={workoutExercises}
+            onGoToNextExercise={handleGoToNextExercise}
             onCompleteWorkout={handleCompleteWorkout}
-            onReset={handleBackToHome}
+            onUpdateSets={handleUpdateExerciseSets}
             checkForNewPR={checkForNewPR}
             userSettings={userSettings}
-            userWeight={userSettings.weight || 70}
-            onUpdateSets={handleUpdateExerciseSets}
+            initialSets={workoutExercises[currentExerciseIndex]._sets || []}
+            initialStarted={sessionStarted}
+            initialActiveTime={sessionActiveTime}
+            initialIsResting={sessionIsResting}
+            onWorkoutStarted={handleWorkoutStarted}
           />
         )}
 
@@ -409,6 +503,7 @@ export default function Tracker() {
             data={workoutCompleteData}
             onNewWorkout={handleNewWorkout}
             onViewAnalytics={handleViewAnalytics}
+            onReturnToPlanner={handleReturnToPlanner}
             level={level}
             xp={xp}
             progress={progress}

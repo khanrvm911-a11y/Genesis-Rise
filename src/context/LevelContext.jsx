@@ -22,15 +22,8 @@ export const LevelProvider = ({ children }) => {
 
   useEffect(() => {
     if (!user) {
-      const savedXP = localStorage.getItem('sl_user_xp');
-      const savedLevel = localStorage.getItem('sl_user_level');
-      if (savedXP !== null && savedLevel !== null) {
-        setXp(parseInt(savedXP, 10));
-        setLevel(parseInt(savedLevel, 10));
-      } else {
-        setXp(0);
-        setLevel(1);
-      }
+      setXp(0);
+      setLevel(1);
       setLoading(false);
       return;
     }

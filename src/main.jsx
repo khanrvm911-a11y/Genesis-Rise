@@ -5,6 +5,8 @@ import { LevelProvider } from './context/LevelContext.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { WorkoutProvider } from './context/WorkoutContext.jsx'
 import { PowerLevelProvider } from './context/PowerLevelContext.jsx'
+import { AvatarProvider } from './context/AvatarContext.jsx'
+import { NotificationProvider } from './context/NotificationContext.jsx'
 import { HelmetProvider } from 'react-helmet-async'
 import './index.css'
 import App from './App.jsx'
@@ -14,6 +16,8 @@ createRoot(document.getElementById('root')).render(
     <HelmetProvider>
       <BrowserRouter>
         <AuthProvider>
+          <AvatarProvider>
+          <NotificationProvider>
           <LevelProvider>
             <PowerLevelProvider>
               <WorkoutProvider>
@@ -21,6 +25,8 @@ createRoot(document.getElementById('root')).render(
               </WorkoutProvider>
             </PowerLevelProvider>
           </LevelProvider>
+          </NotificationProvider>
+          </AvatarProvider>
         </AuthProvider>
       </BrowserRouter>
     </HelmetProvider>

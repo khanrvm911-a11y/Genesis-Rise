@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Heart, Weight, Ruler, Clock, Activity } from 'lucide-react';
+import DailyGoals from './health/DailyGoals';
 
 const Health = () => {
   const [metrics, setMetrics] = useState({
@@ -82,6 +83,8 @@ const Health = () => {
             </p>
           )}
         </div>
+
+        <DailyGoals />
 
         <div className="mobile-card p-4">
           <h2 className="text-base font-bold text-sl-purple-light mb-3 flex items-center gap-2 border-b border-sl-purple/15 pb-2">

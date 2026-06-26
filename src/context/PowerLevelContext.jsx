@@ -10,18 +10,11 @@ export const PowerLevelProvider = ({ children }) => {
   const [weeklyChange, setWeeklyChange] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Fetch power level from Supabase or localStorage
+  // Fetch power level from Supabase
   useEffect(() => {
     if (!user) {
-      // No user, load from localStorage
-      const savedPowerLevel = localStorage.getItem('sl_power_level');
-      const savedWeeklyChange = localStorage.getItem('sl_weekly_change');
-      if (savedPowerLevel !== null) {
-        setPowerLevel(parseInt(savedPowerLevel, 10));
-      }
-      if (savedWeeklyChange !== null) {
-        setWeeklyChange(parseInt(savedWeeklyChange, 10));
-      }
+      setPowerLevel(0);
+      setWeeklyChange(0);
       setLoading(false);
       return;
     }

@@ -4,6 +4,7 @@ export default function WorkoutCompleteScreen({
   data,
   onNewWorkout,
   onViewAnalytics,
+  onReturnToPlanner,
   level,
   xp,
   progress,
@@ -117,6 +118,9 @@ export default function WorkoutCompleteScreen({
       </div>
 
       <div className="flex gap-3">
+        <button onClick={onReturnToPlanner} className="holo-button flex-1 text-center text-sm py-4">
+          Return to Planner
+        </button>
         <button onClick={onNewWorkout} className="holo-button holo-button-primary flex-1 text-center text-sm py-4">
           New Workout
         </button>

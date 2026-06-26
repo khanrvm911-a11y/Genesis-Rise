@@ -6,6 +6,17 @@ const AuthContext = createContext();
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
 
+function isEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function generateUsername(email) {
+  let base = email ? email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '') : 'user';
+  if (base.length < 2) base = 'user' + base;
+  const suffix = Math.random().toString(36).substring(2, 6);
+  return `${base}_${suffix}`;
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,6 +24,7 @@ export const AuthProvider = ({ children }) => {
   const [sessionExpiresAt, setSessionExpiresAt] = useState(null);
   const inactivityTimer = useRef(null);
   const sessionCheckTimer = useRef(null);
+  const initializingGoogleUser = useRef(false);
 
   const clearTimers = () => {
     if (inactivityTimer.current) {
@@ -25,11 +37,61 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkAndInitializeGoogleUser = useCallback(async (currentUser) => {
+    if (!currentUser || initializingGoogleUser.current) return;
+    initializingGoogleUser.current = true;
+    try {
+      const email = currentUser.email;
+      const metadata = currentUser.user_metadata || {};
+
+      const hasUsername = metadata.username;
+      if (hasUsername) return;
+
+      const username = generateUsername(email);
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { username },
+      });
+      if (updateError) throw updateError;
+
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        await supabase
+          .from('profiles')
+          .update({ username })
+          .eq('id', currentUser.id);
+      } else {
+        await supabase.from('profiles').insert({
+          id: currentUser.id,
+          email,
+          username,
+          level: 1,
+          xp: 0,
+          rank: 'Initiate',
+        });
+      }
+
+      localStorage.setItem('sl_user_xp', '0');
+      localStorage.setItem('sl_user_level', '1');
+    } catch (err) {
+      console.error('Failed to initialize Google user:', err);
+    } finally {
+      initializingGoogleUser.current = false;
+    }
+  }, []);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUser(session.user ?? null);
         setSessionExpiresAt(session.expires_at ? session.expires_at * 1000 : null);
+        if (session.user && session.user.app_metadata?.provider === 'google') {
+          checkAndInitializeGoogleUser(session.user);
+        }
       } else {
         setUser(null);
         setSessionExpiresAt(null);
@@ -38,18 +100,22 @@ export const AuthProvider = ({ children }) => {
     });
 
     const {
-      data: { subscription }
+      data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
       setSessionExpiresAt(session?.expires_at ? session.expires_at * 1000 : null);
       setLoading(false);
+      if (currentUser && currentUser.app_metadata?.provider === 'google') {
+        checkAndInitializeGoogleUser(currentUser);
+      }
     });
 
     return () => {
       subscription.unsubscribe();
       clearTimers();
     };
-  }, []);
+  }, [checkAndInitializeGoogleUser]);
 
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer.current) {
@@ -94,30 +160,53 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, sessionExpiresAt, resetInactivityTimer]);
 
-  useEffect(() => {
-    if (user && !user.email_confirmed_at) {
-      supabase.auth.signOut().then(() => {
-        setUser(null);
-        setError('Please verify your email before logging in. A verification link has been sent to your email.');
-      });
-    }
-  }, [user]);
 
-  const login = async (email, password) => {
+
+  const login = async (identifier, password) => {
     setError(null);
     try {
+      let email = identifier;
+
+      if (!isEmail(identifier)) {
+        const { data, error: lookupError } = await supabase.rpc('get_email_by_username', {
+          input_username: identifier,
+        });
+        if (lookupError || !data) {
+          throw new Error('Invalid login credentials');
+        }
+        email = data;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
-      if (data.user && !data.user.email_confirmed_at) {
-        await supabase.auth.signOut();
-        throw new Error('Please verify your email before logging in. A verification link has been sent to your email.');
-      }
       return data;
     } catch (err) {
       const message = err.message || 'Login failed';
+      setError(message);
+      throw err;
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/login`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      const message = err.message || 'Google sign-in failed';
       setError(message);
       throw err;
     }
@@ -142,6 +231,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkUsernameExists = async (username) => {
+    try {
+      const { data, error } = await supabase.rpc('check_username_exists', {
+        input_username: username,
+      });
+      if (error) return false;
+      return data;
+    } catch {
+      return false;
+    }
+  };
+
+  const checkEmailExists = async (email) => {
+    try {
+      const { data, error } = await supabase.rpc('check_email_exists', {
+        input_email: email,
+      });
+      if (error) return false;
+      return data;
+    } catch {
+      return false;
+    }
+  };
+
   const logout = async () => {
     setError(null);
     try {
@@ -151,6 +264,14 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       setError(err.message);
       throw err;
+    } finally {
+      localStorage.removeItem('sl_user_xp');
+      localStorage.removeItem('sl_user_level');
+      localStorage.removeItem('sl_power_level');
+      localStorage.removeItem('sl_weekly_change');
+      localStorage.removeItem('gr_avatar');
+      localStorage.removeItem('gr_avatar_type');
+      localStorage.removeItem('gr_remember_identifier');
     }
   };
 
@@ -172,7 +293,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const { data, error } = await supabase.auth.updateUser({
-        password: password,
+        password,
       });
       if (error) throw error;
       return data;
@@ -216,11 +337,14 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     register,
+    signInWithGoogle,
     logout,
     forgotPassword,
     resetPassword,
     sendVerificationEmail,
     updateUser,
+    checkUsernameExists,
+    checkEmailExists,
     clearError,
   };
 
