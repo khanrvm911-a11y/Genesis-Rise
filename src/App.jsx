@@ -31,7 +31,7 @@ const NAV_ITEMS = [
 
 function App() {
   const { level, xp, progress, title, xpForNext } = useLevel();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const { avatar, avatarType } = useAvatar();
 
   const AVATAR_PRESETS = [
@@ -61,6 +61,7 @@ function App() {
   const isPublicPage = publicPaths.includes(location.pathname);
 
   if (!user && !isPublicPage) {
+    if (loading) return null;
     return <Navigate to="/login" replace={true} />;
   }
 

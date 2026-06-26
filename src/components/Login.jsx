@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoginTransition from './LoginTransition';
 import VideoBackground from './VideoBackground';
 
 const Login = () => {
-  const { login, signInWithGoogle } = useAuth();
+  const { login, signInWithGoogle, user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const wasLoading = useRef(true);
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -17,6 +19,15 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [socialLoading, setSocialLoading] = useState(null);
+
+  useEffect(() => {
+    if (wasLoading.current && !authLoading && user) {
+      navigate('/', { replace: true });
+    }
+    if (!authLoading) {
+      wasLoading.current = false;
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     const saved = localStorage.getItem('gr_remember_identifier');
