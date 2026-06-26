@@ -44,25 +44,38 @@ export const AuthProvider = ({ children }) => {
       const email = currentUser.email;
       const metadata = currentUser.user_metadata || {};
 
-      const hasUsername = metadata.username;
-      if (hasUsername) return;
+      if (metadata.username) return;
 
-      const username = generateUsername(email);
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+      if (existingProfile?.username) {
+        await supabase.auth.updateUser({
+          data: { username: existingProfile.username },
+        });
+        return;
+      }
+
+      const googleName = metadata.full_name || metadata.name || '';
+      let base = googleName
+        ? googleName.toLowerCase().replace(/[^a-z0-9_]/g, '').trim()
+        : email?.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '') || 'user';
+      if (base.length < 2) base = 'user';
+      const suffix = Math.random().toString(36).substring(2, 6);
+      const username = `${base}_${suffix}`;
+
       const { error: updateError } = await supabase.auth.updateUser({
         data: { username },
       });
       if (updateError) throw updateError;
 
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-
       if (existingProfile) {
         await supabase
           .from('profiles')
-          .update({ username })
+          .update({ username, email })
           .eq('id', currentUser.id);
       } else {
         await supabase.from('profiles').insert({
