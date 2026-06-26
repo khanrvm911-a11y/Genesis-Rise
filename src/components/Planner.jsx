@@ -492,6 +492,13 @@ const Planner = () => {
                     <button onClick={() => handleAssignDayType(day, 'workout')} className="bg-sl-purple/10 hover:bg-sl-purple/25 text-sl-purple-light border border-sl-purple/20 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition touch-target">
                       Assign
                     </button>
+                    {plan && (
+                      <button onClick={() => handleRemovePlan(day)} className="bg-red-950/10 hover:bg-red-950/20 text-red-400 border border-red-500/20 px-1.5 py-1.5 rounded-lg transition touch-target">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
                     <div className="relative group">
                       <button className="bg-sl-gray/20 hover:bg-sl-gray/30 text-sl-gray-light border border-sl-gray/20 px-1.5 py-1.5 rounded-lg text-xs transition touch-target">
                         <ChevronDown className="w-3.5 h-3.5" />
@@ -504,16 +511,6 @@ const Planner = () => {
                             {dt.label}
                           </button>
                         ))}
-                        {plan && (
-                          <>
-                            <div className="border-t border-sl-purple/10" />
-                            <button onClick={() => handleRemovePlan(day)}
-                              className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-red-950/20 transition flex items-center gap-2 rounded-b-xl">
-                              <X className="w-3 h-3" />
-                              Remove
-                            </button>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>

@@ -24,7 +24,7 @@ function useDebounce(value, delay) {
 }
 
 const Register = () => {
-  const { register, signInWithGoogle, checkUsernameExists, checkEmailExists } = useAuth();
+  const { register, signInWithGoogle, signInWithFacebook, checkUsernameExists, checkEmailExists } = useAuth();
 
   const [formState, setFormState] = useState({
     username: '',
@@ -96,6 +96,17 @@ const Register = () => {
       await signInWithGoogle();
     } catch (err) {
       setError('Google sign-up failed. Please try again.');
+      setSocialLoading(null);
+    }
+  };
+
+  const handleFacebookSignUp = async () => {
+    setSocialLoading('facebook');
+    setError('');
+    try {
+      await signInWithFacebook();
+    } catch (err) {
+      setError('Facebook sign-up failed. Please try again.');
       setSocialLoading(null);
     }
   };
@@ -211,6 +222,32 @@ const Register = () => {
               <span className="text-white/50 text-xs">Fastest way to get started</span>
             </div>
             {socialLoading === 'google' && (
+              <svg className="w-4 h-4 animate-spin text-white/60 ml-auto relative z-10" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            <svg className="w-4 h-4 text-white/30 ml-auto relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </motion.button>
+
+          <motion.button
+            onClick={handleFacebookSignUp}
+            disabled={!!isSubmitting}
+            className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] border border-white/20 hover:border-white/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden mb-6 shadow-lg shadow-black/10"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <svg className="w-5 h-5 shrink-0 relative z-10" fill="currentColor" viewBox="0 0 24 24">
+              <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg>
+            <div className="flex flex-col items-start relative z-10">
+              <span className="text-white font-medium text-base">Continue with Facebook</span>
+              <span className="text-white/50 text-xs">Fastest way to get started</span>
+            </div>
+            {socialLoading === 'facebook' && (
               <svg className="w-4 h-4 animate-spin text-white/60 ml-auto relative z-10" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />

@@ -225,6 +225,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const signInWithFacebook = async () => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      const message = err.message || 'Facebook sign-in failed';
+      setError(message);
+      throw err;
+    }
+  };
+
   const register = async (email, password, username) => {
     setError(null);
     try {
@@ -351,6 +369,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     signInWithGoogle,
+    signInWithFacebook,
     logout,
     forgotPassword,
     resetPassword,

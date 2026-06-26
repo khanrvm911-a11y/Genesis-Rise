@@ -19,6 +19,54 @@ const Profile = () => {
   const { avatar, avatarType, updateAvatar } = useAvatar();
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameSaving, setUsernameSaving] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const handleSaveUsername = async () => {
+    const trimmed = usernameInput.trim();
+    if (!/^[a-zA-Z0-9 ]+$/.test(trimmed)) {
+      setUsernameError('Letters, numbers, and spaces only');
+      return;
+    }
+    if (trimmed.length < 2 || trimmed.length > 30) {
+      setUsernameError('Username must be 2-30 characters');
+      return;
+    }
+    setUsernameSaving(true);
+    setUsernameError('');
+    try {
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { username: trimmed },
+      });
+      if (authError) throw authError;
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ username: trimmed })
+        .eq('id', user.id);
+      if (profileError) throw profileError;
+      setProfile(prev => ({ ...prev, username: trimmed }));
+      setEditingUsername(false);
+    } catch (err) {
+      setUsernameError(err.message || 'Failed to update username');
+    } finally {
+      setUsernameSaving(false);
+    }
+  };
+
+  const handleMasterReset = () => {
+    const keys = [
+      'sl_exercises', 'sl_workout_history', 'sl_personal_records', 'sl_workout_templates',
+      'sl_user_settings', 'sl_mission_progress', 'sl_user_xp', 'sl_user_level',
+      'sl_power_level', 'sl_weekly_change', 'gr_avatar', 'gr_avatar_type',
+      'gr_remember_identifier', 'gr_workout_schedule', 'gr_completed_workouts',
+      'gr_todays_workout', 'sl_daily_goals',
+    ];
+    keys.forEach(key => localStorage.removeItem(key));
+    window.location.reload();
+  };
 
   const MAX_AVATAR_SIZE = 10 * 1024 * 1024; // 10 MB
 
@@ -225,8 +273,50 @@ const Profile = () => {
             </button>
           </div>
           <h2 className="text-xl font-bold gradient-text mb-1">Genesis Rise</h2>
-          {profile?.username && (
-            <p className="text-sl-purple-light font-semibold">{profile.username}</p>
+          {editingUsername ? (
+            <div className="flex flex-col items-center gap-2">
+              <input
+                type="text"
+                value={usernameInput}
+                onChange={(e) => { setUsernameInput(e.target.value.replace(/[^a-zA-Z0-9 ]/g, '')); setUsernameError(''); }}
+                className="holo-input w-full max-w-[200px] text-white text-center text-sm"
+                placeholder="Enter username"
+                maxLength={30}
+                disabled={usernameSaving}
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveUsername}
+                  disabled={usernameSaving}
+                  className="text-xs px-3 py-1 rounded-lg bg-sl-purple text-white font-semibold hover:bg-sl-purple-light transition disabled:opacity-50"
+                >
+                  {usernameSaving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => { setEditingUsername(false); setUsernameError(''); }}
+                  disabled={usernameSaving}
+                  className="text-xs px-3 py-1 rounded-lg bg-white/10 text-sl-gray-light hover:bg-white/20 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+              {usernameError && <p className="text-red-400 text-xs">{usernameError}</p>}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              {profile?.username && (
+                <p className="text-sl-purple-light font-semibold">{profile.username}</p>
+              )}
+              <button
+                onClick={() => { setUsernameInput(profile?.username || ''); setEditingUsername(true); setUsernameError(''); }}
+                className="text-sl-gray-light/50 hover:text-sl-purple-light transition"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            </div>
           )}
           {user?.email && <p className="text-xs text-sl-gray-light/50 mt-0.5">{user.email}</p>}
         </div>
@@ -417,10 +507,45 @@ const Profile = () => {
           </div>
         )}
 
+        <button
+          onClick={() => setShowResetConfirm(true)}
+          className="w-full py-3 rounded-xl border border-red-500/20 bg-red-950/10 text-red-400 text-sm font-semibold hover:bg-red-950/20 transition mb-3"
+        >
+          Master Reset
+        </button>
+
         <Link to="/" className="holo-button w-full text-center py-3 text-sm">
           Return to Dashboard
         </Link>
       </div>
+
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+          <div className="w-full max-w-sm bg-sl-bg border border-red-500/20 rounded-2xl p-5 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-red-950/20 flex items-center justify-center border border-red-500/20">
+              <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Reset All Data?</h3>
+            <p className="text-sm text-sl-gray-light mb-5">This will erase all your progress, workouts, and settings. This cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl bg-sl-gray/20 text-sl-gray-light text-sm font-semibold hover:bg-sl-gray/30 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMasterReset}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500 transition"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
