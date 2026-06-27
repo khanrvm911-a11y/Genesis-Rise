@@ -121,6 +121,7 @@ export default function ProfilePage() {
                 avatarType={avatarType}
                 hasWorkouts={hasWorkouts}
                 onEditProfile={() => setView(VIEWS.INFO)}
+                onUpdateAvatar={updateAvatar}
               />
 
               <FitnessStats

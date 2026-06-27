@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useLayoutEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Home as HomeIcon, Activity, Calendar, Sparkles, Heart, BarChart3, LogOut, ChevronDown, Settings as SettingsIcon } from 'lucide-react';
 import Home from './pages/Home';
@@ -55,6 +55,23 @@ function LazyRoute({ element, skeleton }) {
       </Suspense>
     </ErrorBoundary>
   );
+}
+
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    const previousScrollBehavior = html.style.scrollBehavior;
+
+    html.style.scrollBehavior = 'auto';
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.body.scrollTop = 0;
+    html.scrollTop = 0;
+    html.style.scrollBehavior = previousScrollBehavior;
+  }, [pathname, search]);
+
+  return null;
 }
 
 function App() {
@@ -219,6 +236,7 @@ function App() {
         </nav>
       )}
 
+      <ScrollToTop />
       <main className={user ? 'pt-16 pb-20' : ''}>
         <Routes>
           <Route path="/" element={<Home />} />

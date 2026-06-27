@@ -11,7 +11,7 @@ const MAX_AVATAR_SIZE = 10 * 1024 * 1024;
 export default function ProfileHero({
   user, profile, level, xp, progress, xpForNext, title,
   powerLevel, weeklyChange, currentStreak, longestStreak,
-  avatar, avatarType, hasWorkouts, onEditProfile,
+  avatar, avatarType, hasWorkouts, onEditProfile, onUpdateAvatar,
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -28,7 +28,7 @@ export default function ProfileHero({
   const email = user?.email || '';
 
   const handleAvatarSelect = (presetId) => {
-    updateAvatar(presetId, 'preset');
+    onUpdateAvatar(presetId, 'preset');
     setShowPicker(false);
   };
 
@@ -44,7 +44,7 @@ export default function ProfileHero({
     const reader = new FileReader();
     reader.onload = (ev) => {
       if (typeof ev.target?.result === 'string') {
-        updateAvatar(ev.target.result, 'custom');
+        onUpdateAvatar(ev.target.result, 'custom');
         setShowPicker(false);
       }
     };
