@@ -1,8 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trophy, SkipForward, CheckCircle } from 'lucide-react';
+import { Trophy, SkipForward, CheckCircle, Cloud, CloudOff, Loader, Target, Activity, Play, Flame } from 'lucide-react';
 import { calculateExerciseCalories } from '../../utils/calorieUtils';
+import { saveCompletedSet } from '../../utils/autoSaveUtils';
+import RestTimer from './RestTimer';
+import PersonalRecords from './PersonalRecords';
 
-const REST_OPTIONS = [30, 60, 90, 120];
+const MUSCLE_COLORS = {
+  Chest: 'from-red-500/20 to-red-600/10 border-red-500/30',
+  Back: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
+  Legs: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30',
+  Shoulders: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
+  Arms: 'from-orange-500/20 to-orange-600/10 border-orange-500/30',
+  Core: 'from-yellow-500/20 to-yellow-600/10 border-yellow-500/30',
+  Cardio: 'from-pink-500/20 to-pink-600/10 border-pink-500/30',
+  FullBody: 'from-cyan-500/20 to-cyan-600/10 border-cyan-500/30',
+};
+
+const MUSCLE_BADGE_COLORS = {
+  Chest: 'bg-red-500/20 text-red-300',
+  Back: 'bg-blue-500/20 text-blue-300',
+  Legs: 'bg-emerald-500/20 text-emerald-300',
+  Shoulders: 'bg-purple-500/20 text-purple-300',
+  Arms: 'bg-orange-500/20 text-orange-300',
+  Core: 'bg-yellow-500/20 text-yellow-300',
+  Cardio: 'bg-pink-500/20 text-pink-300',
+  FullBody: 'bg-cyan-500/20 text-cyan-300',
+};
 
 export default function ActiveWorkoutMode({
   exercise,
@@ -20,49 +43,41 @@ export default function ActiveWorkoutMode({
   initialActiveTime,
   initialIsResting,
   onWorkoutStarted,
+  userId,
+  sessionId,
 }) {
-  const [started, setStarted] = useState(true);
   const [completedSets, setCompletedSets] = useState(initialSets || []);
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
-  const [isResting, setIsResting] = useState(false);
+  const [isResting, setIsResting] = useState(initialIsResting || false);
   const [setInProgress, setSetInProgress] = useState(false);
-
-  const [restTimeLeft, setRestTimeLeft] = useState(0);
-  const [restDuration, setRestDuration] = useState(60);
-  const [restRunning, setRestRunning] = useState(false);
-  const restIntervalRef = useRef(null);
 
   const [activeTime, setActiveTime] = useState(initialActiveTime || 0);
   const [timerRunning, setTimerRunning] = useState(false);
   const timerIntervalRef = useRef(null);
 
-  const [latestPR, setLatestPR] = useState(null);
+  const [latestPRs, setLatestPRs] = useState(null);
+  const [syncStatus, setSyncStatus] = useState('idle');
 
   const weightRef = useRef(null);
   const repsRef = useRef(null);
   const notifiedStartedRef = useRef(false);
 
-  const assignedSets = exercise.sets || 3;
+  const assignedSets = exercise.sets ?? 3;
   const allSetsDone = completedSets.length >= assignedSets;
   const isLastExercise = exerciseIndex >= totalExercises - 1;
-
   const currentWeight = userSettings?.weight || 70;
 
-  const beep = () => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      osc.type = 'sine';
-      gain.gain.value = 0.3;
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-    } catch { /* audio context not available */ }
-  };
+  const totalCalories = calculateExerciseCalories(
+    exercise.exerciseId || exercise.id,
+    exercise.trackingType || 'weight',
+    completedSets,
+    currentWeight
+  );
+  const totalVolume = completedSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+  const activeMinutes = Math.floor(activeTime / 60);
+  const activeSeconds = activeTime % 60;
+  const exerciseProgress = totalExercises > 0 ? (exerciseIndex + (allSetsDone ? 1 : completedSets.length / assignedSets)) / totalExercises : 0;
 
   useEffect(() => {
     if (timerRunning) {
@@ -70,59 +85,30 @@ export default function ActiveWorkoutMode({
         setActiveTime(prev => prev + 1);
       }, 1000);
     }
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    };
+    return () => { if (timerIntervalRef.current) clearInterval(timerIntervalRef.current); };
   }, [timerRunning]);
 
   useEffect(() => {
-    if (restRunning && restTimeLeft > 0) {
-      restIntervalRef.current = setInterval(() => {
-        setRestTimeLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(restIntervalRef.current);
-            setRestRunning(false);
-            beep();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (!isResting && !allSetsDone) {
+      if (weightRef.current) weightRef.current.focus();
     }
-    return () => {
-      if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-    };
-  }, [restRunning, restTimeLeft]);
-
-  useEffect(() => {
-    if (started && !isResting && weightRef.current) {
-      weightRef.current.focus();
-    }
-  }, [started, isResting, exerciseIndex, completedSets.length]);
+  }, [isResting, exerciseIndex, completedSets.length, allSetsDone]);
 
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.hidden && timerRunning) {
-        setTimerRunning(false);
-      }
+      if (document.hidden && timerRunning) setTimerRunning(false);
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [timerRunning]);
 
   const latestSnapshot = useRef(null);
-
   useEffect(() => {
     if (!workoutExercises || workoutExercises.length === 0) return;
     latestSnapshot.current = {
-      workoutName,
-      exercises: workoutExercises,
-      currentExerciseIndex: exerciseIndex,
-      started: true,
-      activeTime,
-      isResting,
-      setInProgress,
-      lastUpdated: Date.now(),
+      workoutName, exercises: workoutExercises,
+      currentExerciseIndex: exerciseIndex, started: true,
+      activeTime, isResting, setInProgress, lastUpdated: Date.now(),
     };
     localStorage.setItem('gr_active_workout_session', JSON.stringify(latestSnapshot.current));
   });
@@ -131,8 +117,7 @@ export default function ActiveWorkoutMode({
     const handleSave = () => {
       if (latestSnapshot.current) {
         localStorage.setItem('gr_active_workout_session', JSON.stringify({
-          ...latestSnapshot.current,
-          lastUpdated: Date.now(),
+          ...latestSnapshot.current, lastUpdated: Date.now(),
         }));
       }
     };
@@ -149,12 +134,7 @@ export default function ActiveWorkoutMode({
     const w = parseFloat(weight) || 0;
     const r = parseInt(reps) || 0;
     if (w <= 0 && r <= 0) return;
-
-    if (isResting) {
-      setRestRunning(false);
-      setIsResting(false);
-    }
-
+    if (isResting) setIsResting(false);
     setTimerRunning(true);
     setSetInProgress(true);
     if (onWorkoutStarted && !notifiedStartedRef.current) {
@@ -170,53 +150,52 @@ export default function ActiveWorkoutMode({
 
     setTimerRunning(false);
     setSetInProgress(false);
-
     const newSet = { weight: w, reps: r, timestamp: Date.now() };
     const updatedSets = [...completedSets, newSet];
     setCompletedSets(updatedSets);
     setWeight('');
     setReps('');
 
-    if (onUpdateSets) {
-      onUpdateSets(exerciseIndex, updatedSets);
-    }
+    if (onUpdateSets) onUpdateSets(exerciseIndex, updatedSets);
 
     if (checkForNewPR) {
       const prs = checkForNewPR(exercise.exerciseId || exercise.id, w, r);
       if (prs.length > 0) {
-        setLatestPR(prs[0]);
-        setTimeout(() => setLatestPR(null), 3000);
+        setLatestPRs(prs);
+        setTimeout(() => setLatestPRs(null), 4000);
       }
     }
 
+    setSyncStatus('saving');
+    saveCompletedSet({
+      sessionId, userId,
+      exerciseId: exercise.exerciseId || exercise.id,
+      exerciseName: exercise.name,
+      setIndex: completedSets.length, weight: w, reps: r,
+      completedAt: new Date().toISOString(),
+    }).then(result => {
+      setSyncStatus(result.synced ? 'synced' : 'offline');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    }).catch(() => {
+      setSyncStatus('offline');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    });
+
     if (updatedSets.length < assignedSets) {
       setIsResting(true);
-      setRestDuration(60);
-      setRestTimeLeft(60);
-      setRestRunning(true);
     }
   };
 
-  const handleNextSet = () => {
-    setRestRunning(false);
-    setIsResting(false);
-    setTimerRunning(true);
-  };
-
-  const handleSkipRest = () => {
-    setRestRunning(false);
+  const handleRestComplete = () => {
     setIsResting(false);
   };
 
-  const changeRestDuration = (secs) => {
-    setRestDuration(secs);
-    setRestTimeLeft(secs);
-    setRestRunning(true);
+  const handleRestSkip = () => {
+    setIsResting(false);
   };
 
   const handleNextExercise = () => {
     setTimerRunning(false);
-    setRestRunning(false);
     if (isLastExercise) {
       if (onCompleteWorkout) onCompleteWorkout(activeTime);
     } else {
@@ -224,37 +203,35 @@ export default function ActiveWorkoutMode({
     }
   };
 
-  const restMinutes = Math.floor(restTimeLeft / 60);
-  const restSeconds = restTimeLeft % 60;
-  const restProgress = restDuration > 0 ? 1 - (restTimeLeft / restDuration) : 0;
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (setInProgress) handleCompleteSet();
+      else if (weight && reps) handleStartSet();
+      else if (e.target === weightRef.current) repsRef.current?.focus();
+    }
+  };
 
-  const totalCalories = calculateExerciseCalories(
-    exercise.exerciseId || exercise.id,
-    exercise.trackingType || 'weight',
-    completedSets,
-    currentWeight
-  );
-
-  const totalVolume = completedSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
-  const activeMinutes = Math.floor(activeTime / 60);
-  const activeSeconds = activeTime % 60;
+  const muscleBg = MUSCLE_COLORS[exercise.muscleGroup] || 'from-sl-purple/20 to-sl-purple/10 border-sl-purple/30';
+  const muscleBadge = MUSCLE_BADGE_COLORS[exercise.muscleGroup] || 'bg-sl-purple/20 text-sl-purple-light';
 
   return (
     <div className="space-y-4 pb-4">
-      {latestPR && (
-        <div className="fixed top-20 right-4 z-50 animate-slide-up bg-gradient-to-r from-yellow-500/20 to-sl-red/20 border border-yellow-500/40 rounded-xl p-4 shadow-lg max-w-[280px] backdrop-blur-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Trophy className="w-4 h-4 text-yellow-400" />
-            <span className="text-xs font-bold text-yellow-400 uppercase tracking-widest">NEW PR</span>
-          </div>
-          <p className="text-white font-bold text-sm">{exercise.name}</p>
-          <p className="text-yellow-300 text-xs">
-            {latestPR.type === 'weight' ? `${latestPR.newValue}${latestPR.unit}` : ''}
-            {latestPR.type === 'reps' ? `${latestPR.newValue} reps` : ''}
-            {latestPR.type === 'volume' ? `${(latestPR.newValue / 1000).toFixed(1)}k kg` : ''}
-          </p>
+      {latestPRs && (
+        <div className="fixed top-20 right-4 z-50 w-[300px] animate-slide-up">
+          <PersonalRecords prs={latestPRs} exerciseName={exercise.name} compact />
         </div>
       )}
+
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-[10px] text-sl-gray-light font-semibold uppercase tracking-wider">
+          <span>{workoutName || 'Workout'}</span>
+          <span>Exercise {exerciseIndex + 1}/{totalExercises}</span>
+        </div>
+        <div className="w-full bg-sl-gray/30 rounded-full h-1.5 overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-sl-purple via-sl-red to-yellow-400 rounded-full transition-all duration-500 ease-out"
+               style={{ width: `${Math.min(100, exerciseProgress * 100)}%` }} />
+        </div>
+      </div>
 
       <div className="flex items-center justify-between">
         <div className="flex-1 text-center">
@@ -263,37 +240,56 @@ export default function ActiveWorkoutMode({
             {activeMinutes}:{String(activeSeconds).padStart(2, '0')}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          {syncStatus === 'saving' && (
+            <div className="flex items-center gap-1 text-xs text-sl-gray-light"><Loader className="w-3 h-3 animate-spin" /><span>Saving</span></div>
+          )}
+          {syncStatus === 'synced' && (
+            <div className="flex items-center gap-1 text-xs text-emerald-400"><Cloud className="w-3 h-3" /><span>Saved</span></div>
+          )}
+          {syncStatus === 'offline' && (
+            <div className="flex items-center gap-1 text-xs text-yellow-400"><CloudOff className="w-3 h-3" /><span>Saved locally</span></div>
+          )}
+        </div>
         <div className="text-right">
-          <p className="text-[10px] text-sl-gray-light font-semibold uppercase tracking-wider">Calories</p>
-          <p className="text-lg font-bold text-sl-red-light">{totalCalories}</p>
+          <p className="text-[10px] text-sl-gray-light font-semibold uppercase tracking-wider">Volume</p>
+          <p className="text-lg font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</p>
         </div>
       </div>
 
-      <div className="text-center">
-        <p className="text-[10px] text-sl-gray-light uppercase tracking-wider font-semibold">
-          {workoutName || 'Workout'} &middot; {exerciseIndex + 1}/{totalExercises}
-        </p>
-      </div>
-
-      <div className="mobile-card text-center">
-        <h2 className="text-2xl font-bold text-white mb-1">{exercise.name}</h2>
-        <p className="text-sm text-sl-gray-light">{exercise.muscleGroup} &middot; {exercise.equipment}</p>
-        <div className="flex justify-center gap-4 mt-3">
-          <div>
+      <div className={`mobile-card bg-gradient-to-br ${muscleBg}`}>
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-white mb-0.5">{exercise.name}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${muscleBadge}`}>{exercise.muscleGroup}</span>
+              {exercise.equipment && (
+                <span className="text-[10px] text-sl-gray-light">{exercise.equipment}</span>
+              )}
+              <span className="text-[10px] text-sl-gray-light">{exercise.difficulty}</span>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
             <p className="text-[10px] text-sl-gray-light font-semibold">Sets</p>
-            <p className="text-lg font-bold text-white">{completedSets.length}/{assignedSets}</p>
+            <p className="text-xl font-bold text-white">{completedSets.length}/{assignedSets}</p>
           </div>
-          <div>
-            <p className="text-[10px] text-sl-gray-light font-semibold">Volume</p>
-            <p className="text-lg font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-black/20 rounded-xl p-2.5 text-center">
+            <Target className="w-3.5 h-3.5 mx-auto mb-0.5 text-sl-purple-light" />
+            <p className="text-[10px] text-sl-gray-light font-semibold">Target</p>
+            <p className="text-sm font-bold text-white">{exercise.weight || 0}kg</p>
           </div>
-          <div>
-            <p className="text-[10px] text-sl-gray-light font-semibold">Cal/min</p>
-            <p className="text-lg font-bold text-sl-red-light">
-              {totalCalories > 0 && activeTime > 0
-                ? (totalCalories / (activeTime / 60)).toFixed(1)
-                : '0.0'}
-            </p>
+          <div className="bg-black/20 rounded-xl p-2.5 text-center">
+            <Activity className="w-3.5 h-3.5 mx-auto mb-0.5 text-sl-red-light" />
+            <p className="text-[10px] text-sl-gray-light font-semibold">Reps</p>
+            <p className="text-sm font-bold text-white">{exercise.reps || 0}</p>
+          </div>
+          <div className="bg-black/20 rounded-xl p-2.5 text-center">
+            <Flame className="w-3.5 h-3.5 mx-auto mb-0.5 text-sl-red-light" />
+            <p className="text-[10px] text-sl-gray-light font-semibold">Calories</p>
+            <p className="text-sm font-bold text-sl-red-light">{totalCalories}</p>
           </div>
         </div>
       </div>
@@ -304,10 +300,7 @@ export default function ActiveWorkoutMode({
             <CheckCircle className="w-6 h-6 text-emerald-400" />
             <h3 className="text-lg font-bold text-emerald-400">Exercise Complete</h3>
           </div>
-          <p className="text-sm text-sl-gray-light mb-4">
-            {completedSets.length} sets completed for {exercise.name}
-          </p>
-          <div className="space-y-2">
+          <div className="space-y-1.5 mb-4">
             {completedSets.map((set, i) => (
               <div key={i} className="flex justify-between items-center bg-sl-gray/20 rounded-xl p-3">
                 <span className="text-xs font-bold text-sl-gray-light">Set {i + 1}</span>
@@ -316,9 +309,8 @@ export default function ActiveWorkoutMode({
               </div>
             ))}
           </div>
-          <button
-            onClick={handleNextExercise}
-            className="w-full holo-button holo-button-primary text-base py-4 font-bold mt-4"
+          <button onClick={handleNextExercise}
+            className="w-full holo-button holo-button-primary text-base py-4 font-bold"
           >
             {isLastExercise ? 'Complete Workout' : (
               <span className="flex items-center justify-center gap-2">
@@ -328,63 +320,13 @@ export default function ActiveWorkoutMode({
           </button>
         </div>
       ) : isResting ? (
-        <div className="mobile-card border-sl-red/30">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-bold text-white">Rest Timer</h3>
-            <div className="flex gap-1.5">
-              {REST_OPTIONS.map(opt => (
-                <button
-                  key={opt}
-                  onClick={() => changeRestDuration(opt)}
-                  className={`px-3 py-1.5 rounded-full text-[10px] font-semibold transition-all touch-target ${
-                    restDuration === opt
-                      ? 'bg-sl-red text-white shadow-sl-glow-red'
-                      : 'bg-sl-gray/30 text-sl-gray-light hover:bg-sl-gray/50'
-                  }`}
-                >
-                  {opt}s
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-center py-3">
-            <p className="text-4xl font-bold text-white tabular-nums">
-              {restMinutes}:{String(restSeconds).padStart(2, '0')}
-            </p>
-            <div className="w-full bg-sl-gray/40 rounded-full h-1.5 mt-2 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-sl-purple to-sl-red transition-all duration-500"
-                style={{ width: `${restProgress * 100}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-center gap-2">
-              {restRunning ? (
-                <button onClick={() => setRestRunning(false)} className="holo-button text-sm py-2 px-4">
-                  Pause
-                </button>
-              ) : restTimeLeft > 0 ? (
-                <button onClick={() => setRestRunning(true)} className="holo-button text-sm py-2 px-4">
-                  Resume
-                </button>
-              ) : null}
-              <button onClick={handleSkipRest} className="holo-button text-sm py-2 px-4">
-                Skip
-              </button>
-            </div>
-
-            <button
-              onClick={handleStartSet}
-              disabled={!weight && !reps}
-              className="w-full holo-button holo-button-success text-base py-4 font-bold disabled:opacity-50"
-            >
-              Start Set
-            </button>
-          </div>
-        </div>
+        <RestTimer
+          key={`rest-${exerciseIndex}-${completedSets.length}`}
+          onComplete={handleRestComplete}
+          onSkip={handleRestSkip}
+          autoStart={true}
+          defaultDuration={60}
+        />
       ) : (
         <div className="mobile-card">
           <div className="flex items-center justify-between mb-3">
@@ -401,36 +343,36 @@ export default function ActiveWorkoutMode({
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label className="block text-xs text-sl-gray-light mb-1.5 font-semibold">Weight (kg)</label>
-              <input
-                ref={weightRef}
-                type="number" step="0.5" min="0"
+              <input ref={weightRef} type="number" step="0.5" min="0"
                 value={weight}
                 onChange={e => setWeight(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && repsRef.current?.focus()}
+                onKeyDown={handleKeyDown}
                 className="holo-input text-center text-xl font-bold py-3"
                 placeholder={exercise.weight > 0 ? String(exercise.weight) : '0'}
               />
             </div>
             <div>
               <label className="block text-xs text-sl-gray-light mb-1.5 font-semibold">Reps</label>
-              <input
-                ref={repsRef}
-                type="number" min="0"
+              <input ref={repsRef} type="number" min="0"
                 value={reps}
                 onChange={e => setReps(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (setInProgress ? handleCompleteSet() : handleStartSet())}
+                onKeyDown={handleKeyDown}
                 className="holo-input text-center text-xl font-bold py-3"
                 placeholder={exercise.reps > 0 ? String(exercise.reps) : '0'}
               />
             </div>
           </div>
 
-          <button
-            onClick={setInProgress ? handleCompleteSet : handleStartSet}
-            disabled={!setInProgress && !weight && !reps}
-            className="w-full holo-button holo-button-success text-base py-4 font-bold disabled:opacity-50"
+          <button onClick={setInProgress ? handleCompleteSet : handleStartSet}
+            disabled={!setInProgress && (!weight || !reps)}
+            className="w-full holo-button text-base py-4 font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: setInProgress ? 'linear-gradient(135deg, #059669, #10b981)' : 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
           >
-            {setInProgress ? 'Complete Set' : 'Start Set'}
+            {setInProgress ? (
+              <><CheckCircle className="w-5 h-5" /> Complete Set</>
+            ) : (
+              <><Play className="w-5 h-5" /> Start Set</>
+            )}
           </button>
         </div>
       )}
@@ -442,11 +384,9 @@ export default function ActiveWorkoutMode({
             {completedSets.map((set, i) => {
               const vol = set.weight * set.reps;
               return (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 bg-sl-gray/20 rounded-xl p-3"
-                >
+                <div key={i} className="flex items-center gap-2 bg-sl-gray/20 rounded-xl p-3">
                   <span className="text-sl-gray-light font-bold text-xs w-5 shrink-0">#{i + 1}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                   <div className="flex-1 flex items-center gap-3">
                     <span className="text-sm font-semibold text-white">{set.weight} kg</span>
                     <span className="text-sl-gray-light">&times;</span>

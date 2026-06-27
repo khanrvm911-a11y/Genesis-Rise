@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLevel } from '../context/LevelContext';
 import { usePowerLevel } from '../context/PowerLevelContext';
@@ -18,10 +18,17 @@ import {
   calculateWorkoutCalories,
   calculateExerciseCalories,
 } from '../utils/calorieUtils';
+import {
+  createWorkoutSession,
+  completeWorkoutSession,
+  setupAutoSync,
+  syncOfflineQueue,
+  getOfflineQueueSize,
+} from '../utils/autoSaveUtils';
 import ActiveWorkoutMode from './tracker/ActiveWorkoutMode';
 import WorkoutCompleteScreen from './tracker/WorkoutCompleteScreen';
 import AnalyticsDashboard from './tracker/AnalyticsDashboard';
-import { ArrowLeft, Dumbbell, Moon } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Moon, CloudOff } from 'lucide-react';
 
 const STORAGE_KEY_SESSION = 'gr_active_workout_session';
 const STORAGE_KEY_TODAYS_WORKOUT = 'gr_todays_workout';
@@ -57,6 +64,9 @@ export default function Tracker() {
   const [isTodayCompleted, setIsTodayCompleted] = useState(false);
   const [todayDayType, setTodayDayType] = useState(null);
   const [syncKey, setSyncKey] = useState(0);
+  const [sessionId, setSessionId] = useState(null);
+  const [offlineQueueSize, setOfflineQueueSize] = useState(0);
+  const syncCleanupRef = useRef(null);
 
   useEffect(() => {
     const handler = () => setSyncKey(k => k + 1);
@@ -66,10 +76,17 @@ export default function Tracker() {
     window.addEventListener(TODAYS_WORKOUT_CHANGED, handler);
     document.addEventListener('visibilitychange', refreshOnFocus);
     window.addEventListener('focus', refreshOnFocus);
+
+    setOfflineQueueSize(getOfflineQueueSize());
+    syncCleanupRef.current = setupAutoSync((result) => {
+      setOfflineQueueSize(0);
+    });
+
     return () => {
       window.removeEventListener(TODAYS_WORKOUT_CHANGED, handler);
       document.removeEventListener('visibilitychange', refreshOnFocus);
       window.removeEventListener('focus', refreshOnFocus);
+      if (syncCleanupRef.current) syncCleanupRef.current();
     };
   }, []);
 
@@ -152,6 +169,10 @@ export default function Tracker() {
       } catch { /* invalid today workout data */ }
     }
 
+    setWorkoutExercises([]);
+    setWorkoutName('');
+    setWorkflowStep('idle');
+
     const todayStr = new Date().toISOString().split('T')[0];
     const completed = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
     if (completed.includes(todayStr)) {
@@ -175,6 +196,7 @@ export default function Tracker() {
     setSessionStarted(false);
     setSessionActiveTime(0);
     setSessionIsResting(false);
+    setSessionId(null);
   };
 
   const handleBack = () => {
@@ -333,7 +355,19 @@ export default function Tracker() {
       workoutName,
     });
 
+    completeWorkoutSession(sessionId, {
+      durationSeconds,
+      totalVolume,
+      totalCalories,
+      totalXP,
+      totalSets,
+      exercisesCount: finalExercises.length,
+    });
+
+    syncOfflineQueue().then(() => setOfflineQueueSize(0));
+
     setWorkflowStep('complete');
+    setSessionId(null);
     localStorage.removeItem(STORAGE_KEY_SESSION);
     localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
 
@@ -371,6 +405,11 @@ export default function Tracker() {
     setSessionStarted(true);
     setSessionActiveTime(0);
     setSessionIsResting(false);
+    if (user?.id) {
+      createWorkoutSession(user.id, workoutName).then(id => {
+        if (id) setSessionId(id);
+      });
+    }
   };
 
   const stepTitle = () => {
@@ -428,8 +467,14 @@ export default function Tracker() {
                   <button onClick={() => { setWorkflowStep('activeWorkout'); handleWorkoutStarted(); }} className="w-full holo-button holo-button-primary text-lg py-4 font-bold">
                     Start Workout
                   </button>
-                  <p className="text-[10px] text-red-400/80 text-center mt-2 leading-relaxed">
-                    Warning!: If you close, minimize or visit any other page during set the set will be deleted..!! STAY FOCUSED..
+                  {offlineQueueSize > 0 && (
+                    <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-yellow-400">
+                      <CloudOff className="w-3.5 h-3.5" />
+                      <span>{offlineQueueSize} unsynced set{offlineQueueSize > 1 ? 's' : ''} — will sync when online</span>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-amber-400/70 text-center mt-2 leading-relaxed">
+                     Warning!:Your active set will be lost if you navigate away or close this page.STAY FOCUSED...
                   </p>
                 </div>
               </div>
@@ -495,6 +540,8 @@ export default function Tracker() {
             initialActiveTime={sessionActiveTime}
             initialIsResting={sessionIsResting}
             onWorkoutStarted={handleWorkoutStarted}
+            userId={user?.id}
+            sessionId={sessionId}
           />
         )}
 
@@ -517,6 +564,12 @@ export default function Tracker() {
               workoutHistory={workoutHistory}
               personalRecords={personalRecords}
               userSettings={userSettings}
+              missionProgress={missionProgress}
+              level={level}
+              xp={xp}
+              title={title}
+              progress={progress}
+              powerLevel={powerLevel}
               onBack={handleBackFromAnalytics}
             />
           </div>

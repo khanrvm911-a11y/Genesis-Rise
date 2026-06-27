@@ -25,16 +25,16 @@ const XPToast = () => {
   if (!toastVisible) return null;
 
   return (
-    <div className="bg-sl-purple/90 backdrop-blur-sm text-sl-purple-light p-4 rounded-sl-lg shadow-sl-glow max-w-xs animate-in border border-sl-purple/30">
-      <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 flex items-center justify-center bg-sl-purple/50 rounded-full">
-          <svg className="w-5 h-5 text-sl-purple-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M5 10h14" />
+    <div className="bg-gradient-to-r from-sl-purple to-amber-500 text-white p-4 rounded-xl shadow-2xl shadow-sl-purple/40 max-w-xs animate-in border border-white/10">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 flex items-center justify-center bg-white/20 rounded-full shrink-0">
+          <svg className="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
         <div>
-          <p className="font-bold">{toastMessage}</p>
-          <p className="text-xxs text-sl-purple-light/50">Vessel capability upgraded. Keep training!</p>
+          <p className="font-bold text-white text-sm">{toastMessage}</p>
+          <p className="text-[11px] text-white/70">Keep training. Greatness awaits!</p>
         </div>
       </div>
     </div>

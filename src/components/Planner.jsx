@@ -201,6 +201,7 @@ const Planner = () => {
       saveTodaysWorkout(todayEntry);
     } else {
       localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
+      localStorage.removeItem('gr_active_workout_session');
     }
     dispatchTodaysWorkoutChanged();
   }, [schedule[todayName], addNotification]);

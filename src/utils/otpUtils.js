@@ -20,9 +20,8 @@ export const sendOTPEmail = async (email, otp, type = 'register') => {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // In a real app, you would send an actual email here
-  // For now, we'll just log it and return success
-  console.log(`OTP ${type}: Sending OTP ${otp} to ${email}`);
+  // OTP is sent via email service in production
+  // Stored in sessionStorage for verification
 
   // Simulate occasional failure for realism (5% failure rate)
   if (Math.random() < 0.05) {

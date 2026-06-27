@@ -7,6 +7,7 @@ import { WorkoutProvider } from './context/WorkoutContext.jsx'
 import { PowerLevelProvider } from './context/PowerLevelContext.jsx'
 import { AvatarProvider } from './context/AvatarContext.jsx'
 import { NotificationProvider } from './context/NotificationContext.jsx'
+import { OfflineProvider } from './context/OfflineContext.jsx'
 import { HelmetProvider } from 'react-helmet-async'
 import './index.css'
 import App from './App.jsx'
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')).render(
     <HelmetProvider>
       <BrowserRouter>
         <AuthProvider>
+          <OfflineProvider>
           <AvatarProvider>
           <NotificationProvider>
           <LevelProvider>
@@ -27,6 +29,7 @@ createRoot(document.getElementById('root')).render(
           </LevelProvider>
           </NotificationProvider>
           </AvatarProvider>
+          </OfflineProvider>
         </AuthProvider>
       </BrowserRouter>
     </HelmetProvider>

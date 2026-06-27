@@ -1,14 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoginTransition from './LoginTransition';
-import VideoBackground from './VideoBackground';
 
 const Login = () => {
   const { login, signInWithGoogle, signInWithFacebook, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const wasLoading = useRef(true);
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -21,11 +19,8 @@ const Login = () => {
   const [socialLoading, setSocialLoading] = useState(null);
 
   useEffect(() => {
-    if (wasLoading.current && !authLoading && user) {
+    if (!authLoading && user) {
       navigate('/', { replace: true });
-    }
-    if (!authLoading) {
-      wasLoading.current = false;
     }
   }, [user, authLoading, navigate]);
 

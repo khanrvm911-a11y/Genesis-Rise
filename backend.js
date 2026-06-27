@@ -19,28 +19,24 @@ const groq = new Groq({
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages } = req.body;
+    const { messages, systemPrompt } = req.body;
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
-
     const groqMessages = [
       {
         role: 'system',
-        content: "Write a short direct answer to the user's fitness or nutrition question. Use plain text. No style. No flourishes. No names for the user. Just the answer."
+        content: systemPrompt || "You are Genesis AI Coach, a knowledgeable and supportive fitness coach. Provide concise, actionable advice based on the user's profile. Use plain text. Be encouraging but honest. Never provide medical diagnoses or recommend unsafe practices. Always encourage consulting qualified professionals for medical concerns."
       },
-      ...(lastUserMsg ? [{ role: 'user', content: lastUserMsg.content }] : [])
+      ...messages.slice(-20)
     ];
 
-    const temperature = 0.1;
-
     const completion = await groq.chat.completions.create({
-      model: 'mixtral-8x7b-32768',
+      model: 'llama-3.3-70b-versatile',
       messages: groqMessages,
-      temperature,
-      max_tokens: 300,
+      temperature: 0.3,
+      max_tokens: 600,
     });
 
     const text = completion?.choices?.[0]?.message?.content?.trim()
@@ -50,6 +46,53 @@ app.post('/api/chat', async (req, res) => {
   } catch (err) {
     console.error('Chat error:', err.message);
     res.status(503).json({ error: 'AI service temporarily unavailable' });
+  }
+});
+
+app.post('/api/chat/stream', async (req, res) => {
+  try {
+    const { messages, systemPrompt } = req.body;
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Messages array is required' });
+    }
+
+    const groqMessages = [
+      {
+        role: 'system',
+        content: systemPrompt || "You are Genesis AI Coach, a knowledgeable and supportive fitness coach. Provide concise, actionable advice based on the user's profile. Use plain text. Be encouraging but honest. Never provide medical diagnoses or recommend unsafe practices. Always encourage consulting qualified professionals for medical concerns."
+      },
+      ...messages.slice(-20)
+    ];
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    });
+
+    const stream = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: groqMessages,
+      temperature: 0.3,
+      max_tokens: 600,
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content || '';
+      if (content) {
+        res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+      }
+    }
+
+    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    res.end();
+  } catch (err) {
+    console.error('Stream error:', err.message);
+    try {
+      res.write(`data: ${JSON.stringify({ type: 'error', content: 'AI service temporarily unavailable' })}\n\n`);
+      res.end();
+    } catch {}
   }
 });
 

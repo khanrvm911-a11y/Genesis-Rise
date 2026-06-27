@@ -1,18 +1,20 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 
 const AvatarContext = createContext();
 
 export function AvatarProvider({ children }) {
   const { user } = useAuth();
+  const prevUserRef = useRef(user);
   const [avatar, setAvatar] = useState(() => localStorage.getItem('gr_avatar') || null);
   const [avatarType, setAvatarType] = useState(() => localStorage.getItem('gr_avatar_type') || 'initial');
 
   useEffect(() => {
-    if (!user) {
+    if (prevUserRef.current && !user) {
       setAvatar(null);
       setAvatarType('initial');
     }
+    prevUserRef.current = user;
   }, [user]);
 
   const updateAvatar = (newAvatar, newType) => {

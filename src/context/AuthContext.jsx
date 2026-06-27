@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { isCapacitor, ANDROID_REDIRECT_URL } from '../lib/capacitor';
 
 const AuthContext = createContext();
 
@@ -130,6 +131,48 @@ export const AuthProvider = ({ children }) => {
     };
   }, [checkAndInitializeGoogleUser]);
 
+  useEffect(() => {
+    if (!isCapacitor) return;
+
+    let listener;
+
+    const handleOAuthUrl = async (url) => {
+      if (!url?.startsWith(ANDROID_REDIRECT_URL)) return;
+
+      try {
+        const urlObj = new URL(url);
+        const code = urlObj.searchParams.get('code');
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+        }
+      } catch (err) {
+        console.error('OAuth callback error:', err);
+        setError('Authentication failed. Please try again.');
+      }
+    };
+
+    const init = async () => {
+      const { App } = await import('@capacitor/app');
+
+      listener = await App.addListener('appUrlOpen', (event) => {
+        handleOAuthUrl(event.url);
+      });
+
+      const launchUrl = await App.getLaunchUrl();
+      if (launchUrl?.url) {
+        handleOAuthUrl(launchUrl.url);
+      }
+    };
+
+    init();
+
+    return () => {
+      if (listener) listener.remove();
+    };
+  }, []);
+
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer.current) {
       clearTimeout(inactivityTimer.current);
@@ -206,18 +249,48 @@ export const AuthProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     setError(null);
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
+      if (isCapacitor) {
+        const originalOpen = window.open;
+        window.open = () => null;
+
+        let result;
+        try {
+          result = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: ANDROID_REDIRECT_URL,
+              queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+              },
+            },
+          });
+        } finally {
+          window.open = originalOpen;
+        }
+
+        if (result.error) throw result.error;
+
+        if (result.data?.url) {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.open({ url: result.data.url });
+        }
+
+        return result.data;
+      } else {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/`,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+            },
           },
-        },
-      });
-      if (error) throw error;
-      return data;
+        });
+        if (error) throw error;
+        return data;
+      }
     } catch (err) {
       const message = err.message || 'Google sign-in failed';
       setError(message);
@@ -228,14 +301,40 @@ export const AuthProvider = ({ children }) => {
   const signInWithFacebook = async () => {
     setError(null);
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
-      if (error) throw error;
-      return data;
+      if (isCapacitor) {
+        const originalOpen = window.open;
+        window.open = () => null;
+
+        let result;
+        try {
+          result = await supabase.auth.signInWithOAuth({
+            provider: 'facebook',
+            options: {
+              redirectTo: ANDROID_REDIRECT_URL,
+            },
+          });
+        } finally {
+          window.open = originalOpen;
+        }
+
+        if (result.error) throw result.error;
+
+        if (result.data?.url) {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.open({ url: result.data.url });
+        }
+
+        return result.data;
+      } else {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'facebook',
+          options: {
+            redirectTo: `${window.location.origin}/`,
+          },
+        });
+        if (error) throw error;
+        return data;
+      }
     } catch (err) {
       const message = err.message || 'Facebook sign-in failed';
       setError(message);

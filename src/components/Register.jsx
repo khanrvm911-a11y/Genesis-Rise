@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import VideoBackground from './VideoBackground';
 
 const hasSpecialChar = (p) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(p);
 
@@ -187,7 +186,6 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-sl-gradient flex items-center justify-center px-4 py-8 relative overflow-hidden">
-      <VideoBackground src="/videos/genesis-bg.mp4" />
       <div className="absolute inset-0 bg-black/75" />
 
       <motion.div

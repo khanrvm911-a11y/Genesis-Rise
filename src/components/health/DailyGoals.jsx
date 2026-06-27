@@ -15,7 +15,7 @@ const getTodayStart = () => {
   return d.getTime();
 };
 
-const defaultGoals = { water: 3000, steps: 10000, sleep: 480, calories: 500 };
+const defaultGoals = { water: 3000, steps: 10000, sleep: 8, calories: 500 };
 
 const defaultDay = () => ({
   date: getTodayKey(),
@@ -39,10 +39,9 @@ const saveAll = (data) => {
   } catch {}
 };
 
-const formatDuration = (minutes) => {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+const formatDuration = (hours) => {
+  if (hours === Math.floor(hours)) return `${hours}h`;
+  return `${hours.toFixed(1)}h`;
 };
 
 const formatNumber = (n) => n.toLocaleString();
@@ -131,7 +130,7 @@ const DailyGoals = () => {
       }
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [user, todayKey, todaySafe]);
+  }, [user, todayKey]);
 
   useEffect(() => {
     const waterCompleted = todaySafe.water.total >= goals.water;
@@ -152,7 +151,7 @@ const DailyGoals = () => {
     }
     if (sleepCompleted && !goalNotifiedRef.current.sleep) {
       goalNotifiedRef.current.sleep = true;
-      addNotification('Sleep Goal Completed', `You reached your daily sleep goal of ${Math.round(goals.sleep / 60)}h!`, 'health', 'health', '/health');
+      addNotification('Sleep Goal Completed', `You reached your daily sleep goal of ${goals.sleep}h!`, 'health', 'health', '/health');
     }
     if (caloriesCompleted && !goalNotifiedRef.current.calories) {
       goalNotifiedRef.current.calories = true;
@@ -201,7 +200,7 @@ const DailyGoals = () => {
   useEffect(() => {
     if (todaySafe.sleep.start && !todaySafe.sleep.end) {
       const update = () => {
-        const elapsed = (Date.now() - new Date(todaySafe.sleep.start).getTime()) / 60000;
+        const elapsed = (Date.now() - new Date(todaySafe.sleep.start).getTime()) / 3600000;
         setSleepElapsed(elapsed);
       };
       update();
@@ -278,11 +277,11 @@ const DailyGoals = () => {
   const stopSleep = () => {
     const end = new Date();
     const start = new Date(todaySafe.sleep.start);
-    const durMinutes = (end.getTime() - start.getTime()) / 60000;
+    const durHours = (end.getTime() - start.getTime()) / 3600000;
     setToday(prev => {
       const next = {
         ...prev,
-        sleep: { start: prev.sleep.start, end: end.toISOString(), duration: prev.sleep.duration + Math.round(durMinutes) },
+        sleep: { start: prev.sleep.start, end: end.toISOString(), duration: Math.round((prev.sleep.duration + durHours) * 10) / 10 },
       };
       persist(next, null);
       return next;
@@ -315,7 +314,7 @@ const DailyGoals = () => {
   const goalKeys = [
     { key: 'water', label: 'Water', icon: Droplets, unit: 'ml' },
     { key: 'steps', label: 'Steps', icon: Activity, unit: 'steps' },
-    { key: 'sleep', label: 'Sleep', icon: Moon, unit: 'min' },
+    { key: 'sleep', label: 'Sleep', icon: Moon, unit: 'h' },
     { key: 'calories', label: 'Calories', icon: Flame, unit: 'cal' },
   ];
 
@@ -353,7 +352,7 @@ const DailyGoals = () => {
             displayValue = `${formatNumber(current)} / ${formatNumber(goal)}`;
             progress = Math.min(current / goal, 1);
           } else if (key === 'sleep') {
-            current = todaySafe.sleep.duration + (todaySafe.sleep.start && !todaySafe.sleep.end ? Math.round(sleepElapsed) : 0);
+            current = todaySafe.sleep.duration + (todaySafe.sleep.start && !todaySafe.sleep.end ? Math.round(sleepElapsed * 10) / 10 : 0);
             displayValue = `${formatDuration(current)} / ${formatDuration(goal)}`;
             progress = Math.min(current / goal, 1);
           } else if (key === 'calories') {
@@ -373,15 +372,15 @@ const DailyGoals = () => {
                 <div className="flex items-center gap-2">
                   {editingGoal === key ? (
                     <div className="flex items-center gap-1">
-                      <input type="number" value={goalInput} onChange={(e) => setGoalInput(e.target.value)}
-                        className="w-16 h-6 bg-sl-gray/40 border border-sl-purple/20 rounded-lg text-xs text-white text-center px-1"
-                        min="0" autoFocus onKeyDown={(e) => e.key === 'Enter' && saveGoal()} />
+                      <input type="number" value={goalInput} onChange={(e) => { const v = e.target.value; if (v === '' || /^\d*\.?\d*$/.test(v)) setGoalInput(v); }}
+                        className="w-16 h-6 bg-sl-gray/40 border border-sl-purple/20 rounded-lg text-xs text-white text-center px-1 focus:outline-none focus:border-sl-purple/50 focus:bg-sl-gray/50 transition"
+                        min="0" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveGoal(); if (e.key === '-' || e.key === 'e') e.preventDefault(); }} />
                       <button onClick={saveGoal} className="text-emerald-400 hover:text-emerald-300"><Check className="w-3 h-3" /></button>
                     </div>
                   ) : (
                     <button onClick={() => startEditGoal(key)} className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-sl-purple-light/40 hover:text-sl-purple-light transition">
                       <Edit2 className="w-2.5 h-2.5" />
-                      {formatNumber(goal)}{unit === 'ml' ? 'ml' : unit === 'cal' ? 'cal' : ''}
+                      {formatNumber(goal)}{unit === 'ml' ? 'ml' : unit === 'cal' ? 'cal' : unit === 'h' ? 'h' : ''}
                     </button>
                   )}
                 </div>
@@ -408,8 +407,8 @@ const DailyGoals = () => {
                         </button>
                       ))}
                       <form onSubmit={handleCustomWater} className="flex items-center gap-1">
-                        <input type="number" value={waterInput} onChange={(e) => setWaterInput(e.target.value)}
-                          placeholder="ml" className="w-12 h-5 bg-sl-gray/40 border border-sl-purple/15 rounded text-[9px] text-white text-center px-0.5" min="0" />
+                        <input type="number" value={waterInput} onChange={(e) => { const v = e.target.value; if (v === '' || /^\d*\.?\d*$/.test(v)) setWaterInput(v); }}
+                          placeholder="ml" className="w-12 h-5 bg-sl-gray/40 border border-sl-purple/15 rounded text-[9px] text-white text-center px-0.5 focus:outline-none focus:border-sl-purple/50 focus:bg-sl-gray/50 transition" min="0" />
                         <button type="submit" className="text-emerald-400 hover:text-emerald-300"><Plus className="w-3 h-3" /></button>
                       </form>
                     </>
@@ -417,7 +416,7 @@ const DailyGoals = () => {
                   {key === 'steps' && (
                     <>
                       <input type="number" value={todaySafe.steps.count} onChange={updateSteps}
-                        className="w-16 h-5 bg-sl-gray/40 border border-sl-purple/15 rounded text-[9px] text-white text-center px-0.5" min="0" />
+                        className="w-16 h-5 bg-sl-gray/40 border border-sl-purple/15 rounded text-[9px] text-white text-center px-0.5 focus:outline-none focus:border-sl-purple/50 focus:bg-sl-gray/50 transition" min="0" />
                       <button onClick={togglePedometer}
                         className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border transition ${
                           pedometerActive
