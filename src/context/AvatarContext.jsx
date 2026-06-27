@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabase';
+import { isSafeAvatarValue } from '../utils/avatarUtils';
 
 const AvatarContext = createContext();
 
@@ -56,6 +57,11 @@ export function AvatarProvider({ children }) {
   }, [user]);
 
   const updateAvatar = useCallback((newAvatar, newType) => {
+    if (!isSafeAvatarValue(newAvatar, newType)) {
+      console.error('Rejected unsafe avatar value');
+      return;
+    }
+
     localStorage.setItem('gr_avatar', newAvatar || '');
     localStorage.setItem('gr_avatar_type', newType || 'initial');
     setAvatar(newAvatar);

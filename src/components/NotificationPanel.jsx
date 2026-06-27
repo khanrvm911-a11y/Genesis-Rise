@@ -19,6 +19,22 @@ const CATEGORY_ICONS = {
   system: Info,
 };
 
+const ALLOWED_ACTION_LINKS = new Set([
+  '/',
+  '/tracker',
+  '/planner',
+  '/adviser',
+  '/health',
+  '/analysis',
+  '/profile',
+  '/settings',
+]);
+
+function getSafeActionLink(actionLink) {
+  if (typeof actionLink !== 'string') return null;
+  return ALLOWED_ACTION_LINKS.has(actionLink) ? actionLink : null;
+}
+
 const getRelativeTime = (dateStr) => {
   const now = new Date();
   const date = new Date(dateStr);
@@ -45,8 +61,9 @@ export default function NotificationPanel({ isOpen, onClose }) {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    if (notification.action_link) {
-      navigate(notification.action_link);
+    const actionLink = getSafeActionLink(notification.action_link);
+    if (actionLink) {
+      navigate(actionLink);
     }
     onClose();
   };

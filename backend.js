@@ -2,14 +2,48 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import Groq from 'groq-sdk';
+import rateLimit from 'express-rate-limit';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
 const app = express();
 const PORT = 5000;
+const DEFAULT_ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
+];
+const allowedOrigins = (process.env.ALLOWED_ORIGIN || process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+const corsOrigins = allowedOrigins.length > 0 ? allowedOrigins : DEFAULT_ALLOWED_ORIGINS;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '1mb' }));
+const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  : null;
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || corsOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
+app.use(express.json({ limit: '128kb' }));
+
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -17,19 +51,49 @@ const groq = new Groq({
   maxRetries: 0,
 });
 
-app.post('/api/chat', async (req, res) => {
+const SYSTEM_PROMPT = "You are Genesis AI Coach, a knowledgeable and supportive fitness coach. Provide concise, actionable advice based on the user's profile. Use plain text. Be encouraging but honest. Never provide medical diagnoses or recommend unsafe practices. Always encourage consulting qualified professionals for medical concerns.";
+
+async function requireAuth(req, res, next) {
+  if (!supabase) {
+    return res.status(503).json({ error: 'Authentication is not configured' });
+  }
+
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) return res.status(401).json({ error: 'Authentication required' });
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) return res.status(401).json({ error: 'Invalid session' });
+
+  req.user = data.user;
+  next();
+}
+
+function normalizeMessages(messages) {
+  if (!Array.isArray(messages)) return null;
+
+  const normalized = messages.slice(-20).map(message => {
+    const role = message?.role === 'assistant' ? 'assistant' : message?.role === 'user' ? 'user' : null;
+    const content = typeof message?.content === 'string' ? message.content.trim() : '';
+    if (!role || !content || content.length > 5000) return null;
+    return { role, content };
+  });
+
+  if (normalized.some(message => !message)) return null;
+  return normalized;
+}
+
+app.post('/api/chat', chatLimiter, requireAuth, async (req, res) => {
   try {
-    const { messages, systemPrompt } = req.body;
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Messages array is required' });
-    }
+    const messages = normalizeMessages(req.body?.messages);
+    if (!messages) return res.status(400).json({ error: 'Valid messages array is required' });
 
     const groqMessages = [
       {
         role: 'system',
-        content: systemPrompt || "You are Genesis AI Coach, a knowledgeable and supportive fitness coach. Provide concise, actionable advice based on the user's profile. Use plain text. Be encouraging but honest. Never provide medical diagnoses or recommend unsafe practices. Always encourage consulting qualified professionals for medical concerns."
+        content: SYSTEM_PROMPT,
       },
-      ...messages.slice(-20)
+      ...messages,
     ];
 
     const completion = await groq.chat.completions.create({
@@ -49,19 +113,17 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-app.post('/api/chat/stream', async (req, res) => {
+app.post('/api/chat/stream', chatLimiter, requireAuth, async (req, res) => {
   try {
-    const { messages, systemPrompt } = req.body;
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Messages array is required' });
-    }
+    const messages = normalizeMessages(req.body?.messages);
+    if (!messages) return res.status(400).json({ error: 'Valid messages array is required' });
 
     const groqMessages = [
       {
         role: 'system',
-        content: systemPrompt || "You are Genesis AI Coach, a knowledgeable and supportive fitness coach. Provide concise, actionable advice based on the user's profile. Use plain text. Be encouraging but honest. Never provide medical diagnoses or recommend unsafe practices. Always encourage consulting qualified professionals for medical concerns."
+        content: SYSTEM_PROMPT,
       },
-      ...messages.slice(-20)
+      ...messages,
     ];
 
     res.writeHead(200, {

@@ -298,50 +298,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signInWithFacebook = async () => {
-    setError(null);
-    try {
-      if (isCapacitor) {
-        const originalOpen = window.open;
-        window.open = () => null;
-
-        let result;
-        try {
-          result = await supabase.auth.signInWithOAuth({
-            provider: 'facebook',
-            options: {
-              redirectTo: ANDROID_REDIRECT_URL,
-            },
-          });
-        } finally {
-          window.open = originalOpen;
-        }
-
-        if (result.error) throw result.error;
-
-        if (result.data?.url) {
-          const { Browser } = await import('@capacitor/browser');
-          await Browser.open({ url: result.data.url });
-        }
-
-        return result.data;
-      } else {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'facebook',
-          options: {
-            redirectTo: `${window.location.origin}/`,
-          },
-        });
-        if (error) throw error;
-        return data;
-      }
-    } catch (err) {
-      const message = err.message || 'Facebook sign-in failed';
-      setError(message);
-      throw err;
-    }
-  };
-
+  
   const register = async (email, password, username) => {
     setError(null);
     try {
@@ -468,8 +425,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     signInWithGoogle,
-    signInWithFacebook,
-    logout,
+        logout,
     forgotPassword,
     resetPassword,
     sendVerificationEmail,

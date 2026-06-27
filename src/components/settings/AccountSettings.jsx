@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAvatar } from '../../context/AvatarContext';
 import { supabase } from '../../lib/supabase';
 import { AVATAR_PRESETS, getAvatarEmoji } from '../../utils/avatarPresets';
+import { validateAvatarFile } from '../../utils/avatarUtils';
 
 export default function AccountSettings({ settings, onUpdate, showToast }) {
   const { user, updateUser } = useAuth();
@@ -82,7 +83,12 @@ export default function AccountSettings({ settings, onUpdate, showToast }) {
   const handleAvatarUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { setError('Image must be under 10 MB'); return; }
+    const validationError = validateAvatarFile(file);
+    if (validationError) {
+      setError(validationError);
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (ev) => {
       if (typeof ev.target?.result === 'string') {

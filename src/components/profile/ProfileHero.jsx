@@ -5,8 +5,7 @@ import {
   ArrowUp, ArrowDown, Minus, User,
 } from 'lucide-react';
 import { AVATAR_PRESETS } from '../../utils/avatarPresets';
-
-const MAX_AVATAR_SIZE = 10 * 1024 * 1024;
+import { validateAvatarFile } from '../../utils/avatarUtils';
 
 export default function ProfileHero({
   user, profile, level, xp, progress, xpForNext, title,
@@ -36,8 +35,9 @@ export default function ProfileHero({
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError('');
-    if (file.size > MAX_AVATAR_SIZE) {
-      setUploadError('Image must be under 10 MB');
+    const validationError = validateAvatarFile(file);
+    if (validationError) {
+      setUploadError(validationError);
       e.target.value = '';
       return;
     }

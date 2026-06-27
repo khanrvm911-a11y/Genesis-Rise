@@ -104,7 +104,7 @@ export default function AccountSection({ user, onBack }) {
             </div>
           </div>
           <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-sl-purple/10 text-sl-purple-light border border-sl-purple/20">
-            {provider === 'google' ? 'Google' : provider === 'facebook' ? 'Facebook' : 'Email'}
+            {provider === 'google' ? 'Google' : 'Email'}
           </span>
         </div>
 
