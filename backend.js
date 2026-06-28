@@ -15,12 +15,13 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'http://localhost:5000',
   'http://127.0.0.1:5000',
 ];
-const allowedOrigins = (process.env.ALLOWED_ORIGIN || process.env.ALLOWED_ORIGINS || '')
+const rawAllowed = process.env.ALLOWED_ORIGIN || process.env.ALLOWED_ORIGINS || '';
+const allowedOrigins = rawAllowed
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean);
-const corsOrigins = allowedOrigins.length > 0 ? allowedOrigins : DEFAULT_ALLOWED_ORIGINS;
 const isProduction = process.env.NODE_ENV === 'production';
+const corsOrigins = allowedOrigins.length > 0 ? allowedOrigins : (isProduction ? [] : DEFAULT_ALLOWED_ORIGINS);
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
