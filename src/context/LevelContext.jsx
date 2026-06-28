@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import {
@@ -10,6 +10,17 @@ import {
 
 const LevelContext = createContext();
 
+const readStoredXP = () => {
+  const stored = parseInt(localStorage.getItem('sl_user_xp') || '0', 10);
+  return Number.isFinite(stored) && stored > 0 ? stored : 0;
+};
+
+const applyXP = (setXp, setLevel, nextXP) => {
+  const safeXP = Math.max(0, nextXP);
+  setXp(safeXP);
+  setLevel(calculateLevelFromXP(safeXP));
+};
+
 export const LevelProvider = ({ children }) => {
   const { user } = useAuth();
   const [xp, setXp] = useState(0);
@@ -17,10 +28,23 @@ export const LevelProvider = ({ children }) => {
   const [progress, setProgress] = useState(0);
   const [xpForNext, setXpForNext] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
   const [justLeveledUp, setJustLeveledUp] = useState(false);
   const [newLevel, setNewLevel] = useState(null);
 
-  const fetchProfile = useCallback(async () => {
+  const xpRef = useRef(0);
+  useEffect(() => {
+    xpRef.current = xp;
+  }, [xp]);
+
+  const mergeRemoteXP = useCallback((remoteXP) => {
+    const safeRemote = remoteXP ?? 0;
+    const merged = Math.max(xpRef.current, safeRemote);
+    applyXP(setXp, setLevel, merged);
+    return merged;
+  }, []);
+
+  const fetchProfile = useCallback(async ({ isInitial = false } = {}) => {
     if (!user) return;
     try {
       const { data, error } = await supabase
@@ -35,40 +59,48 @@ export const LevelProvider = ({ children }) => {
       }
 
       if (data) {
-        setXp(data.xp);
-        setLevel(data.level);
+        mergeRemoteXP(data.xp);
       } else {
+        const startingXP = isInitial ? readStoredXP() : xpRef.current;
         await supabase.from('profiles').insert({
           id: user.id,
           email: user.email,
           username: user.user_metadata?.username || '',
-          level: 1,
-          xp: 0,
-          rank: 'Initiate',
+          level: calculateLevelFromXP(startingXP),
+          xp: startingXP,
+          rank: getLevelTitle(calculateLevelFromXP(startingXP)),
         });
-        setXp(0);
-        setLevel(1);
+        applyXP(setXp, setLevel, startingXP);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
     }
-  }, [user]);
+  }, [user, mergeRemoteXP]);
 
   useEffect(() => {
     if (!user) {
-      setXp(0);
-      setLevel(1);
+      applyXP(setXp, setLevel, 0);
+      setHydrated(false);
       setLoading(false);
       return;
     }
 
+    const storedXP = readStoredXP();
+    if (storedXP > 0) {
+      applyXP(setXp, setLevel, storedXP);
+    }
+
+    setHydrated(false);
     setLoading(true);
-    fetchProfile().finally(() => setLoading(false));
+    fetchProfile({ isInitial: true }).finally(() => {
+      setHydrated(true);
+      setLoading(false);
+    });
   }, [user, fetchProfile]);
 
   // Cross-tab sync: refetch XP when tab becomes visible
   useEffect(() => {
-    if (!user) return;
+    if (!user || !hydrated) return;
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         fetchProfile();
@@ -76,15 +108,28 @@ export const LevelProvider = ({ children }) => {
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [user, fetchProfile]);
+  }, [user, hydrated, fetchProfile]);
 
   // Online sync: refetch when coming back online
   useEffect(() => {
-    if (!user) return;
+    if (!user || !hydrated) return;
     const handleOnline = () => fetchProfile();
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [user, fetchProfile]);
+  }, [user, hydrated, fetchProfile]);
+
+  // Cross-tab sync via localStorage changes in other tabs
+  useEffect(() => {
+    if (!user) return;
+    const handleStorage = (event) => {
+      if (event.key !== 'sl_user_xp' || event.newValue == null) return;
+      const remoteXP = parseInt(event.newValue, 10);
+      if (!Number.isFinite(remoteXP)) return;
+      mergeRemoteXP(remoteXP);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [user, mergeRemoteXP]);
 
   useEffect(() => {
     const p = getLevelProgress(xp, level);
@@ -94,21 +139,27 @@ export const LevelProvider = ({ children }) => {
 
   const persistProfile = useCallback(async () => {
     if (!user) return;
+    const computedLevel = calculateLevelFromXP(xp);
     try {
-      await supabase.from('profiles').update({ xp, level, rank: getLevelTitle(level) }).eq('id', user.id);
+      await supabase
+        .from('profiles')
+        .update({ xp, level: computedLevel, rank: getLevelTitle(computedLevel) })
+        .eq('id', user.id);
     } catch (err) {
       console.error('Error updating profile:', err);
     }
-  }, [xp, level, user]);
+  }, [xp, user]);
 
+  // Only persist after initial hydration to avoid overwriting DB with stale defaults
   useEffect(() => {
+    if (!user || !hydrated) return;
     persistProfile();
-  }, [persistProfile]);
+  }, [xp, user, hydrated, persistProfile]);
 
   useEffect(() => {
     if (!user) return;
-    localStorage.setItem('sl_user_xp', xp);
-    localStorage.setItem('sl_user_level', level);
+    localStorage.setItem('sl_user_xp', String(xp));
+    localStorage.setItem('sl_user_level', String(level));
   }, [xp, level, user]);
 
   const addXP = useCallback((amount) => {
@@ -117,23 +168,25 @@ export const LevelProvider = ({ children }) => {
     setXp(prev => {
       const newXP = prev + amount;
       const currentLevel = calculateLevelFromXP(prev);
-      const newLevel = calculateLevelFromXP(newXP);
+      const nextLevel = calculateLevelFromXP(newXP);
 
-      if (newLevel > currentLevel) {
-        setNewLevel(newLevel);
+      if (nextLevel > currentLevel) {
+        setNewLevel(nextLevel);
         setJustLeveledUp(true);
-        setLevel(newLevel);
+        setLevel(nextLevel);
         setTimeout(() => {
           setJustLeveledUp(false);
           setNewLevel(null);
         }, 4000);
       } else {
-        setLevel(newLevel);
+        setLevel(nextLevel);
       }
 
       return newXP;
     });
   }, []);
+
+  const refreshXP = useCallback(() => fetchProfile(), [fetchProfile]);
 
   const value = {
     xp,
@@ -141,6 +194,7 @@ export const LevelProvider = ({ children }) => {
     progress,
     xpForNext,
     addXP,
+    refreshXP,
     loading,
     title: getLevelTitle(level),
     justLeveledUp,

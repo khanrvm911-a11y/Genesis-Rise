@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useWorkout } from '../../context/WorkoutContext';
 import { useNotification } from '../../context/NotificationContext';
 import { supabase } from '../../lib/supabase';
+import { createGpsStepCounter, requestGeolocationPermission } from '../../utils/gpsStepCounter';
 
 const STORAGE_KEY = 'sl_daily_goals';
 
@@ -160,41 +161,27 @@ const DailyGoals = () => {
   }, [todaySafe, goals, workoutHistory, addNotification]);
 
   useEffect(() => {
-    if (pedometerActive) {
-      let lastMagnitude = null;
-      let stepBuffer = 0;
-      const threshold = 12;
-      const handler = (e) => {
-        const acc = e.accelerationIncludingGravity;
-        if (!acc) return;
-        const mag = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
-        if (lastMagnitude !== null) {
-          const diff = Math.abs(mag - lastMagnitude);
-          if (diff > threshold && mag > 9.5) {
-            stepBuffer++;
-          }
-        }
-        lastMagnitude = mag;
-      };
-      window.addEventListener('devicemotion', handler);
-      const iv = setInterval(() => {
-        if (stepBuffer > 0) {
-          setToday(prev => {
-            const next = { ...prev, steps: { count: prev.steps.count + stepBuffer } };
-            allData.current.days[next.date || todayKey] = next;
-            saveAll(allData.current);
-            return next;
-          });
-          stepBuffer = 0;
-        }
-      }, 2000);
-      pedometerRef.current = { handler, iv };
-      return () => {
-        window.removeEventListener('devicemotion', handler);
-        clearInterval(iv);
-        pedometerRef.current = null;
-      };
-    }
+    if (!pedometerActive) return;
+
+    const counter = createGpsStepCounter({
+      onSteps: (stepCount) => {
+        if (stepCount <= 0) return;
+        setToday(prev => {
+          const next = { ...prev, steps: { count: prev.steps.count + stepCount } };
+          allData.current.days[next.date || todayKey] = next;
+          saveAll(allData.current);
+          return next;
+        });
+      },
+    });
+
+    counter.start();
+    pedometerRef.current = counter;
+
+    return () => {
+      counter.stop();
+      pedometerRef.current = null;
+    };
   }, [pedometerActive, todayKey]);
 
   useEffect(() => {
@@ -248,20 +235,12 @@ const DailyGoals = () => {
   const togglePedometer = async () => {
     if (pedometerActive) {
       setPedometerActive(false);
-      if (pedometerRef.current) {
-        window.removeEventListener('devicemotion', pedometerRef.current.handler);
-        clearInterval(pedometerRef.current.iv);
-        pedometerRef.current = null;
-      }
       return;
     }
-    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-      try {
-        const result = await DeviceMotionEvent.requestPermission();
-        if (result !== 'granted') return;
-      } catch {
-        return;
-      }
+    try {
+      await requestGeolocationPermission();
+    } catch {
+      return;
     }
     setPedometerActive(true);
   };

@@ -1142,7 +1142,7 @@ const Home = () => {
             <p className="text-lg font-extrabold text-white">{level}</p>
             <p className="text-[9px] text-sl-gray-light mt-0.5">{title || 'Initiate'}</p>
             <div className="w-full h-1 bg-sl-gray/40 rounded-full overflow-hidden mt-2">
-              <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all" style={{ width: `${Math.min(progress, 100)}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all" style={{ width: `${Math.min(progress * 100, 100)}%` }} />
             </div>
           </div>
 

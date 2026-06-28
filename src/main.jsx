@@ -11,12 +11,14 @@ import { OfflineProvider } from './context/OfflineContext.jsx'
 import { HelmetProvider } from 'react-helmet-async'
 import './index.css'
 import App from './App.jsx'
+import LaunchSplashGate from './components/LaunchSplashGate.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
         <AuthProvider>
+          <LaunchSplashGate>
           <OfflineProvider>
           <AvatarProvider>
           <NotificationProvider>
@@ -30,6 +32,7 @@ createRoot(document.getElementById('root')).render(
           </NotificationProvider>
           </AvatarProvider>
           </OfflineProvider>
+          </LaunchSplashGate>
         </AuthProvider>
       </BrowserRouter>
     </HelmetProvider>

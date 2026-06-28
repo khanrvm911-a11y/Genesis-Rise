@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/splash_background" />
+    <item
+        android:width="220dp"
+        android:height="220dp"
+        android:gravity="center">
+        <shape android:shape="oval">
+            <gradient
+                android:centerColor="@color/splash_glow_core"
+                android:endColor="@android:color/transparent"
+                android:gradientRadius="110dp"
+                android:startColor="@color/splash_glow_outer"
+                android:type="radial" />
+        </shape>
+    </item>
+    <item
+        android:width="96dp"
+        android:height="96dp"
+        android:drawable="@drawable/splash_icon"
+        android:gravity="center" />
+</layer-list>
