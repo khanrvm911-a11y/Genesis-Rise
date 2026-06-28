@@ -7,8 +7,8 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "start /B node backend.js && vite",
-    "dev:backend": "node backend.js",
+    "dev": "start /B node backend.cjs && vite",
+    "dev:backend": "node backend.cjs",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
