@@ -11,6 +11,7 @@ import OfflineBanner from '../offline/OfflineBanner';
 import { supabase } from '../../lib/supabase';
 
 let abortController = null;
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function AIChat({
   ctx, conversations, setConversations,
@@ -104,7 +105,7 @@ export default function AIChat({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Authentication required');
 
-      const response = await fetch('/api/chat/stream', {
+      const response = await fetch(`${API_BASE}/api/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

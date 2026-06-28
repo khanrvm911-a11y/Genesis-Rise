@@ -535,7 +535,7 @@ export default function Tracker() {
                     </div>
                   )}
                   <p className="text-[10px] text-amber-400/70 text-center mt-2 leading-relaxed">
-                     Warning!:Your active set will be lost if you navigate away or close this page.STAY FOCUSED...
+                     Warning! Your active set will be lost if you navigate away or close this page. STAY FOCUSED...
                   </p>
                 </div>
               </div>

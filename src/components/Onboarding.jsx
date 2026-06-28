@@ -375,7 +375,7 @@ export default function Onboarding({ user, onComplete }) {
                   placeholder="170"
                   value={form.height}
                   onChange={(e) => update('height', e.target.value)}
-                  className="w-full h-12 pl-10 pr-3 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purger/50 focus:ring-1 focus:ring-sl-purger/30 transition-all duration-300"
+                  className="w-full h-12 pl-10 pr-3 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purple/50 focus:ring-1 focus:ring-sl-purple/30 transition-all duration-300"
                 />
               </div>
             ) : (
@@ -386,7 +386,7 @@ export default function Onboarding({ user, onComplete }) {
                     placeholder="5"
                     value={form.heightFeet}
                     onChange={(e) => update('heightFeet', e.target.value)}
-                    className="w-full h-12 pl-3 pr-8 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purger/50 focus:ring-1 focus:ring-sl-purger/30 transition-all duration-300"
+                    className="w-full h-12 pl-3 pr-8 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purple/50 focus:ring-1 focus:ring-sl-purple/30 transition-all duration-300"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-sl-gray-light/40 pointer-events-none">ft</span>
                 </div>
@@ -396,7 +396,7 @@ export default function Onboarding({ user, onComplete }) {
                     placeholder="10"
                     value={form.heightInches}
                     onChange={(e) => update('heightInches', e.target.value)}
-                    className="w-full h-12 pl-3 pr-8 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purger/50 focus:ring-1 focus:ring-sl-purger/30 transition-all duration-300"
+                    className="w-full h-12 pl-3 pr-8 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purple/50 focus:ring-1 focus:ring-sl-purple/30 transition-all duration-300"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-sl-gray-light/40 pointer-events-none">in</span>
                 </div>
@@ -406,13 +406,13 @@ export default function Onboarding({ user, onComplete }) {
 
           <FieldGroup label="Weight (kg)" error={errors.weight}>
             <div className="relative">
-              <Weight className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sl-purger-light/50 pointer-events-none" />
+              <Weight className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sl-purple-light/50 pointer-events-none" />
               <input
                 type="text"
                 placeholder="70"
                 value={form.weight}
                 onChange={(e) => update('weight', e.target.value)}
-                className="w-full h-12 pl-10 pr-8 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purger/50 focus:ring-1 focus:ring-sl-purger/30 transition-all duration-300"
+                className="w-full h-12 pl-10 pr-8 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purple/50 focus:ring-1 focus:ring-sl-purple/30 transition-all duration-300"
               />
             </div>
           </FieldGroup>
@@ -420,13 +420,13 @@ export default function Onboarding({ user, onComplete }) {
           <div className="col-span-2">
             <FieldGroup label="Age" error={errors.age}>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sl-purger-light/50 pointer-events-none" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sl-purple-light/50 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="21"
                   value={form.age}
                   onChange={(e) => update('age', e.target.value)}
-                  className="w-full h-12 pl-10 pr-8 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purger/50 focus:ring-1 focus:ring-sl-purger/30 transition-all duration-300"
+                  className="w-full h-12 pl-10 pr-8 bg-sl-gray/20 border border-sl-gray/40 rounded-xl text-white text-sm placeholder-sl-gray-light/30 focus:outline-none focus:border-sl-purple/50 focus:ring-1 focus:ring-sl-purple/30 transition-all duration-300"
                 />
               </div>
             </FieldGroup>
@@ -523,7 +523,7 @@ export default function Onboarding({ user, onComplete }) {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="group relative inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-sl-purger to-amber-500 text-white font-bold text-base rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-sl-purger/25 hover:scale-[1.03] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sl-purger/25 focus-visible:ring-offset-2 focus-visible:ring-offset-sler-dark min-h-[52px] min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+            className="group relative inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-sl-purple to-amber-500 text-white font-bold text-base rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-sl-purple/25 hover:scale-[1.03] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sl-purple/25 focus-visible:ring-offset-2 focus-visible:ring-offset-sl-dark min-h-[52px] min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
           >
             {saving ? (
               <span className="relative z-10">Saving...</span>
@@ -531,7 +531,7 @@ export default function Onboarding({ user, onComplete }) {
               <>
                 <span className="relative z-10">Create My Journey</span>
                 <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-r from-sl-purger via-amber-400 to-amber-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-r from-sl-purple via-amber-400 to-amber-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
               </>
             )}
           </button>
@@ -546,7 +546,7 @@ export default function Onboarding({ user, onComplete }) {
   return (
     <div className="min-h-screen bg-sl-gradient flex items-center justify-center p-4">
       <div className="w-full max-w-lg mx-auto">
-        <div className="bg-sl-gray/20 backdrop-blur-sm border border-sl-purger/10 rounded-2xl shadow-2xl shadow-sl-purger/10 p-5 md:p-8">
+        <div className="bg-sl-gray/20 backdrop-blur-sm border border-sl-purple/10 rounded-2xl shadow-2xl shadow-sl-purple/10 p-5 md:p-8">
           {step > 0 && step <= 4 && <ProgressSteps current={step} />}
 
           <AnimatePresence mode="wait" custom={dir}>
@@ -564,13 +564,13 @@ export default function Onboarding({ user, onComplete }) {
           </AnimatePresence>
 
           {(showBack || showNext) && (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-sl-purger/10">
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-sl-purple/10">
               <div>
                 {showBack && (
                   <button
                     type="button"
                     onClick={goBack}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-sl-gray-light hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sl-purger/25 focus-visible:ring-offset-2 focus-visible:ring-offset-sler-dark rounded-lg"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-sl-gray-light hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sl-purple/25 focus-visible:ring-offset-2 focus-visible:ring-offset-sl-dark rounded-lg"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Back
@@ -582,7 +582,7 @@ export default function Onboarding({ user, onComplete }) {
                   <button
                     type="button"
                     onClick={goNext}
-                    className="inline-flex items-center gap-1.5 px-6 py-2 bg-gradient-to-r from-sl-purger to-amber-500 text-white font-semibold text-sm rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-sl-purger/20 hover:scale-[1.02] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sl-purger/25 focus-visible:ring-offset-2 focus-visible:ring-offset-sler-dark"
+                    className="inline-flex items-center gap-1.5 px-6 py-2 bg-gradient-to-r from-sl-purple to-amber-500 text-white font-semibold text-sm rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-sl-purple/20 hover:scale-[1.02] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sl-purple/25 focus-visible:ring-offset-2 focus-visible:ring-offset-sl-dark"
                   >
                     Continue
                     <ChevronRight className="w-4 h-4" />

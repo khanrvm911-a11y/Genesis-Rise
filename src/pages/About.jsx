@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import igrisIllustration from '../assets/igris.png';
 
 const About = () => {
   return (
@@ -30,7 +31,7 @@ const About = () => {
           {/* Right: Illustration */}
           <div className="bg-sl-dark/40 backdrop-blur-sm rounded-sl-xl p-8 border border-sl-purple/20 shadow-sl-glow">
             <div className="w-24 h-24 bg-sl-purple/20 rounded-full flex items-center justify-center mb-6 mx-auto">
-              <img src="/igris.png" alt="Illustration" className="w-full h-full object-contain" />
+              <img src={igrisIllustration} alt="Illustration" className="w-full h-full object-contain" />
             </div>
             <h3 className="text-xl font-bold text-sl-purple-light text-center">Train Smarter, Not Harder</h3>
             <p className="text-sl-gray-light text-center">
