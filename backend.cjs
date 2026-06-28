@@ -58,17 +58,6 @@ async function startServer() {
     maxRetries: 0,
   });
 
-  async function requireAuth(req, res, next) {
-    if (!supabase) return res.status(503).json({ error: 'Authentication is not configured' });
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
-    if (!token) return res.status(401).json({ error: 'Authentication required' });
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data?.user) return res.status(401).json({ error: 'Invalid session' });
-    req.user = data.user;
-    next();
-  }
-
   function normalizeMessages(messages) {
     if (!Array.isArray(messages)) return null;
     const normalized = messages.slice(-20).map(m => {
@@ -81,66 +70,83 @@ async function startServer() {
     return normalized;
   }
 
-  app.post('/api/chat', chatLimiter, requireAuth, async (req, res) => {
-    const abortController = new AbortController();
-    const serverTimeout = setTimeout(() => abortController.abort(), 55000);
-    try {
-      const messages = normalizeMessages(req.body?.messages);
-      if (!messages) {
+  async function authGuard(req, res) {
+    if (!supabase) { res.status(503).json({ error: 'Authentication is not configured' }); return false; }
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+    if (!token) { res.status(401).json({ error: 'Authentication required' }); return false; }
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) { res.status(401).json({ error: 'Invalid session' }); return false; }
+    req.user = data.user;
+    return true;
+  }
+
+  app.post('/api/chat', (req, res) => {
+    chatLimiter(req, res, async () => {
+      if (!(await authGuard(req, res))) return;
+      const abortController = new AbortController();
+      const serverTimeout = setTimeout(() => abortController.abort(), 55000);
+      try {
+        const messages = normalizeMessages(req.body?.messages);
+        if (!messages) {
+          clearTimeout(serverTimeout);
+          return res.status(400).json({ error: 'Valid messages array is required' });
+        }
+        const completion = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
+          temperature: 0.3,
+          max_tokens: 600,
+        });
         clearTimeout(serverTimeout);
-        return res.status(400).json({ error: 'Valid messages array is required' });
+        res.json({ message: completion?.choices?.[0]?.message?.content?.trim() || "I'm sorry, I'm having trouble processing your request right now. Please try again in a moment." });
+      } catch (err) {
+        clearTimeout(serverTimeout);
+        console.error('Chat error:', err.message);
+        const isRateLimit = err.status === 429 || err.message?.toLowerCase().includes('rate limit');
+        res.status(isRateLimit ? 429 : 503).json({ error: isRateLimit ? "Today's limit exceeded" : 'AI service temporarily unavailable' });
       }
-      const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
-        temperature: 0.3,
-        max_tokens: 600,
-      });
-      clearTimeout(serverTimeout);
-      res.json({ message: completion?.choices?.[0]?.message?.content?.trim() || "I'm sorry, I'm having trouble processing your request right now. Please try again in a moment." });
-    } catch (err) {
-      clearTimeout(serverTimeout);
-      console.error('Chat error:', err.message);
-      const isRateLimit = err.status === 429 || err.message?.toLowerCase().includes('rate limit');
-      res.status(isRateLimit ? 429 : 503).json({ error: isRateLimit ? "Today's limit exceeded" : 'AI service temporarily unavailable' });
-    }
+    });
   });
 
-  app.post('/api/chat/stream', chatLimiter, requireAuth, async (req, res) => {
-    const abortController = new AbortController();
-    const serverTimeout = setTimeout(() => abortController.abort(), 55000);
-    try {
-      const messages = normalizeMessages(req.body?.messages);
-      if (!messages) {
-        clearTimeout(serverTimeout);
-        return res.status(400).json({ error: 'Valid messages array is required' });
-      }
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
-      const stream = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
-        temperature: 0.3,
-        max_tokens: 600,
-        stream: true,
-      }, { signal: abortController.signal });
-      for await (const chunk of stream) {
-        const content = chunk.choices?.[0]?.delta?.content || '';
-        if (content) res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
-      }
-      clearTimeout(serverTimeout);
-      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-      res.end();
-    } catch (err) {
-      clearTimeout(serverTimeout);
-      console.error('Stream error:', err.message);
+  app.post('/api/chat/stream', (req, res) => {
+    chatLimiter(req, res, async () => {
+      if (!(await authGuard(req, res))) return;
+      const abortController = new AbortController();
+      const serverTimeout = setTimeout(() => abortController.abort(), 55000);
       try {
-        const isAborted = err.name === 'AbortError';
-        const isRateLimit = err.status === 429 || err.message?.toLowerCase().includes('rate limit');
-        const errorMessage = isAborted ? 'Request timed out' : isRateLimit ? "Today's limit exceeded" : 'AI service temporarily unavailable';
-        res.write(`data: ${JSON.stringify({ type: 'error', content: errorMessage })}\n\n`);
+        const messages = normalizeMessages(req.body?.messages);
+        if (!messages) {
+          clearTimeout(serverTimeout);
+          return res.status(400).json({ error: 'Valid messages array is required' });
+        }
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+        const stream = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
+          temperature: 0.3,
+          max_tokens: 600,
+          stream: true,
+        }, { signal: abortController.signal });
+        for await (const chunk of stream) {
+          const content = chunk.choices?.[0]?.delta?.content || '';
+          if (content) res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+        }
+        clearTimeout(serverTimeout);
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
         res.end();
-      } catch { /* ignore */ }
-    }
+      } catch (err) {
+        clearTimeout(serverTimeout);
+        console.error('Stream error:', err.message);
+        try {
+          const isAborted = err.name === 'AbortError';
+          const isRateLimit = err.status === 429 || err.message?.toLowerCase().includes('rate limit');
+          const errorMessage = isAborted ? 'Request timed out' : isRateLimit ? "Today's limit exceeded" : 'AI service temporarily unavailable';
+          res.write(`data: ${JSON.stringify({ type: 'error', content: errorMessage })}\n\n`);
+          res.end();
+        } catch { /* ignore */ }
+      }
+    });
   });
 
   if (isProduction) {
