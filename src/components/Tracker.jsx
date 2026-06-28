@@ -529,7 +529,7 @@ export default function Tracker() {
                     Start Workout
                   </button>
                   {offlineQueueSize > 0 && (
-                    <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-yellow-400">
+                    <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-red-400">
                       <CloudOff className="w-3.5 h-3.5" />
                       <span>{offlineQueueSize} unsynced set{offlineQueueSize > 1 ? 's' : ''} — will sync when online</span>
                     </div>

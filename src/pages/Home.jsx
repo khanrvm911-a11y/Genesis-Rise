@@ -1148,10 +1148,10 @@ const Home = () => {
 
           <div className="rounded-xl bg-sl-gray/20 border border-sl-purple/10 p-3.5 hover:bg-sl-gray/30 transition">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] text-sl-gray-light font-semibold">Today's XP</span>
+              <span className="text-[10px] text-sl-gray-light font-semibold">Total XP</span>
               <Zap className="w-3.5 h-3.5 text-yellow-400" />
             </div>
-            <p className="text-lg font-extrabold text-white">{xp}</p>
+            <p className="text-lg font-extrabold text-white">{xp.toLocaleString()}</p>
             <p className="text-[9px] text-sl-gray-light mt-0.5">{xpForNext > 0 ? `${xpForNext - (xp % xpForNext)} to next level` : 'Max level'}</p>
           </div>
 

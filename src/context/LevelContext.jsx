@@ -20,6 +20,40 @@ export const LevelProvider = ({ children }) => {
   const [justLeveledUp, setJustLeveledUp] = useState(false);
   const [newLevel, setNewLevel] = useState(null);
 
+  const fetchProfile = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('level, xp')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      if (data) {
+        setXp(data.xp);
+        setLevel(data.level);
+      } else {
+        await supabase.from('profiles').insert({
+          id: user.id,
+          email: user.email,
+          username: user.user_metadata?.username || '',
+          level: 1,
+          xp: 0,
+          rank: 'Initiate',
+        });
+        setXp(0);
+        setLevel(1);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
       setXp(0);
@@ -28,42 +62,29 @@ export const LevelProvider = ({ children }) => {
       return;
     }
 
-    const fetchProfile = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('level, xp')
-          .eq('id', user.id)
-          .single();
+    setLoading(true);
+    fetchProfile().finally(() => setLoading(false));
+  }, [user, fetchProfile]);
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching profile:', error);
-          setLoading(false);
-          return;
-        }
-
-        if (data) {
-          setXp(data.xp);
-          setLevel(data.level);
-        } else {
-          await supabase.from('profiles').insert({
-            id: user.id,
-            email: user.email,
-            username: user.user_metadata?.username || '',
-            level: 1,
-            xp: 0,
-            rank: 'Initiate',
-          });
-          setXp(0);
-          setLevel(1);
-        }
-      } finally {
-        setLoading(false);
+  // Cross-tab sync: refetch XP when tab becomes visible
+  useEffect(() => {
+    if (!user) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchProfile();
       }
     };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [user, fetchProfile]);
 
-    fetchProfile();
-  }, [user]);
+  // Online sync: refetch when coming back online
+  useEffect(() => {
+    if (!user) return;
+    const handleOnline = () => fetchProfile();
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [user, fetchProfile]);
 
   useEffect(() => {
     const p = getLevelProgress(xp, level);
@@ -71,19 +92,18 @@ export const LevelProvider = ({ children }) => {
     setXpForNext(getXPForNextLevel(level));
   }, [xp, level]);
 
-  useEffect(() => {
+  const persistProfile = useCallback(async () => {
     if (!user) return;
-
-    const updateProfile = async () => {
-      try {
-        await supabase.from('profiles').update({ xp, level, rank: getLevelTitle(level) }).eq('id', user.id);
-      } catch (err) {
-        console.error('Error updating profile:', err);
-      }
-    };
-
-    updateProfile();
+    try {
+      await supabase.from('profiles').update({ xp, level, rank: getLevelTitle(level) }).eq('id', user.id);
+    } catch (err) {
+      console.error('Error updating profile:', err);
+    }
   }, [xp, level, user]);
+
+  useEffect(() => {
+    persistProfile();
+  }, [persistProfile]);
 
   useEffect(() => {
     if (!user) return;
@@ -92,10 +112,12 @@ export const LevelProvider = ({ children }) => {
   }, [xp, level, user]);
 
   const addXP = useCallback((amount) => {
+    if (amount <= 0) return;
+
     setXp(prev => {
       const newXP = prev + amount;
-      const newLevel = calculateLevelFromXP(newXP);
       const currentLevel = calculateLevelFromXP(prev);
+      const newLevel = calculateLevelFromXP(newXP);
 
       if (newLevel > currentLevel) {
         setNewLevel(newLevel);
