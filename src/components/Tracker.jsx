@@ -33,6 +33,7 @@ import { ArrowLeft, Dumbbell, Moon, CloudOff } from 'lucide-react';
 const STORAGE_KEY_SESSION = 'gr_active_workout_session';
 const STORAGE_KEY_TODAYS_WORKOUT = 'gr_todays_workout';
 const STORAGE_KEY_SCHEDULE = 'gr_workout_schedule';
+const STORAGE_KEY_COMPLETED_WORKOUT = 'gr_todays_completed_workout';
 
 export default function Tracker() {
   const navigate = useNavigate();
@@ -57,6 +58,21 @@ export default function Tracker() {
   const [workoutExercises, setWorkoutExercises] = useState([]);
   const [workoutName, setWorkoutName] = useState('');
   const [workoutCompleteData, setWorkoutCompleteData] = useState(null);
+  const [todaysCompletedWorkout, setTodaysCompletedWorkout] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_COMPLETED_WORKOUT);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const today = new Date().toISOString().split('T')[0];
+        const completedDate = parsed.completedAt
+          ? new Date(parsed.completedAt).toISOString().split('T')[0]
+          : today;
+        if (completedDate === today) return parsed;
+        localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
+      }
+    } catch {}
+    return null;
+  });
 
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionActiveTime, setSessionActiveTime] = useState(0);
@@ -154,12 +170,35 @@ export default function Tracker() {
       } catch { /* invalid session data */ }
     }
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    const completedList = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
+    const isTodayDone = completedList.includes(todayStr);
+    setIsTodayCompleted(isTodayDone);
+
+    const savedCompleted = localStorage.getItem(STORAGE_KEY_COMPLETED_WORKOUT);
+    if (savedCompleted) {
+      try {
+        const parsed = JSON.parse(savedCompleted);
+        const completedDate = parsed.completedAt
+          ? new Date(parsed.completedAt).toISOString().split('T')[0]
+          : todayStr;
+        if (completedDate === todayStr) {
+          setTodaysCompletedWorkout(parsed);
+        } else {
+          localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
+          setTodaysCompletedWorkout(null);
+        }
+      } catch {
+        localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
+        setTodaysCompletedWorkout(null);
+      }
+    }
+
     const todayWorkout = localStorage.getItem(STORAGE_KEY_TODAYS_WORKOUT);
     if (todayWorkout) {
       try {
         const data = JSON.parse(todayWorkout);
-        const today = new Date().toISOString().split('T')[0];
-        if (data.date === today && data.exercises?.length > 0) {
+        if (data.date === todayStr && data.exercises?.length > 0) {
           const loaded = loadExercisesWithData(data);
           setWorkoutExercises(loaded);
           setWorkoutName(data.name || "Today's Workout");
@@ -173,15 +212,9 @@ export default function Tracker() {
     setWorkoutName('');
     setWorkflowStep('idle');
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const completed = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
-    if (completed.includes(todayStr)) {
-      setIsTodayCompleted(true);
-    }
-
     const schedule = JSON.parse(localStorage.getItem(STORAGE_KEY_SCHEDULE) || '{}');
     const todayPlan = schedule[todayStr];
-    if (todayPlan && todayPlan.type !== 'workout' && !completed.includes(todayStr)) {
+    if (todayPlan && todayPlan.type !== 'workout' && !completedList.includes(todayStr)) {
       setTodayDayType(todayPlan.type);
     } else {
       setTodayDayType(null);
@@ -219,6 +252,10 @@ export default function Tracker() {
   };
 
   const handleCompleteWorkout = (finalActiveTime) => {
+    localStorage.removeItem(STORAGE_KEY_SESSION);
+    localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
+    resetWorkoutState();
+
     setSessionStarted(false);
     setSessionIsResting(false);
 
@@ -330,7 +367,7 @@ export default function Tracker() {
     const xpForNext = getXPForNextLevel(level);
     const newProgress = getLevelProgress(xp + totalXP, level);
 
-    setWorkoutCompleteData({
+    const completedPayload = {
       duration: durationMinutes,
       totalVolume,
       totalCalories,
@@ -353,7 +390,17 @@ export default function Tracker() {
       calorieBreakdown,
       xpForNext,
       workoutName,
-    });
+      exercises: finalExercises.map(ex => ({
+        name: ex.name,
+        muscleGroup: ex.muscleGroup,
+        sets: (ex._sets || []).map(s => ({ weight: s.weight, reps: s.reps })),
+      })),
+      completedAt: new Date().toISOString(),
+    };
+
+    setWorkoutCompleteData(completedPayload);
+    localStorage.setItem(STORAGE_KEY_COMPLETED_WORKOUT, JSON.stringify(completedPayload));
+    setTodaysCompletedWorkout(completedPayload);
 
     completeWorkoutSession(sessionId, {
       durationSeconds,
@@ -367,9 +414,6 @@ export default function Tracker() {
     syncOfflineQueue().then(() => setOfflineQueueSize(0));
 
     setWorkflowStep('complete');
-    setSessionId(null);
-    localStorage.removeItem(STORAGE_KEY_SESSION);
-    localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
 
     const todayStr = new Date().toISOString().split('T')[0];
     const completed = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
@@ -448,13 +492,30 @@ export default function Tracker() {
 
         {workflowStep === 'idle' && (
           <>
+            {todaysCompletedWorkout && (
+              <WorkoutCompleteScreen
+                data={todaysCompletedWorkout}
+                onNewWorkout={handleNewWorkout}
+                onViewAnalytics={handleViewAnalytics}
+                onReturnToPlanner={handleReturnToPlanner}
+              />
+            )}
+
+            {todaysCompletedWorkout && todaysWorkoutName && (
+              <div className="flex items-center gap-3 my-6">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-sl-purple/30 to-sl-purple/20"></div>
+                <span className="text-[10px] text-sl-gray-light/50 uppercase tracking-[0.2em] font-semibold">Next Session</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-sl-purple/20 via-sl-purple/30 to-transparent"></div>
+              </div>
+            )}
+
             {todaysWorkoutName ? (
-              <div className="flex flex-col items-center justify-center text-center py-12">
-                <div className="w-20 h-20 bg-sl-purple/10 rounded-full flex items-center justify-center border border-sl-purple/30 mb-5">
-                  <Dumbbell className="w-10 h-10 text-sl-purple-light" />
+              <div className="flex flex-col items-center text-center py-8">
+                <div className="w-16 h-16 bg-sl-purple/10 rounded-full flex items-center justify-center border border-sl-purple/30 mb-4">
+                  <Dumbbell className="w-8 h-8 text-sl-purple-light" />
                 </div>
                 <h2 className="text-lg font-bold text-white mb-1">Today's Workout</h2>
-                <p className="text-sm text-sl-gray-light mb-6">{todaysWorkoutName}</p>
+                <p className="text-sm text-sl-gray-light mb-5">{todaysWorkoutName}</p>
                 <div className="w-full max-w-xs space-y-2 mb-4">
                   {workoutExercises.map((ex, idx) => (
                     <div key={idx} className="flex justify-between items-center bg-sl-gray/20 rounded-xl px-4 py-2.5">
@@ -478,47 +539,34 @@ export default function Tracker() {
                   </p>
                 </div>
               </div>
-            ) : isTodayCompleted ? (
-              <div className="flex flex-col items-center justify-center text-center py-16">
-                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/30 mb-4">
-                  <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+            ) : !todaysCompletedWorkout ? (
+              todayDayType ? (
+                <div className="flex flex-col items-center text-center py-16">
+                  <div className="w-20 h-20 rounded-full bg-sl-purple/5 flex items-center justify-center border border-sl-purple/20 mb-4">
+                    <Moon className="w-10 h-10 text-sl-purple" />
+                  </div>
+                  <h2 className="text-lg font-bold text-white mb-3">Rest Day</h2>
+                  <p className="text-sm text-sl-gray-light max-w-xs leading-relaxed">
+                    Today is your scheduled rest day. Take time to relax, stay hydrated, stretch lightly, and prepare for tomorrow's workout.
+                  </p>
                 </div>
-                <h2 className="text-lg font-bold text-emerald-400 mb-2">Workout Complete</h2>
-                <p className="text-sm text-sl-gray-light mb-6 max-w-xs leading-relaxed">
-                  Your assigned workout has been completed. To start a new session, please assign a workout in the Planner.
-                </p>
-                <button onClick={() => navigate('/planner')} className="holo-button holo-button-primary px-6 py-3 text-sm">
-                  Go to Planner
-                </button>
-              </div>
-            ) : todayDayType ? (
-              <div className="flex flex-col items-center text-center py-16">
-                <div className="w-20 h-20 rounded-full bg-sl-purple/5 flex items-center justify-center border border-sl-purple/20 mb-4">
-                  <Moon className="w-10 h-10 text-sl-purple" />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center py-16">
+                  <div className="w-20 h-20 bg-sl-purple/5 rounded-full flex items-center justify-center border border-sl-purple/20 mb-4">
+                    <svg className="w-10 h-10 text-sl-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-bold text-white mb-2">No Workout Assigned</h2>
+                  <p className="text-sm text-sl-gray-light mb-6 max-w-xs">
+                    Head to the Planner to assign a workout for today.
+                  </p>
+                  <button onClick={() => navigate('/planner')} className="holo-button holo-button-primary px-6 py-3 text-sm">
+                    Go to Planner
+                  </button>
                 </div>
-                <h2 className="text-lg font-bold text-white mb-3">Rest Day</h2>
-                <p className="text-sm text-sl-gray-light max-w-xs leading-relaxed">
-                  Today is your scheduled rest day. Take time to relax, stay hydrated, stretch lightly, and prepare for tomorrow's workout.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center text-center py-16">
-                <div className="w-20 h-20 bg-sl-purple/5 rounded-full flex items-center justify-center border border-sl-purple/20 mb-4">
-                  <svg className="w-10 h-10 text-sl-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <h2 className="text-lg font-bold text-white mb-2">No Workout Assigned</h2>
-                <p className="text-sm text-sl-gray-light mb-6 max-w-xs">
-                  Head to the Planner to assign a workout for today.
-                </p>
-                <button onClick={() => navigate('/planner')} className="holo-button holo-button-primary px-6 py-3 text-sm">
-                  Go to Planner
-                </button>
-              </div>
-            )}
+              )
+            ) : null}
           </>
         )}
 
@@ -551,10 +599,6 @@ export default function Tracker() {
             onNewWorkout={handleNewWorkout}
             onViewAnalytics={handleViewAnalytics}
             onReturnToPlanner={handleReturnToPlanner}
-            level={level}
-            xp={xp}
-            progress={progress}
-            title={title}
           />
         )}
 

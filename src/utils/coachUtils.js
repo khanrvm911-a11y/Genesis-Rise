@@ -1,6 +1,6 @@
 const STORAGE_KEY_CONVERSATIONS = 'gr_coach_conversations';
 const STORAGE_KEY_LIMIT = 'gr_coach_daily_limit';
-const DAILY_LIMIT = 50;
+const DAILY_LIMIT = 30;
 
 export function checkDailyLimit() {
   try {
@@ -32,13 +32,7 @@ export function incrementDailyCount() {
 }
 
 export function getLimitResetMessage() {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-  const dateStr = tomorrow.toLocaleDateString('en-US', options);
-  const timeStr = tomorrow.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  return `I've reached my limit for today! You've used all ${DAILY_LIMIT} of your daily AI coaching requests.\n\nYour next session will be available on **${dateStr}** at **${timeStr}**.\n\nRest up, recover, and come back stronger tomorrow! 💪`;
+  return "Today's limit exceeded";
 }
 
 const GOAL_LABELS = {

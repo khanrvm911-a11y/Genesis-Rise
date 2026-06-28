@@ -146,7 +146,7 @@ const Register = () => {
     }
 
     if (!termsAgreed) {
-      setError('You must agree to the Terms of Service and Privacy Policy');
+      setError('Please select our terms and condition');
       return;
     }
 

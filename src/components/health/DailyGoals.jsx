@@ -266,14 +266,6 @@ const DailyGoals = () => {
     setPedometerActive(true);
   };
 
-  const startSleep = () => {
-    setToday(prev => {
-      const next = { ...prev, sleep: { start: new Date().toISOString(), end: null, duration: 0 } };
-      persist(next, null);
-      return next;
-    });
-  };
-
   const stopSleep = () => {
     const end = new Date();
     const start = new Date(todaySafe.sleep.start);
@@ -428,15 +420,21 @@ const DailyGoals = () => {
                     </>
                   )}
                   {key === 'sleep' && (
-                    !todaySafe.sleep.start || todaySafe.sleep.end ? (
-                      <button onClick={startSleep}
-                        className="flex items-center gap-1 text-[9px] font-bold bg-sl-purple/10 border border-sl-purple/20 px-1.5 py-0.5 rounded-md text-sl-purple-light hover:bg-sl-purple/20 transition">
-                        <Play className="w-2.5 h-2.5" /> Start
-                      </button>
-                    ) : (
+                    todaySafe.sleep.start && !todaySafe.sleep.end ? (
                       <button onClick={stopSleep}
                         className="flex items-center gap-1 text-[9px] font-bold bg-red-500/20 border border-red-500/30 px-1.5 py-0.5 rounded-md text-red-400 hover:bg-red-500/30 transition">
                         <Square className="w-2.5 h-2.5" /> Stop
+                      </button>
+                    ) : (
+                      <button onClick={() => {
+                        setToday(prev => {
+                          const next = { ...prev, sleep: { start: null, end: null, duration: goals.sleep } };
+                          persist(next, null);
+                          return next;
+                        });
+                      }}
+                        className="flex items-center gap-1 text-[9px] font-bold bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.5 rounded-md text-emerald-400 hover:bg-emerald-500/30 transition">
+                        <Check className="w-2.5 h-2.5" /> Done
                       </button>
                     )
                   )}

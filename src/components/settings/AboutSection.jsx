@@ -43,8 +43,8 @@ export default function AboutSection({ settings, onUpdate, showToast }) {
       </div>
 
       <div className="px-4 py-4 border-b border-sl-purple/10 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sl-purple to-sl-red flex items-center justify-center mx-auto mb-3">
-          <span className="text-white font-bold text-lg">G</span>
+        <div className="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-3 bg-sl-purple/10">
+          <img src="/igris_shadow_face.png" alt="Genesis Rise Logo" className="w-full h-full object-contain" />
         </div>
         <h4 className="text-base font-bold text-white">Genesis Rise</h4>
         <p className="text-xs text-sl-purple-light/60 mt-1">Version 1.0.0</p>

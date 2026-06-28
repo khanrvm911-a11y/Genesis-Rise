@@ -130,7 +130,8 @@ const Planner = () => {
   const [mgSelectedExercises, setMgSelectedExercises] = useState([]);
   const [mgActiveSplit, setMgActiveSplit] = useState(null);
   const [customExerciseName, setCustomExerciseName] = useState('');
-  const [customExerciseSets, setCustomExerciseSets] = useState(3);
+  const [customExerciseSets, setCustomExerciseSets] = useState(1);
+  const [setsError, setSetsError] = useState('');
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [editExerciseName, setEditExerciseName] = useState('');
 
@@ -262,7 +263,7 @@ const Planner = () => {
       setMgSelectedExercises([]);
       setMgActiveSplit(null);
       setCustomExerciseName('');
-      setCustomExerciseSets(3);
+      setCustomExerciseSets(1);
       setEditingExerciseId(null);
       setEditExerciseName('');
     } else {
@@ -331,7 +332,7 @@ const Planner = () => {
     setSelectedExercises(prev => [...prev, {
       exerciseId: `custom-${Date.now()}`,
       name,
-      sets: customExerciseSets || 3,
+      sets: customExerciseSets || 1,
       reps: 10,
       weight: 0,
       difficulty: 'Beginner',
@@ -341,7 +342,7 @@ const Planner = () => {
       equipment: '',
     }]);
     setCustomExerciseName('');
-    setCustomExerciseSets(3);
+    setCustomExerciseSets(1);
   };
 
   const handleAssignCustomWorkout = () => {
@@ -549,7 +550,7 @@ const Planner = () => {
                 setMgSelectedExercises([]);
                 setMgActiveSplit(null);
                 setCustomExerciseName('');
-                setCustomExerciseSets(3);
+                setCustomExerciseSets(1);
                 setEditingExerciseId(null);
                 setEditExerciseName('');
               }} className="holo-button holo-button-primary px-6 py-3 text-sm">
@@ -639,7 +640,7 @@ const Planner = () => {
 
             <div className="flex gap-3 mb-4 border-b border-sl-purple/15 pb-2">
               {['templates', 'custom', 'musclegroups'].map(tab => (
-                <button key={tab} onClick={() => { setModalTab(tab); setMgActiveGroup(null); setMgActiveSplit(null); setCustomExerciseName(''); setCustomExerciseSets(3); setEditingExerciseId(null); setEditExerciseName(''); }}
+                <button key={tab} onClick={() => { setModalTab(tab); setMgActiveGroup(null); setMgActiveSplit(null); setCustomExerciseName(''); setCustomExerciseSets(1); setEditingExerciseId(null); setEditExerciseName(''); }}
                   className={`text-xs font-semibold pb-2 border-b-2 transition -mb-[10px] capitalize ${modalTab === tab ? 'text-sl-purple-light border-sl-purple' : 'text-sl-gray-light border-transparent hover:text-white'}`}>
                   {tab === 'musclegroups' ? 'Groups' : tab}
                 </button>
@@ -771,7 +772,7 @@ const Planner = () => {
                       {selectedExercises.map(ex => (
                         <div key={ex.exerciseId} className="p-2 rounded-xl bg-sl-gray/10 border border-sl-purple/10">
                           <div className="flex items-center gap-1 mb-1.5">
-                            {editingExerciseId === ex.exerciseId ? (
+                            {ex.exerciseId?.startsWith('custom-') && editingExerciseId === ex.exerciseId ? (
                               <input type="text" value={editExerciseName}
                                 onChange={e => setEditExerciseName(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
@@ -782,17 +783,21 @@ const Planner = () => {
                               <span className="text-xs font-semibold text-white truncate flex-1">{ex.name}</span>
                             )}
                             <div className="flex gap-1 shrink-0">
-                              {editingExerciseId === ex.exerciseId ? (
+                              {ex.exerciseId?.startsWith('custom-') && editingExerciseId === ex.exerciseId ? (
                                 <button onClick={handleSaveEdit} className="text-emerald-400 text-[10px]">Save</button>
-                              ) : (
+                              ) : ex.exerciseId?.startsWith('custom-') ? (
                                 <button onClick={() => handleStartEdit(ex)} className="text-sl-purple-light text-[10px]">Edit</button>
-                              )}
+                              ) : null}
                               <button onClick={() => handleRemoveExercise(ex.exerciseId)} className="text-red-400 text-[10px]">Remove</button>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 gap-1.5">
                             <div><label className="text-[8px] text-sl-gray-light block font-semibold">Sets</label>
-                              <input type="number" min="1" max="20" value={ex.sets} onChange={e => handleUpdateExercise(ex.exerciseId, 'sets', parseInt(e.target.value) || 1)} className="holo-input text-center text-xs py-1" /></div>
+                              <input type="number" min="1" max="10" value={ex.sets} onChange={e => {
+                                const val = parseInt(e.target.value);
+                                if (val < 0) return;
+                                handleUpdateExercise(ex.exerciseId, 'sets', val > 10 ? 10 : (val || 1));
+                              }} className="holo-input text-center text-xs py-1" /></div>
                           </div>
                         </div>
                       ))}
@@ -809,9 +814,18 @@ const Planner = () => {
                       onChange={e => setCustomExerciseName(e.target.value)}
                       className="holo-input text-sm flex-1" />
                     <div className="w-16 shrink-0">
-                      <input type="number" min="1" max="20" value={customExerciseSets}
-                        onChange={e => setCustomExerciseSets(parseInt(e.target.value) || 3)}
+                      <input type="number" min="1" max="10" value={customExerciseSets}
+                        onChange={e => {
+                          const val = parseInt(e.target.value);
+                          if (val < 0) {
+                            setSetsError("Sets can't be negative");
+                            return;
+                          }
+                          setSetsError('');
+                          setCustomExerciseSets(val > 10 ? 10 : (val || 1));
+                        }}
                         className="holo-input text-center text-xs py-2" />
+                      {setsError && <p className="text-red-400 text-[9px] mt-1 text-center">{setsError}</p>}
                     </div>
                     <button onClick={handleAssignCustomExercise}
                       disabled={!customExerciseName.trim() || selectedExercises.length >= 10}

@@ -377,7 +377,7 @@ export default function AnalyticsDashboard({
     }
 
     return summary;
-  }, [filteredWorkflows]);
+  }, [filteredWorkouts]);
 
   const prCount = useMemo(() => {
     if (!personalRecords) return 0;

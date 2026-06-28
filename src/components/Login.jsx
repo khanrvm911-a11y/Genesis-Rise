@@ -15,6 +15,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [socialLoading, setSocialLoading] = useState(null);
 
@@ -39,6 +40,10 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!identifier.trim() || !password) return;
+    if (!termsAgreed) {
+      setError('Please select our terms and condition');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -230,6 +235,37 @@ const Login = () => {
             </Link>
           </div>
 
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={termsAgreed}
+              onChange={(e) => setTermsAgreed(e.target.checked)}
+              className="sr-only"
+              disabled={isSubmitting}
+            />
+            <div className={`w-5 h-5 shrink-0 mt-0.5 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
+              termsAgreed
+                ? 'bg-sl-purple-light border-sl-purple-light'
+                : 'bg-transparent border-white/20 group-hover:border-sl-purple-light/50'
+            }`}>
+              {termsAgreed && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+            <span className="text-xs text-white/50 leading-relaxed select-none group-hover:text-white/70 transition">
+              I agree to the{' '}
+              <Link to="/terms" className="text-sl-purple-light hover:text-sl-purple-light/80 underline underline-offset-2 transition font-semibold">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link to="/privacy" className="text-sl-purple-light hover:text-sl-purple-light/80 underline underline-offset-2 transition font-semibold">
+                Privacy Policy
+              </Link>
+            </span>
+          </label>
+
           <AnimatePresence>
             {error && (
               <motion.p
@@ -245,7 +281,7 @@ const Login = () => {
 
           <motion.button
             type="submit"
-            disabled={isSubmitting || !identifier.trim() || !password}
+            disabled={isSubmitting || !identifier.trim() || !password || !termsAgreed}
             className="holo-button-primary w-full py-3.5 rounded-xl text-base font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
             whileHover={!isSubmitting ? { scale: 1.01 } : {}}
             whileTap={!isSubmitting ? { scale: 0.98 } : {}}

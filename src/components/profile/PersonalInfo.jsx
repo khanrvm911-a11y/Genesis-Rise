@@ -20,7 +20,7 @@ const EXPERIENCE_LEVELS = [
 
 export default function PersonalInfo({
   user, profile, userSettings,
-  onUpdateAvatar, onUpdateProfile, onUpdateUsername, onBack,
+  onUpdateAvatar, onUpdateProfile, onUpdateUsername, onBack, onSaved,
 }) {
   const [username, setUsername] = useState(profile?.username || '');
   const [age, setAge] = useState(String(profile?.age || userSettings?.age || ''));
@@ -95,8 +95,8 @@ export default function PersonalInfo({
 
     setSaving(false);
     if (updates.length === 0) {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (onSaved) onSaved();
+      onBack();
     } else {
       setError(`Failed to save: ${updates.join(', ')}`);
     }

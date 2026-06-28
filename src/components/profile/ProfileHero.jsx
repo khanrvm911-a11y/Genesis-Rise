@@ -22,8 +22,8 @@ export default function ProfileHero({
   const goal = profile?.goal || null;
   const goalLabel = goal ? goal.charAt(0).toUpperCase() + goal.slice(1).replace(/_/g, ' ') : null;
 
-  const displayName = user?.user_metadata?.full_name || profile?.username || user?.email?.split('@')[0] || 'Explorer';
   const username = profile?.username || '';
+  const displayName = username;
   const email = user?.email || '';
 
   const handleAvatarSelect = (presetId) => {

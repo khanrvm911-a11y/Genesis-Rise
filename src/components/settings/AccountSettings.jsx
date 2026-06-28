@@ -134,9 +134,7 @@ export default function AccountSettings({ settings, onUpdate, showToast }) {
             ) : avatarType === 'preset' && avatar ? (
               <span className="text-sm">{getAvatarEmoji(avatar)}</span>
             ) : (
-              <span className="text-sm text-sl-purple-light font-bold">
-                {(user?.email || 'C').charAt(0).toUpperCase()}
-              </span>
+              <img src="/igris_shadow_face.png" alt="Brand" className="w-full h-full object-cover opacity-80" />
             )}
           </div>
           <button onClick={() => setShowAvatarPicker(true)}

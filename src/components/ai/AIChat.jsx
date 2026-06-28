@@ -96,8 +96,11 @@ export default function AIChat({
 
     const contextPrompt = buildSystemPrompt(ctx).slice(0, 5000);
 
+    let requestTimedOut = false;
+    let frontendTimeout;
     try {
       abortController = new AbortController();
+      frontendTimeout = setTimeout(() => { requestTimedOut = true; abortController?.abort(); }, 45000);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Authentication required');
 
@@ -116,7 +119,12 @@ export default function AIChat({
         signal: abortController.signal,
       });
 
-      if (!response.ok) throw new Error('Network error');
+      if (!response.ok) {
+        let errMsg = 'Service unavailable';
+        try { const body = await response.json(); errMsg = body.error || errMsg; } catch {}
+        if (response.status === 429) errMsg = "Today's limit exceeded";
+        throw new Error(errMsg);
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -147,16 +155,21 @@ export default function AIChat({
               persist(resultConvs, withResponse.id);
               setStreamingContent('');
             } else if (data.type === 'error') {
-              setError(data.content || 'Service unavailable');
+              setError(data.content === 'Daily limit exceeded' ? "Today's limit exceeded" : data.content || 'Service unavailable');
             }
-          } catch {}
+          } catch {
+            /* ignore JSON parse errors for incomplete chunks */
+          }
         }
       }
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        setError('Failed to get response. Please try again.');
+      if (err.name === 'AbortError') {
+        if (requestTimedOut) setError('Request timed out. Please try again.');
+      } else {
+        setError(err.message === "Today's limit exceeded" ? "Today's limit exceeded" : err.message || 'Failed to get response. Please try again.');
       }
     } finally {
+      clearTimeout(frontendTimeout);
       setStreaming(false);
       setStreamingContent('');
       abortController = null;

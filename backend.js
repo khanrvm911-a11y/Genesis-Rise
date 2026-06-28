@@ -84,9 +84,15 @@ function normalizeMessages(messages) {
 }
 
 app.post('/api/chat', chatLimiter, requireAuth, async (req, res) => {
+  const abortController = new AbortController();
+  const serverTimeout = setTimeout(() => abortController.abort(), 55000);
+
   try {
     const messages = normalizeMessages(req.body?.messages);
-    if (!messages) return res.status(400).json({ error: 'Valid messages array is required' });
+    if (!messages) {
+      clearTimeout(serverTimeout);
+      return res.status(400).json({ error: 'Valid messages array is required' });
+    }
 
     const groqMessages = [
       {
@@ -103,20 +109,29 @@ app.post('/api/chat', chatLimiter, requireAuth, async (req, res) => {
       max_tokens: 600,
     });
 
+    clearTimeout(serverTimeout);
     const text = completion?.choices?.[0]?.message?.content?.trim()
       || "I'm sorry, I'm having trouble processing your request right now. Please try again in a moment.";
 
     res.json({ message: text });
   } catch (err) {
+    clearTimeout(serverTimeout);
     console.error('Chat error:', err.message);
-    res.status(503).json({ error: 'AI service temporarily unavailable' });
+    const isRateLimit = err.status === 429 || err.message?.toLowerCase().includes('rate limit') || err.message?.toLowerCase().includes('limit');
+    res.status(isRateLimit ? 429 : 503).json({ error: isRateLimit ? "Today's limit exceeded" : 'AI service temporarily unavailable' });
   }
 });
 
 app.post('/api/chat/stream', chatLimiter, requireAuth, async (req, res) => {
+  const abortController = new AbortController();
+  const serverTimeout = setTimeout(() => abortController.abort(), 55000);
+
   try {
     const messages = normalizeMessages(req.body?.messages);
-    if (!messages) return res.status(400).json({ error: 'Valid messages array is required' });
+    if (!messages) {
+      clearTimeout(serverTimeout);
+      return res.status(400).json({ error: 'Valid messages array is required' });
+    }
 
     const groqMessages = [
       {
@@ -138,7 +153,7 @@ app.post('/api/chat/stream', chatLimiter, requireAuth, async (req, res) => {
       temperature: 0.3,
       max_tokens: 600,
       stream: true,
-    });
+    }, { signal: abortController.signal });
 
     for await (const chunk of stream) {
       const content = chunk.choices?.[0]?.delta?.content || '';
@@ -147,14 +162,21 @@ app.post('/api/chat/stream', chatLimiter, requireAuth, async (req, res) => {
       }
     }
 
+    clearTimeout(serverTimeout);
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     res.end();
   } catch (err) {
+    clearTimeout(serverTimeout);
     console.error('Stream error:', err.message);
     try {
-      res.write(`data: ${JSON.stringify({ type: 'error', content: 'AI service temporarily unavailable' })}\n\n`);
+      const isAborted = err.name === 'AbortError';
+      const isRateLimit = err.status === 429 || err.message?.toLowerCase().includes('rate limit') || err.message?.toLowerCase().includes('limit');
+      const errorMessage = isAborted ? 'Request timed out' : isRateLimit ? "Today's limit exceeded" : 'AI service temporarily unavailable';
+      res.write(`data: ${JSON.stringify({ type: 'error', content: errorMessage })}\n\n`);
       res.end();
-    } catch {}
+    } catch {
+      /* ignore write/end errors */
+    }
   }
 });
 

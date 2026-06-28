@@ -34,6 +34,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [view, setView] = useState(VIEWS.PROFILE);
+  const [profileToast, setProfileToast] = useState('');
 
   const hasWorkouts = (workoutHistory?.length || 0) > 0;
 
@@ -103,6 +104,14 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-sl-gradient">
       <div className="mobile-container py-4">
         <div className="space-y-4">
+          {profileToast && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+              <div className="bg-sl-purple/90 text-white text-sm font-bold px-6 py-3 rounded-xl shadow-2xl shadow-sl-purple/30 animate-slide-up">
+                {profileToast}
+              </div>
+            </div>
+          )}
+
           {view === VIEWS.PROFILE && (
             <>
               <ProfileHero
@@ -158,6 +167,10 @@ export default function ProfilePage() {
               onUpdateProfile={handleUpdateProfile}
               onUpdateUsername={handleUpdateUsername}
               onBack={() => setView(VIEWS.PROFILE)}
+              onSaved={() => {
+                setProfileToast('Profile Changed');
+                setTimeout(() => setProfileToast(''), 3000);
+              }}
             />
           )}
 
