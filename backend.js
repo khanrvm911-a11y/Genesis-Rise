@@ -184,6 +184,14 @@ app.post('/api/chat/stream', chatLimiter, requireAuth, async (req, res) => {
   }
 });
 
+if (isProduction) {
+  app.use(express.static('dist'));
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) return;
+    res.sendFile('index.html', { root: 'dist' });
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`Genesis Rise backend server running on port ${PORT}`);
 });
