@@ -31,9 +31,9 @@ const NAV_ITEMS = [
   { to: '/', icon: HomeIcon, label: 'Home' },
   { to: '/tracker', icon: Activity, label: 'Tracker' },
   { to: '/planner', icon: Calendar, label: 'Planner' },
-  { to: '/adviser', icon: Sparkles, label: 'Coach' },
   { to: '/health', icon: Heart, label: 'Health' },
   { to: '/analysis', icon: BarChart3, label: 'Analysis' },
+  { to: '/adviser', icon: Sparkles, label: 'Coach' },
 ];
 
 const SKELETONS = {
