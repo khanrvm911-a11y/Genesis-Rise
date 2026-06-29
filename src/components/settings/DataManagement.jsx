@@ -1,10 +1,22 @@
 import { useState } from 'react';
 import { Database, Download, Upload, BarChart3, Heart, Settings2, Archive, AlertTriangle, Trash2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
 
 export default function DataManagement({ settings, onUpdate, showToast }) {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const { user } = useAuth();
 
-  const handleGenesisReset = () => {
+  const handleGenesisReset = async () => {
+    if (user) {
+      try {
+        await supabase.from('daily_goals').delete().eq('user_id', user.id);
+        await supabase.from('power_levels').delete().eq('user_id', user.id);
+        await supabase.from('notifications').delete().eq('user_id', user.id);
+        await supabase.from('profiles').delete().eq('id', user.id);
+      } catch {}
+    }
+
     const keys = Object.keys(localStorage);
     const appKeys = keys.filter(k => k.startsWith('sl_') || k.startsWith('gr_'));
     appKeys.forEach(k => localStorage.removeItem(k));

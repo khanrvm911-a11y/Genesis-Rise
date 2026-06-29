@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Droplets, Activity, Moon, Flame, Target, Edit2, Plus, Play, Square, Check, ChevronDown, ChevronUp, Clock, RotateCcw } from 'lucide-react';
+import { Droplets, Activity, Moon, Flame, Target, Edit2, Plus, Play, Square, Check, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkout } from '../../context/WorkoutContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -203,27 +203,6 @@ const DailyGoals = () => {
     }
   }, [todaySafe.sleep.start, todaySafe.sleep.end]);
 
-  const resetToday = () => {
-    const fresh = defaultDay();
-    setToday(fresh);
-    allData.current.days[getTodayKey()] = fresh;
-    saveAll(allData.current);
-    goalNotifiedRef.current = { water: false, steps: false, sleep: false, calories: false };
-  };
-
-  const resetGoal = (key) => {
-    setToday(prev => {
-      const next = { ...prev };
-      if (key === 'water') next.water = { total: 0, entries: [] };
-      if (key === 'steps') next.steps = { count: 0 };
-      if (key === 'sleep') next.sleep = { start: null, end: null, duration: 0 };
-      if (key === 'calories') next.calories = { total: 0, fromSteps: 0 };
-      persist(next, null);
-      return next;
-    });
-    goalNotifiedRef.current[key] = false;
-  };
-
   const addWater = (amount) => {
     setToday(prev => {
       const next = {
@@ -327,10 +306,6 @@ const DailyGoals = () => {
           {syncStatus === 'synced' && <span className="text-[9px] text-emerald-400 font-semibold">Synced</span>}
           {syncStatus === 'offline' && <span className="text-[9px] text-amber-400 font-semibold">Offline</span>}
           <div className="flex items-center gap-1">
-            <button onClick={resetToday} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-400/60 hover:text-red-400 transition">
-              <RotateCcw className="w-3 h-3" />
-              Reset
-            </button>
             <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-sl-purple-light/60 hover:text-sl-purple-light transition">
               <Clock className="w-3 h-3" />
               {showHistory ? 'Hide' : 'History'}
@@ -374,9 +349,6 @@ const DailyGoals = () => {
                   <span className="text-xs font-bold text-white">{label}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => resetGoal(key)} className="text-red-400/40 hover:text-red-400 transition" title={`Reset ${label}`}>
-                    <RotateCcw className="w-2.5 h-2.5" />
-                  </button>
                   {editingGoal === key ? (
                     <div className="flex items-center gap-1">
                       <input type="number" value={goalInput} onChange={(e) => { const v = e.target.value; if (v === '' || /^\d*\.?\d*$/.test(v)) setGoalInput(v); }}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useLevel } from '../context/LevelContext';
 import { usePowerLevel } from '../context/PowerLevelContext';
 import { useWorkout } from '../context/WorkoutContext';
@@ -35,6 +36,22 @@ const STORAGE_KEY_TODAYS_WORKOUT = 'gr_todays_workout';
 const STORAGE_KEY_SCHEDULE = 'gr_workout_schedule';
 const STORAGE_KEY_COMPLETED_WORKOUT = 'gr_todays_completed_workout';
 
+const getLocalDateStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getDateStrFromISO = (iso) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const motionVariants = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -12 },
+};
+
 export default function Tracker() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -58,7 +75,21 @@ export default function Tracker() {
   const [workoutExercises, setWorkoutExercises] = useState([]);
   const [workoutName, setWorkoutName] = useState('');
   const [workoutCompleteData, setWorkoutCompleteData] = useState(null);
-  const [todaysCompletedWorkout, setTodaysCompletedWorkout] = useState(null);
+  const [todaysCompletedWorkout, setTodaysCompletedWorkout] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_COMPLETED_WORKOUT);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const localToday = getLocalDateStr();
+        const completedDate = parsed.completedAt
+          ? getDateStrFromISO(parsed.completedAt)
+          : localToday;
+        if (completedDate === localToday) return parsed;
+        localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
+      }
+    } catch {}
+    return null;
+  });
 
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionActiveTime, setSessionActiveTime] = useState(0);
@@ -156,20 +187,22 @@ export default function Tracker() {
       } catch { /* invalid session data */ }
     }
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayLocal = getLocalDateStr();
     const completedList = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
-    const isTodayDone = completedList.includes(todayStr);
+    const isTodayDone = completedList.includes(todayLocal);
     setIsTodayCompleted(isTodayDone);
 
     const savedCompleted = localStorage.getItem(STORAGE_KEY_COMPLETED_WORKOUT);
+    let hasCompleted = false;
     if (savedCompleted) {
       try {
         const parsed = JSON.parse(savedCompleted);
         const completedDate = parsed.completedAt
-          ? new Date(parsed.completedAt).toISOString().split('T')[0]
-          : todayStr;
-        if (completedDate === todayStr) {
+          ? getDateStrFromISO(parsed.completedAt)
+          : todayLocal;
+        if (completedDate === todayLocal) {
           setTodaysCompletedWorkout(parsed);
+          hasCompleted = true;
         } else {
           localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
           setTodaysCompletedWorkout(null);
@@ -180,11 +213,19 @@ export default function Tracker() {
       }
     }
 
+    if (hasCompleted) {
+      setWorkoutExercises([]);
+      setWorkoutName('');
+      setWorkflowStep('idle');
+      setTodayDayType(null);
+      return;
+    }
+
     const todayWorkout = localStorage.getItem(STORAGE_KEY_TODAYS_WORKOUT);
     if (todayWorkout) {
       try {
         const data = JSON.parse(todayWorkout);
-        if (data.date === todayStr && data.exercises?.length > 0) {
+        if (data.date === todayLocal && data.exercises?.length > 0) {
           const loaded = loadExercisesWithData(data);
           setWorkoutExercises(loaded);
           setWorkoutName(data.name || "Today's Workout");
@@ -199,8 +240,8 @@ export default function Tracker() {
     setWorkflowStep('idle');
 
     const schedule = JSON.parse(localStorage.getItem(STORAGE_KEY_SCHEDULE) || '{}');
-    const todayPlan = schedule[todayStr];
-    if (todayPlan && todayPlan.type !== 'workout' && !completedList.includes(todayStr)) {
+    const todayPlan = schedule[todayLocal];
+    if (todayPlan && todayPlan.type !== 'workout' && !completedList.includes(todayLocal)) {
       setTodayDayType(todayPlan.type);
     } else {
       setTodayDayType(null);
@@ -478,134 +519,144 @@ export default function Tracker() {
           )}
         </div>
 
-        {workflowStep === 'idle' && (
-          <>
-            {todaysCompletedWorkout && (
+        <AnimatePresence mode="wait">
+          {workflowStep === 'idle' && (
+            <motion.div key="idle" variants={motionVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2, ease: 'easeOut' }}>
+              {todaysCompletedWorkout && (
+                <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+                  <WorkoutCompleteScreen
+                    data={todaysCompletedWorkout}
+                    onNewWorkout={handleNewWorkout}
+                    onViewAnalytics={handleViewAnalytics}
+                    onReturnToPlanner={handleReturnToPlanner}
+                  />
+                </motion.div>
+              )}
+
+              {todaysCompletedWorkout && todaysWorkoutName && (
+                <div className="flex items-center gap-3 my-6">
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-sl-purple/30 to-sl-purple/20"></div>
+                  <span className="text-[10px] text-sl-gray-light/50 uppercase tracking-[0.2em] font-semibold">Next Session</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-sl-purple/20 via-sl-purple/30 to-transparent"></div>
+                </div>
+              )}
+
+              {todaysWorkoutName ? (
+                <div className="flex flex-col items-center text-center py-8">
+                  <div className="w-16 h-16 bg-sl-purple/10 rounded-full flex items-center justify-center border border-sl-purple/30 mb-4">
+                    <Dumbbell className="w-8 h-8 text-sl-purple-light" />
+                  </div>
+                  <h2 className="text-lg font-bold text-white mb-1">Today's Workout</h2>
+                  <p className="text-sm text-sl-gray-light mb-5">{todaysWorkoutName}</p>
+                  <div className="w-full max-w-xs space-y-2 mb-4">
+                    {workoutExercises.map((ex, idx) => (
+                      <div key={idx} className="flex justify-between items-center bg-sl-gray/20 rounded-xl px-4 py-2.5">
+                        <span className="text-sm font-medium text-white">{ex.name}</span>
+                        <span className="text-xs text-sl-gray-light font-semibold">{ex.sets}x{ex.reps}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="w-full max-w-xs">
+                    <button onClick={() => { setWorkflowStep('activeWorkout'); handleWorkoutStarted(); }} className="w-full holo-button holo-button-primary text-lg py-4 font-bold">
+                      Start Workout
+                    </button>
+                    {offlineQueueSize > 0 && (
+                      <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-red-400">
+                        <CloudOff className="w-3.5 h-3.5" />
+                        <span>{offlineQueueSize} unsynced set{offlineQueueSize > 1 ? 's' : ''} — will sync when online</span>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-amber-400/70 text-center mt-2 leading-relaxed">
+                       Warning! Your active set will be lost if you navigate away or close this page. STAY FOCUSED...
+                    </p>
+                  </div>
+                </div>
+              ) : !todaysCompletedWorkout ? (
+                todayDayType ? (
+                  <div className="flex flex-col items-center text-center py-16">
+                    <div className="w-20 h-20 rounded-full bg-sl-purple/5 flex items-center justify-center border border-sl-purple/20 mb-4">
+                      <Moon className="w-10 h-10 text-sl-purple" />
+                    </div>
+                    <h2 className="text-lg font-bold text-white mb-3">Rest Day</h2>
+                    <p className="text-sm text-sl-gray-light max-w-xs leading-relaxed">
+                      Today is your scheduled rest day. Take time to relax, stay hydrated, stretch lightly, and prepare for tomorrow's workout.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center py-16">
+                    <div className="w-20 h-20 bg-sl-purple/5 rounded-full flex items-center justify-center border border-sl-purple/20 mb-4">
+                      <svg className="w-10 h-10 text-sl-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <h2 className="text-lg font-bold text-white mb-2">No Workout Assigned</h2>
+                    <p className="text-sm text-sl-gray-light mb-6 max-w-xs">
+                      Head to the Planner to assign a workout for today.
+                    </p>
+                    <button onClick={() => navigate('/planner')} className="holo-button holo-button-primary px-6 py-3 text-sm">
+                      Go to Planner
+                    </button>
+                  </div>
+                )
+              ) : null}
+            </motion.div>
+          )}
+
+          {workflowStep === 'activeWorkout' && workoutExercises.length > 0 && (
+            <motion.div key="activeWorkout" variants={motionVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2, ease: 'easeOut' }}>
+              <ActiveWorkoutMode
+                key={`exercise-${currentExerciseIndex}`}
+                exercise={workoutExercises[currentExerciseIndex]}
+                exerciseIndex={currentExerciseIndex}
+                totalExercises={workoutExercises.length}
+                workoutName={workoutName}
+                workoutExercises={workoutExercises}
+                onGoToNextExercise={handleGoToNextExercise}
+                onCompleteWorkout={handleCompleteWorkout}
+                onUpdateSets={handleUpdateExerciseSets}
+                checkForNewPR={checkForNewPR}
+                userSettings={userSettings}
+                initialSets={workoutExercises[currentExerciseIndex]._sets || []}
+                initialStarted={sessionStarted}
+                initialActiveTime={sessionActiveTime}
+                initialIsResting={sessionIsResting}
+                onWorkoutStarted={handleWorkoutStarted}
+                userId={user?.id}
+                sessionId={sessionId}
+              />
+            </motion.div>
+          )}
+
+          {workflowStep === 'complete' && workoutCompleteData && (
+            <motion.div key="complete" variants={motionVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2, ease: 'easeOut' }}>
               <WorkoutCompleteScreen
-                data={todaysCompletedWorkout}
+                data={workoutCompleteData}
                 onNewWorkout={handleNewWorkout}
                 onViewAnalytics={handleViewAnalytics}
                 onReturnToPlanner={handleReturnToPlanner}
               />
-            )}
+            </motion.div>
+          )}
 
-            {todaysCompletedWorkout && todaysWorkoutName && (
-              <div className="flex items-center gap-3 my-6">
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-sl-purple/30 to-sl-purple/20"></div>
-                <span className="text-[10px] text-sl-gray-light/50 uppercase tracking-[0.2em] font-semibold">Next Session</span>
-                <div className="flex-1 h-px bg-gradient-to-r from-sl-purple/20 via-sl-purple/30 to-transparent"></div>
+          {workflowStep === 'analytics' && (
+            <motion.div key="analytics" variants={motionVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2, ease: 'easeOut' }}>
+              <div className="space-y-4">
+                <AnalyticsDashboard
+                  workoutHistory={workoutHistory}
+                  personalRecords={personalRecords}
+                  userSettings={userSettings}
+                  missionProgress={missionProgress}
+                  level={level}
+                  xp={xp}
+                  title={title}
+                  progress={progress}
+                  powerLevel={powerLevel}
+                  onBack={handleBackFromAnalytics}
+                />
               </div>
-            )}
-
-            {todaysWorkoutName ? (
-              <div className="flex flex-col items-center text-center py-8">
-                <div className="w-16 h-16 bg-sl-purple/10 rounded-full flex items-center justify-center border border-sl-purple/30 mb-4">
-                  <Dumbbell className="w-8 h-8 text-sl-purple-light" />
-                </div>
-                <h2 className="text-lg font-bold text-white mb-1">Today's Workout</h2>
-                <p className="text-sm text-sl-gray-light mb-5">{todaysWorkoutName}</p>
-                <div className="w-full max-w-xs space-y-2 mb-4">
-                  {workoutExercises.map((ex, idx) => (
-                    <div key={idx} className="flex justify-between items-center bg-sl-gray/20 rounded-xl px-4 py-2.5">
-                      <span className="text-sm font-medium text-white">{ex.name}</span>
-                      <span className="text-xs text-sl-gray-light font-semibold">{ex.sets}x{ex.reps}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="w-full max-w-xs">
-                  <button onClick={() => { setWorkflowStep('activeWorkout'); handleWorkoutStarted(); }} className="w-full holo-button holo-button-primary text-lg py-4 font-bold">
-                    Start Workout
-                  </button>
-                  {offlineQueueSize > 0 && (
-                    <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-red-400">
-                      <CloudOff className="w-3.5 h-3.5" />
-                      <span>{offlineQueueSize} unsynced set{offlineQueueSize > 1 ? 's' : ''} — will sync when online</span>
-                    </div>
-                  )}
-                  <p className="text-[10px] text-amber-400/70 text-center mt-2 leading-relaxed">
-                     Warning! Your active set will be lost if you navigate away or close this page. STAY FOCUSED...
-                  </p>
-                </div>
-              </div>
-            ) : !todaysCompletedWorkout ? (
-              todayDayType ? (
-                <div className="flex flex-col items-center text-center py-16">
-                  <div className="w-20 h-20 rounded-full bg-sl-purple/5 flex items-center justify-center border border-sl-purple/20 mb-4">
-                    <Moon className="w-10 h-10 text-sl-purple" />
-                  </div>
-                  <h2 className="text-lg font-bold text-white mb-3">Rest Day</h2>
-                  <p className="text-sm text-sl-gray-light max-w-xs leading-relaxed">
-                    Today is your scheduled rest day. Take time to relax, stay hydrated, stretch lightly, and prepare for tomorrow's workout.
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-center py-16">
-                  <div className="w-20 h-20 bg-sl-purple/5 rounded-full flex items-center justify-center border border-sl-purple/20 mb-4">
-                    <svg className="w-10 h-10 text-sl-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  </div>
-                  <h2 className="text-lg font-bold text-white mb-2">No Workout Assigned</h2>
-                  <p className="text-sm text-sl-gray-light mb-6 max-w-xs">
-                    Head to the Planner to assign a workout for today.
-                  </p>
-                  <button onClick={() => navigate('/planner')} className="holo-button holo-button-primary px-6 py-3 text-sm">
-                    Go to Planner
-                  </button>
-                </div>
-              )
-            ) : null}
-          </>
-        )}
-
-        {workflowStep === 'activeWorkout' && workoutExercises.length > 0 && (
-          <ActiveWorkoutMode
-            key={`exercise-${currentExerciseIndex}`}
-            exercise={workoutExercises[currentExerciseIndex]}
-            exerciseIndex={currentExerciseIndex}
-            totalExercises={workoutExercises.length}
-            workoutName={workoutName}
-            workoutExercises={workoutExercises}
-            onGoToNextExercise={handleGoToNextExercise}
-            onCompleteWorkout={handleCompleteWorkout}
-            onUpdateSets={handleUpdateExerciseSets}
-            checkForNewPR={checkForNewPR}
-            userSettings={userSettings}
-            initialSets={workoutExercises[currentExerciseIndex]._sets || []}
-            initialStarted={sessionStarted}
-            initialActiveTime={sessionActiveTime}
-            initialIsResting={sessionIsResting}
-            onWorkoutStarted={handleWorkoutStarted}
-            userId={user?.id}
-            sessionId={sessionId}
-          />
-        )}
-
-        {workflowStep === 'complete' && workoutCompleteData && (
-          <WorkoutCompleteScreen
-            data={workoutCompleteData}
-            onNewWorkout={handleNewWorkout}
-            onViewAnalytics={handleViewAnalytics}
-            onReturnToPlanner={handleReturnToPlanner}
-          />
-        )}
-
-        {workflowStep === 'analytics' && (
-          <div className="space-y-4">
-            <AnalyticsDashboard
-              workoutHistory={workoutHistory}
-              personalRecords={personalRecords}
-              userSettings={userSettings}
-              missionProgress={missionProgress}
-              level={level}
-              xp={xp}
-              title={title}
-              progress={progress}
-              powerLevel={powerLevel}
-              onBack={handleBackFromAnalytics}
-            />
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

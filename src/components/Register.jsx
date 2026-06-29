@@ -90,6 +90,10 @@ const Register = () => {
   };
 
   const handleGoogleSignUp = async () => {
+    if (!termsAgreed) {
+      setError('Please agree to the Terms of Service and Privacy Policy');
+      return;
+    }
     setSocialLoading('google');
     setError('');
     try {
