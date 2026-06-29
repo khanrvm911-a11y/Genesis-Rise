@@ -166,31 +166,7 @@ export default function Tracker() {
   };
 
   useEffect(() => {
-    const activeSession = localStorage.getItem(STORAGE_KEY_SESSION);
-    if (activeSession) {
-      try {
-        const data = JSON.parse(activeSession);
-        const age = Date.now() - (data.lastUpdated || 0);
-        if (age < 86400000 && data.exercises?.length > 0) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          const loaded = loadExercisesWithData(data);
-          setWorkoutExercises(loaded);
-          setWorkoutName(data.workoutName || 'Workout');
-          setCurrentExerciseIndex(data.currentExerciseIndex || 0);
-          setSessionStarted(data.started || false);
-          setSessionActiveTime(data.activeTime || 0);
-          setSessionIsResting(data.isResting || false);
-          setWorkflowStep('activeWorkout');
-          return;
-        }
-        localStorage.removeItem(STORAGE_KEY_SESSION);
-      } catch { /* invalid session data */ }
-    }
-
     const todayLocal = getLocalDateStr();
-    const completedList = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
-    const isTodayDone = completedList.includes(todayLocal);
-    setIsTodayCompleted(isTodayDone);
 
     const savedCompleted = localStorage.getItem(STORAGE_KEY_COMPLETED_WORKOUT);
     let hasCompleted = false;
@@ -214,12 +190,38 @@ export default function Tracker() {
     }
 
     if (hasCompleted) {
+      localStorage.removeItem(STORAGE_KEY_SESSION);
       setWorkoutExercises([]);
       setWorkoutName('');
       setWorkflowStep('idle');
       setTodayDayType(null);
+      setIsTodayCompleted(true);
       return;
     }
+
+    const activeSession = localStorage.getItem(STORAGE_KEY_SESSION);
+    if (activeSession) {
+      try {
+        const data = JSON.parse(activeSession);
+        const age = Date.now() - (data.lastUpdated || 0);
+        if (age < 86400000 && data.exercises?.length > 0) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          const loaded = loadExercisesWithData(data);
+          setWorkoutExercises(loaded);
+          setWorkoutName(data.workoutName || 'Workout');
+          setCurrentExerciseIndex(data.currentExerciseIndex || 0);
+          setSessionStarted(data.started || false);
+          setSessionActiveTime(data.activeTime || 0);
+          setSessionIsResting(data.isResting || false);
+          setWorkflowStep('activeWorkout');
+          return;
+        }
+        localStorage.removeItem(STORAGE_KEY_SESSION);
+      } catch { /* invalid session data */ }
+    }
+
+    const completedList = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
+    setIsTodayCompleted(completedList.includes(todayLocal));
 
     const todayWorkout = localStorage.getItem(STORAGE_KEY_TODAYS_WORKOUT);
     if (todayWorkout) {

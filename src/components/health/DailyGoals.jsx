@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Droplets, Activity, Moon, Flame, Target, Edit2, Plus, Play, Square, Check, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Droplets, Activity, Moon, Flame, Target, Edit2, Plus, Play, Square, Check, ChevronDown, ChevronUp, Clock, RotateCcw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkout } from '../../context/WorkoutContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -283,6 +283,22 @@ const DailyGoals = () => {
     }
   };
 
+  const resetGoal = (key) => {
+    setToday(prev => {
+      const next = { ...prev };
+      if (key === 'water') next.water = { total: 0, entries: [] };
+      else if (key === 'steps') next.steps = { count: 0 };
+      else if (key === 'sleep') next.sleep = { start: null, end: null, duration: 0 };
+      else if (key === 'calories') next.calories = { total: 0, fromSteps: 0 };
+      persist(next, null);
+      return next;
+    });
+    if (key === 'water') goalNotifiedRef.current.water = false;
+    else if (key === 'steps') goalNotifiedRef.current.steps = false;
+    else if (key === 'sleep') goalNotifiedRef.current.sleep = false;
+    else if (key === 'calories') goalNotifiedRef.current.calories = false;
+  };
+
   const pastDays = Object.entries(allData.current.days || {})
     .filter(([k]) => k !== todayKey)
     .sort(([a], [b]) => b.localeCompare(a))
@@ -376,6 +392,9 @@ const DailyGoals = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-sl-purple-light/60 font-semibold">{displayValue}</span>
+                <button onClick={() => resetGoal(key)} className="text-sl-gray-light/40 hover:text-red-400 transition ml-1" title={`Reset ${label}`}>
+                  <RotateCcw className="w-2.5 h-2.5" />
+                </button>
                 <div className="flex items-center gap-1.5">
                   {key === 'water' && (
                     <>

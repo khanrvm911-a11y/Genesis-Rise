@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { showDeviceNotification } from '../utils/deviceNotifications';
 
 const NotificationContext = createContext();
 
@@ -67,6 +68,12 @@ export function NotificationProvider({ children }) {
 
     loadNotifications();
 
+    const asked = localStorage.getItem('gr_notification_asked');
+    if (!asked) {
+      localStorage.setItem('gr_notification_asked', 'true');
+      import('../lib/permissions').then(m => m.requestNotificationPermission()).catch(() => {});
+    }
+
     return () => {
       mounted = false;
       supabase.removeChannel(channel);
@@ -89,6 +96,8 @@ export function NotificationProvider({ children }) {
 
     const tempId = `temp-${Date.now()}`;
     setNotifications(prev => [{ ...newNotification, id: tempId }, ...prev]);
+
+    showDeviceNotification(title, message);
 
     try {
       const { data, error } = await supabase

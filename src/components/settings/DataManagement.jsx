@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Database, Download, Upload, BarChart3, Heart, Settings2, Archive, AlertTriangle, Trash2 } from 'lucide-react';
+import { Database, Download, Upload, BarChart3, Heart, Archive, AlertTriangle, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -9,12 +9,10 @@ export default function DataManagement({ settings, onUpdate, showToast }) {
 
   const handleGenesisReset = async () => {
     if (user) {
-      try {
-        await supabase.from('daily_goals').delete().eq('user_id', user.id);
-        await supabase.from('power_levels').delete().eq('user_id', user.id);
-        await supabase.from('notifications').delete().eq('user_id', user.id);
-        await supabase.from('profiles').delete().eq('id', user.id);
-      } catch {}
+      try { await supabase.from('daily_goals').delete().eq('user_id', user.id); } catch {}
+      try { await supabase.from('power_levels').delete().eq('user_id', user.id); } catch {}
+      try { await supabase.from('notifications').delete().eq('user_id', user.id); } catch {}
+      try { await supabase.from('profiles').delete().eq('id', user.id); } catch {}
     }
 
     const keys = Object.keys(localStorage);
@@ -24,7 +22,6 @@ export default function DataManagement({ settings, onUpdate, showToast }) {
     showToast('GENESIS RESET complete. Reloading...');
     setTimeout(() => window.location.reload(), 1500);
   };
-
   const handleExport = (type) => {
     let data = {};
     switch (type) {

@@ -17,21 +17,7 @@ const MUSCLE_GROUPS = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'];
 
 const MUSCLE_COLORS = ['#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#14b8a6'];
 
-const FILTERS = [
-  { key: '7d', label: '7 Days' },
-  { key: '30d', label: '30 Days' },
-  { key: '90d', label: '90 Days' },
-  { key: '1y', label: 'Year' },
-  { key: 'all', label: 'All Time' },
-];
 
-function filterByRange(workouts, range) {
-  if (range === 'all') return workouts;
-  const cutoff = new Date();
-  const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[range] || 30;
-  cutoff.setDate(cutoff.getDate() - days);
-  return workouts.filter(w => new Date(w.timestamp || w.date) >= cutoff);
-}
 
 function Skeleton({ className }) {
   return <div className={`bg-sl-gray/20 rounded-xl animate-pulse ${className || ''}`} />;
@@ -103,15 +89,13 @@ export default function AnalyticsDashboard({
   level, xp, title, progress, powerLevel,
   onBack,
 }) {
-  const [filter, setFilter] = useState('30d');
   const [chartTab, setChartTab] = useState('workouts');
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => { const t = setTimeout(() => setLoaded(true), 200); return () => clearTimeout(t); }, []);
 
-  const filteredWorkouts = useMemo(() => filterByRange(workoutHistory, filter), [workoutHistory, filter]);
   const stats = useMemo(() => getWorkoutStats(workoutHistory), [workoutHistory]);
-  const filteredStats = useMemo(() => getWorkoutStats(filteredWorkouts), [filteredWorkouts]);
+  const filteredWorkouts = workoutHistory;
 
   const hasData = workoutHistory.length > 0;
   const hasFilteredData = filteredWorkouts.length > 0;
@@ -202,9 +186,6 @@ export default function AnalyticsDashboard({
   }, [filteredWorkouts]);
 
   const xpChartData = useMemo(() => {
-    const now = new Date();
-    const rangeStart = new Date(now);
-    rangeStart.setDate(now.getDate() - (filter === 'all' ? 365 : parseInt(filter)));
     const byDate = {};
     filteredWorkouts.forEach(w => {
       const key = (w.date || w.timestamp?.slice(0, 10));
@@ -212,7 +193,7 @@ export default function AnalyticsDashboard({
     });
     const sorted = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b));
     return { labels: sorted.map(([d]) => d.slice(5)), data: sorted.map(([, v]) => v) };
-  }, [filteredWorkouts, filter]);
+  }, [filteredWorkouts]);
 
   const caloriesChartData = useMemo(() => {
     const byDate = {};
@@ -437,28 +418,15 @@ export default function AnalyticsDashboard({
         <button onClick={onBack} className="flex items-center gap-1 text-sl-purple-light hover:text-white text-sm touch-target transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
-        <div className="flex gap-1">
-          {FILTERS.map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)}
-              className={`px-3 py-1.5 rounded-full text-[10px] font-semibold transition-all touch-target ${
-                filter === f.key
-                  ? 'bg-sl-purple text-white shadow-sl-glow-purple'
-                  : 'bg-sl-gray/20 text-sl-gray-light hover:bg-sl-gray/30'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard icon={Award} label="Level" value={`${level} ${title}`} sub={`${Math.round(progress * 100)}% to next`} color="gradient-text" accent="bg-yellow-500/15" />
-        <StatCard icon={Zap} label="Total XP" value={xp.toLocaleString()} sub={`${filteredWorkouts.reduce((s,w) => s+(w.xpGained||0), 0).toLocaleString()} in period`} color="text-yellow-400" accent="bg-yellow-500/15" />
+        <StatCard icon={Zap} label="Total XP" value={xp.toLocaleString()} sub={`${workoutHistory.reduce((s,w) => s+(w.xpGained||0), 0).toLocaleString()} earned`} color="text-yellow-400" accent="bg-yellow-500/15" />
         <StatCard icon={Heart} label="Streak" value={`${stats.currentStreak} days`} sub={`Best: ${stats.longestStreak} days`} color="text-sl-red-light" accent="bg-sl-red/15" />
-        <StatCard icon={Dumbbell} label="Workouts" value={stats.totalWorkouts} sub={`${filteredStats.totalWorkouts} in period`} color="text-emerald-400" accent="bg-emerald-500/15" />
+        <StatCard icon={Dumbbell} label="Workouts" value={stats.totalWorkouts} sub={`All time`} color="text-emerald-400" accent="bg-emerald-500/15" />
         <StatCard icon={Clock} label="Total Time" value={`${Math.floor(stats.totalTime / 60)}h ${stats.totalTime % 60}m`} sub={`Avg ${stats.averageDuration} min`} color="text-blue-400" accent="bg-blue-500/15" />
-        <StatCard icon={Flame} label="Calories" value={stats.totalCalories.toLocaleString()} sub={`${filteredCalories.toLocaleString()} in period`} color="text-sl-red-light" accent="bg-sl-red/15" />
+        <StatCard icon={Flame} label="Calories" value={stats.totalCalories.toLocaleString()} sub={`All time`} color="text-sl-red-light" accent="bg-sl-red/15" />
         {userSettings?.weight > 0 && (
           <StatCard icon={Weight} label="Weight" value={`${userSettings.weight} kg`} sub="Current" color="text-sl-purple-light" accent="bg-sl-purple/15" />
         )}
