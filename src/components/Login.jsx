@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import LoginTransition from './LoginTransition';
 
 const Login = () => {
-  const { login, signInWithGoogle, user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+  const { login, signInWithGoogle } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -15,15 +13,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [termsAgreed, setTermsAgreed] = useState(false);
-  const [showTransition, setShowTransition] = useState(false);
   const [socialLoading, setSocialLoading] = useState(null);
-
-  useEffect(() => {
-    if (!authLoading && user) {
-      navigate('/', { replace: true });
-    }
-  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     const saved = localStorage.getItem('gr_remember_identifier');
@@ -40,10 +30,6 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!identifier.trim() || !password) return;
-    if (!termsAgreed) {
-      setError('Please select our terms and condition');
-      return;
-    }
     setLoading(true);
     setError('');
     try {
@@ -53,7 +39,6 @@ const Login = () => {
       } else {
         localStorage.removeItem('gr_remember_identifier');
       }
-      setShowTransition(true);
     } catch (err) {
       const msg = err.message || '';
       if (msg.includes('Email not confirmed')) {
@@ -93,7 +78,7 @@ const Login = () => {
       <motion.div
         className="w-full max-w-md relative z-10"
         initial={{ opacity: 0, y: 20 }}
-        animate={showTransition ? { opacity: 0, scale: 0.95 } : { opacity: 1, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <div className="text-center mb-8">
@@ -206,7 +191,7 @@ const Login = () => {
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center text-sm">
             <label className="flex items-center gap-2 cursor-pointer group">
               <input
                 type="checkbox"
@@ -227,61 +212,32 @@ const Login = () => {
               </div>
               <span className="text-white/50 group-hover:text-white/70 transition">Remember me</span>
             </label>
-            <Link
-              to="/forgot-password"
-              className="text-sl-purple-light/80 hover:text-sl-purple-light transition font-medium"
-            >
-              Forgot password?
-            </Link>
           </div>
-
-          <label className="flex items-start gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={termsAgreed}
-              onChange={(e) => setTermsAgreed(e.target.checked)}
-              className="sr-only"
-              disabled={isSubmitting}
-            />
-            <div className={`w-5 h-5 shrink-0 mt-0.5 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
-              termsAgreed
-                ? 'bg-sl-purple-light border-sl-purple-light'
-                : 'bg-transparent border-white/20 group-hover:border-sl-purple-light/50'
-            }`}>
-              {termsAgreed && (
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </div>
-            <span className="text-xs text-white/50 leading-relaxed select-none group-hover:text-white/70 transition">
-              I agree to the{' '}
-              <Link to="/terms" className="text-sl-purple-light hover:text-sl-purple-light/80 underline underline-offset-2 transition font-semibold">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link to="/privacy" className="text-sl-purple-light hover:text-sl-purple-light/80 underline underline-offset-2 transition font-semibold">
-                Privacy Policy
-              </Link>
-            </span>
-          </label>
 
           <AnimatePresence>
             {error && (
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0, y: -8, height: 0 }}
                 animate={{ opacity: 1, y: 0, height: 'auto' }}
                 exit={{ opacity: 0, y: -8, height: 0 }}
-                className="text-red-400 text-center text-sm bg-red-500/10 rounded-lg px-3 py-2 border border-red-500/20"
+                className="text-center"
               >
-                {error}
-              </motion.p>
+                <p className="text-red-400 text-sm bg-red-500/10 rounded-lg px-3 py-2 border border-red-500/20">
+                  {error}
+                </p>
+                <Link
+                  to="/forgot-password"
+                  className="inline-block mt-2 text-xs text-sl-purple-light/70 hover:text-sl-purple-light transition font-medium underline underline-offset-2"
+                >
+                  Forgot password?
+                </Link>
+              </motion.div>
             )}
           </AnimatePresence>
 
           <motion.button
             type="submit"
-            disabled={isSubmitting || !identifier.trim() || !password || !termsAgreed}
+            disabled={isSubmitting || !identifier.trim() || !password}
             className="holo-button-primary w-full py-3.5 rounded-xl text-base font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
             whileHover={!isSubmitting ? { scale: 1.01 } : {}}
             whileTap={!isSubmitting ? { scale: 0.98 } : {}}
@@ -307,8 +263,6 @@ const Login = () => {
           </Link>
         </p>
       </motion.div>
-
-      {showTransition && <LoginTransition onComplete={() => setShowTransition(false)} />}
     </div>
   );
 };

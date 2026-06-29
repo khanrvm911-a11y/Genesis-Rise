@@ -95,9 +95,16 @@ function App() {
   const publicPaths = ['/', '/about', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy'];
   const isPublicPage = publicPaths.includes(location.pathname);
 
+  const authPages = ['/login', '/register'];
+  const isAuthPage = authPages.includes(location.pathname);
+
   if (!user && !isPublicPage) {
     if (loading) return null;
     return <Navigate to="/login" replace={true} />;
+  }
+
+  if (user && isAuthPage) {
+    return <Navigate to="/" replace={true} />;
   }
 
   const getUserName = () => {
