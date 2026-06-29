@@ -27,7 +27,7 @@ const VIEWS = {
 export default function ProfilePage() {
   const { user } = useAuth();
   const { level, xp, progress, xpForNext, title } = useLevel();
-  const { workoutHistory, personalRecords, userSettings, missionProgress, updateUserSettings } = useWorkout();
+  const { workoutHistory, personalRecords, userSettings, updateUserSettings } = useWorkout();
   const { powerLevel, weeklyChange } = usePowerLevel();
   const { avatar, avatarType, updateAvatar } = useAvatar();
 
@@ -63,7 +63,7 @@ export default function ProfilePage() {
   }, []);
 
   const longestStreak = stats.longestStreak || 0;
-  const currentStreak = missionProgress?.streak || 0;
+  const currentStreak = stats.currentStreak || 0;
 
   const handleUpdateProfile = useCallback(async (field, value) => {
     if (!user) return;

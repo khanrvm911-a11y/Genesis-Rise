@@ -300,7 +300,7 @@ export const getWorkoutStats = (workoutHistory) => {
 
       if (diffDays === 1) {
         tempStreak++;
-        if (i === 1) currentStreak = tempStreak;
+        currentStreak = tempStreak;
       } else {
         if (tempStreak > longestStreak) longestStreak = tempStreak;
         tempStreak = 0;

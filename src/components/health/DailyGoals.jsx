@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Droplets, Activity, Moon, Flame, Target, Edit2, Plus, Play, Square, Check, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Droplets, Activity, Moon, Flame, Target, Edit2, Plus, Play, Square, Check, ChevronDown, ChevronUp, Clock, RotateCcw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkout } from '../../context/WorkoutContext';
 import { useNotification } from '../../context/NotificationContext';
 import { supabase } from '../../lib/supabase';
-import { createGpsStepCounter, requestGeolocationPermission } from '../../utils/gpsStepCounter';
+import { createStepCounter, requestMotionPermission } from '../../utils/stepCounter';
 
 const STORAGE_KEY = 'sl_daily_goals';
 
@@ -163,7 +163,7 @@ const DailyGoals = () => {
   useEffect(() => {
     if (!pedometerActive) return;
 
-    const counter = createGpsStepCounter({
+    const counter = createStepCounter({
       onSteps: (stepCount) => {
         if (stepCount <= 0) return;
         setToday(prev => {
@@ -175,7 +175,12 @@ const DailyGoals = () => {
       },
     });
 
-    counter.start();
+    const started = counter.start();
+    if (!started) {
+      setPedometerActive(false);
+      return;
+    }
+
     pedometerRef.current = counter;
 
     return () => {
@@ -197,6 +202,14 @@ const DailyGoals = () => {
       setSleepElapsed(0);
     }
   }, [todaySafe.sleep.start, todaySafe.sleep.end]);
+
+  const resetToday = () => {
+    const fresh = defaultDay();
+    setToday(fresh);
+    allData.current.days[getTodayKey()] = fresh;
+    saveAll(allData.current);
+    goalNotifiedRef.current = { water: false, steps: false, sleep: false, calories: false };
+  };
 
   const addWater = (amount) => {
     setToday(prev => {
@@ -238,7 +251,8 @@ const DailyGoals = () => {
       return;
     }
     try {
-      await requestGeolocationPermission();
+      const result = await requestMotionPermission();
+      if (result !== 'granted') return;
     } catch {
       return;
     }
@@ -299,10 +313,16 @@ const DailyGoals = () => {
         <div className="flex items-center gap-2">
           {syncStatus === 'synced' && <span className="text-[9px] text-emerald-400 font-semibold">Synced</span>}
           {syncStatus === 'offline' && <span className="text-[9px] text-amber-400 font-semibold">Offline</span>}
-          <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-sl-purple-light/60 hover:text-sl-purple-light transition">
-            <Clock className="w-3 h-3" />
-            {showHistory ? 'Hide' : 'History'}
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={resetToday} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-400/60 hover:text-red-400 transition">
+              <RotateCcw className="w-3 h-3" />
+              Reset
+            </button>
+            <button onClick={() => setShowHistory(!showHistory)} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-sl-purple-light/60 hover:text-sl-purple-light transition">
+              <Clock className="w-3 h-3" />
+              {showHistory ? 'Hide' : 'History'}
+            </button>
+          </div>
         </div>
       </div>
 

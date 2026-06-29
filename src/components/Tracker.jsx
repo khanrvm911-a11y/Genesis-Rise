@@ -58,21 +58,7 @@ export default function Tracker() {
   const [workoutExercises, setWorkoutExercises] = useState([]);
   const [workoutName, setWorkoutName] = useState('');
   const [workoutCompleteData, setWorkoutCompleteData] = useState(null);
-  const [todaysCompletedWorkout, setTodaysCompletedWorkout] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_COMPLETED_WORKOUT);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const today = new Date().toISOString().split('T')[0];
-        const completedDate = parsed.completedAt
-          ? new Date(parsed.completedAt).toISOString().split('T')[0]
-          : today;
-        if (completedDate === today) return parsed;
-        localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
-      }
-    } catch {}
-    return null;
-  });
+  const [todaysCompletedWorkout, setTodaysCompletedWorkout] = useState(null);
 
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionActiveTime, setSessionActiveTime] = useState(0);
@@ -175,25 +161,6 @@ export default function Tracker() {
     const isTodayDone = completedList.includes(todayStr);
     setIsTodayCompleted(isTodayDone);
 
-    const savedCompleted = localStorage.getItem(STORAGE_KEY_COMPLETED_WORKOUT);
-    if (savedCompleted) {
-      try {
-        const parsed = JSON.parse(savedCompleted);
-        const completedDate = parsed.completedAt
-          ? new Date(parsed.completedAt).toISOString().split('T')[0]
-          : todayStr;
-        if (completedDate === todayStr) {
-          setTodaysCompletedWorkout(parsed);
-        } else {
-          localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
-          setTodaysCompletedWorkout(null);
-        }
-      } catch {
-        localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
-        setTodaysCompletedWorkout(null);
-      }
-    }
-
     const todayWorkout = localStorage.getItem(STORAGE_KEY_TODAYS_WORKOUT);
     if (todayWorkout) {
       try {
@@ -226,6 +193,7 @@ export default function Tracker() {
     setWorkoutExercises([]);
     setWorkoutName('');
     setWorkoutCompleteData(null);
+    setTodaysCompletedWorkout(null);
     setSessionStarted(false);
     setSessionActiveTime(0);
     setSessionIsResting(false);

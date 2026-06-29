@@ -6,6 +6,7 @@ import { useAvatar } from '../context/AvatarContext';
 import { AVATAR_PRESETS } from '../utils/avatarPresets';
 import { useNotification } from '../context/NotificationContext';
 import { useLevel } from '../context/LevelContext';
+import { getWorkoutStats } from '../utils/workoutUtils';
 import NotificationPanel from '../components/NotificationPanel';
 import Onboarding from '../components/Onboarding';
 import { useWorkout } from '../context/WorkoutContext';
@@ -79,8 +80,15 @@ const Home = () => {
 
   useEffect(() => {
     const handler = () => setSyncKey(k => k + 1);
+    const onFocus = () => setSyncKey(k => k + 1);
     window.addEventListener(TODAYS_WORKOUT_CHANGED, handler);
-    return () => window.removeEventListener(TODAYS_WORKOUT_CHANGED, handler);
+    window.addEventListener('XP_CHANGED', handler);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener(TODAYS_WORKOUT_CHANGED, handler);
+      window.removeEventListener('XP_CHANGED', handler);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
   }, []);
 
   useEffect(() => {
@@ -90,7 +98,7 @@ const Home = () => {
     }
   }, [showOnboarding]);
 
-  const dailyData = useMemo(() => loadDailyGoals(), []);
+  const dailyData = useMemo(() => loadDailyGoals(), [syncKey]);
   const todaysWorkout = useMemo(() => loadFromStorage('gr_todays_workout'), [syncKey]);
   const completedDates = useMemo(() => {
     try {
@@ -100,15 +108,6 @@ const Home = () => {
       return [];
     }
   }, [syncKey]);
-  const workouts = useMemo(() => {
-    try {
-      const w = JSON.parse(localStorage.getItem('sl_workout_history') || '[]');
-      return Array.isArray(w) ? w : [];
-    } catch {
-      return [];
-    }
-  }, [syncKey]);
-
   const todayKey = getTodayKey();
   const goals = dailyData.goals;
   const todaySafe = useMemo(() => {
@@ -221,8 +220,8 @@ const Home = () => {
   const AvatarIcon = avatarPreset?.icon;
 
   const recentWorkouts = useMemo(() => {
-    return [...workouts].sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date)).slice(0, 5);
-  }, [workouts]);
+    return [...(workoutHistory || [])].sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date)).slice(0, 5);
+  }, [workoutHistory]);
 
   const weeklyData = useMemo(() => {
     const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -251,6 +250,8 @@ const Home = () => {
     const totalDuration = weeklyData.reduce((s, d) => s + d.duration, 0);
     return { totalWorkouts, totalCalories, totalDuration };
   }, [weeklyData]);
+
+  const streakStats = useMemo(() => getWorkoutStats(workoutHistory || []), [workoutHistory]);
 
   const circleRadius = 54;
   const circleCircumference = 2 * Math.PI * circleRadius;
@@ -1072,7 +1073,7 @@ const Home = () => {
       </div>
 
       {/* ===== Section 4: Today's Mission (first-time users) ===== */}
-      {workouts.length === 0 && onboardingRecs && (
+      {(!workoutHistory || workoutHistory.length === 0) && onboardingRecs && (
         <div className="mobile-container mt-5 animate-slide-up" style={{ animationDelay: '240ms' }}>
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-sl-purple/10 to-sl-gray/20 border border-amber-500/20 p-5 shadow-lg shadow-amber-500/5">
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -1160,27 +1161,17 @@ const Home = () => {
               <span className="text-[10px] text-sl-gray-light font-semibold">Workout Streak</span>
               <Flame className="w-3.5 h-3.5 text-orange-400" />
             </div>
-            <p className="text-lg font-extrabold text-white">{weeklyStats.totalWorkouts > 0 ? weeklyStats.totalWorkouts : 0}</p>
-            <p className="text-[9px] text-sl-gray-light mt-0.5">{weeklyStats.totalWorkouts > 0 ? 'This week' : 'No workouts yet'}</p>
+            <p className="text-lg font-extrabold text-white">{streakStats.currentStreak > 0 ? `${streakStats.currentStreak}d` : '—'}</p>
+            <p className="text-[9px] text-sl-gray-light mt-0.5">{streakStats.currentStreak > 0 ? `${streakStats.currentStreak} day${streakStats.currentStreak > 1 ? 's' : ''} in a row` : 'No active streak'}</p>
           </div>
 
           <div className="rounded-xl bg-sl-gray/20 border border-sl-purple/10 p-3.5 hover:bg-sl-gray/30 transition">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] text-sl-gray-light font-semibold">Weekly Progress</span>
+              <span className="text-[10px] text-sl-gray-light font-semibold">Weekly Workouts</span>
               <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
             </div>
-            <p className="text-lg font-extrabold text-white">
-              {onboardingRecs && weeklyStats.totalWorkouts === 0
-                ? `${onboardingRecs.workoutDays}x`
-                : `${weeklyStats.totalWorkouts}x`
-              }
-            </p>
-            <p className="text-[9px] text-sl-gray-light mt-0.5">
-              {onboardingRecs && weeklyStats.totalWorkouts === 0
-                ? `${onboardingRecs.workoutDays} workouts planned`
-                : `${weeklyStats.totalWorkouts} workouts this week`
-              }
-            </p>
+            <p className="text-lg font-extrabold text-white">{weeklyStats.totalWorkouts}x</p>
+            <p className="text-[9px] text-sl-gray-light mt-0.5">{weeklyStats.totalWorkouts} workout{weeklyStats.totalWorkouts !== 1 ? 's' : ''} this week</p>
           </div>
         </div>
       </div>
@@ -1251,59 +1242,6 @@ const Home = () => {
           </button>
         )}
       </div>
-
-      {/* ===== Section 7: Weekly Activity ===== */}
-      <div className="mobile-container mt-5 animate-slide-up" style={{ animationDelay: '400ms' }}>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-white flex items-center gap-1.5">
-            <BarChart3 className="w-4 h-4 text-sl-purple-light" />
-            Weekly Activity
-          </h2>
-          <Link to="/analysis" className="text-[10px] font-bold text-sl-purple-light hover:text-sl-purple flex items-center gap-0.5 transition">
-            Details <ChevronRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        <div className="rounded-xl bg-sl-gray/20 border border-sl-purple/10 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3 text-[10px] text-sl-gray-light font-semibold">
-              <span>{weeklyStats.totalWorkouts} workouts</span>
-              <span>·</span>
-              <span>{Math.round(weeklyStats.totalDuration / 60)}h {weeklyStats.totalDuration % 60}m</span>
-              <span>·</span>
-              <span>{weeklyStats.totalCalories.toLocaleString()} cal</span>
-            </div>
-          </div>
-
-          <div className="flex items-end justify-between gap-1.5 h-24">
-            {weeklyData.map((day, i) => {
-              const maxCal = Math.max(...weeklyData.map(d => d.calories), 1);
-              const heightPct = day.calories > 0 ? Math.max((day.calories / maxCal) * 100, 8) : 4;
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                  <div className="relative w-full flex justify-center group">
-                    <div className="w-full max-w-[28px] rounded-t-md bg-gradient-to-t from-sl-purple/40 to-sl-purple/70 transition-all duration-500 hover:from-sl-purple/60 hover:to-sl-purple cursor-pointer relative"
-                      style={{ height: `${heightPct}%`, minHeight: day.hasWorkout ? '12px' : '4px' }}>
-                      {day.calories > 0 && (
-                        <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition text-[8px] text-sl-gray-light font-semibold whitespace-nowrap bg-sl-gray/80 px-1.5 py-0.5 rounded">
-                          {day.calories.toLocaleString()} cal
-                        </div>
-                      )}
-                    </div>
-                    {day.hasWorkout && (
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-                    )}
-                  </div>
-                  <span className={`text-[8px] font-semibold ${day.hasWorkout ? 'text-sl-purple-light' : 'text-sl-gray-light/40'}`}>
-                    {day.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
 
 
       {/* ===== Section 8: Recent Workouts ===== */}

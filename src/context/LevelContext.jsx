@@ -165,25 +165,24 @@ export const LevelProvider = ({ children }) => {
   const addXP = useCallback((amount) => {
     if (amount <= 0) return;
 
-    setXp(prev => {
-      const newXP = prev + amount;
-      const currentLevel = calculateLevelFromXP(prev);
-      const nextLevel = calculateLevelFromXP(newXP);
+    const prevXP = xpRef.current;
+    const newXP = prevXP + amount;
+    const currentLevel = calculateLevelFromXP(prevXP);
+    const nextLevel = calculateLevelFromXP(newXP);
 
-      if (nextLevel > currentLevel) {
-        setNewLevel(nextLevel);
-        setJustLeveledUp(true);
-        setLevel(nextLevel);
-        setTimeout(() => {
-          setJustLeveledUp(false);
-          setNewLevel(null);
-        }, 4000);
-      } else {
-        setLevel(nextLevel);
-      }
+    setXp(newXP);
+    setLevel(nextLevel);
 
-      return newXP;
-    });
+    if (nextLevel > currentLevel) {
+      setNewLevel(nextLevel);
+      setJustLeveledUp(true);
+      setTimeout(() => {
+        setJustLeveledUp(false);
+        setNewLevel(null);
+      }, 4000);
+    }
+
+    window.dispatchEvent(new CustomEvent('XP_CHANGED', { detail: { xp: newXP, amount, level: nextLevel } }));
   }, []);
 
   const refreshXP = useCallback(() => fetchProfile(), [fetchProfile]);

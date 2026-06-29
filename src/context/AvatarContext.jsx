@@ -41,14 +41,30 @@ export function AvatarProvider({ children }) {
           if (localType && localType !== 'initial') {
             setAvatar(localAvatar);
             setAvatarType(localType);
+          } else {
+            const googleAvatarUrl = user.user_metadata?.avatar_url;
+            if (googleAvatarUrl) {
+              setAvatar(googleAvatarUrl);
+              setAvatarType('custom');
+              localStorage.setItem('gr_avatar', googleAvatarUrl);
+              localStorage.setItem('gr_avatar_type', 'custom');
+            }
           }
         }
       } catch {
         const localAvatar = localStorage.getItem('gr_avatar');
         const localType = localStorage.getItem('gr_avatar_type');
-        if (localType) {
+        if (localType && localType !== 'initial') {
           setAvatar(localAvatar);
           setAvatarType(localType);
+        } else {
+          const googleAvatarUrl = user.user_metadata?.avatar_url;
+          if (googleAvatarUrl) {
+            setAvatar(googleAvatarUrl);
+            setAvatarType('custom');
+            localStorage.setItem('gr_avatar', googleAvatarUrl);
+            localStorage.setItem('gr_avatar_type', 'custom');
+          }
         }
       } finally {
         setLoadedFromDb(true);

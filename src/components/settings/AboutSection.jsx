@@ -15,9 +15,9 @@ export default function AboutSection({ settings, onUpdate, showToast }) {
     { icon: FileText, label: 'Privacy Policy', url: '/privacy' },
     { icon: Shield, label: 'Terms of Service', url: '/terms' },
     { icon: BookOpen, label: 'Release Notes', action: () => showToast('Genesis Rise v1.0.0 — Initial release with workout tracking, AI coaching, and analytics.') },
-    { icon: MessageCircle, label: 'Contact Support', url: 'mailto:support@genesisrise.app' },
-    { icon: Bug, label: 'Report a Bug', url: 'https://github.com/genesisrise/app/issues' },
-    { icon: Lightbulb, label: 'Request a Feature', url: 'https://github.com/genesisrise/app/issues' },
+    { icon: MessageCircle, label: 'Contact Support', url: 'mailto:support.genesisrise.app@gmail.com' },
+    { icon: Bug, label: 'Report a Bug', url: 'mailto:support.genesisrise.app@gmail.com?subject=Bug%20Report%20-%20Genesis%20Rise' },
+    { icon: Lightbulb, label: 'Request a Feature', url: 'mailto:support.genesisrise.app@gmail.com?subject=Feature%20Request%20-%20Genesis%20Rise' },
     { icon: BookOpen, label: 'Open Source Licenses', action: () => setShowLicenses(!showLicenses) },
   ];
 

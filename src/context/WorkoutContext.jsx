@@ -133,7 +133,8 @@ export const WorkoutProvider = ({ children }) => {
       daily: { workoutCompleted: false, waterIntake: 0, steps: 0, proteinGoalMet: false },
       weekly: { workoutsCompleted: 0, volumeLifted: 0, totalCalories: 0 },
       streak: 0,
-      lastReset: new Date().toISOString().split('T')[0]
+      lastReset: new Date().toISOString().split('T')[0],
+      lastWorkoutDate: ''
     };
   });
 
@@ -242,19 +243,23 @@ export const WorkoutProvider = ({ children }) => {
       let dailyProgress = prev.daily;
       if (prev.lastReset !== today) {
         dailyProgress = { workoutCompleted: false, waterIntake: 0, steps: 0, proteinGoalMet: false };
-        setWorkoutHistory(prevHistory => prevHistory);
       }
       dailyProgress.workoutCompleted = true;
 
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
       let newStreak = prev.streak;
-      if (prev.lastReset !== today) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
-        newStreak = prev.lastReset === yesterdayStr ? prev.streak + 1 : 1;
+      if (prev.lastWorkoutDate !== today) {
+        if (prev.lastWorkoutDate === yesterdayStr) {
+          newStreak = prev.streak + 1;
+        } else {
+          newStreak = 1;
+        }
       }
 
-      return { ...prev, daily: dailyProgress, lastReset: today, streak: newStreak };
+      return { ...prev, daily: dailyProgress, lastReset: today, lastWorkoutDate: today, streak: newStreak };
     });
   };
 
