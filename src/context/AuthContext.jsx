@@ -135,9 +135,12 @@ export const AuthProvider = ({ children }) => {
     if (!isCapacitor) return;
 
     let listener;
+    let handledUrls = new Set();
 
     const handleOAuthUrl = async (url) => {
       if (!url?.startsWith(ANDROID_REDIRECT_URL)) return;
+      if (handledUrls.has(url)) return;
+      handledUrls.add(url);
 
       try {
         const urlObj = new URL(url);
@@ -149,7 +152,7 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (err) {
         console.error('OAuth callback error:', err);
-        setError('Authentication failed. Please try again.');
+        setError(err.message || 'Authentication failed. Please try again.');
       }
     };
 
@@ -160,9 +163,13 @@ export const AuthProvider = ({ children }) => {
         handleOAuthUrl(event.url);
       });
 
-      const launchUrl = await App.getLaunchUrl();
-      if (launchUrl?.url) {
-        handleOAuthUrl(launchUrl.url);
+      try {
+        const launchUrl = await App.getLaunchUrl();
+        if (launchUrl?.url) {
+          handleOAuthUrl(launchUrl.url);
+        }
+      } catch (e) {
+        // getLaunchUrl may throw if not available
       }
     };
 

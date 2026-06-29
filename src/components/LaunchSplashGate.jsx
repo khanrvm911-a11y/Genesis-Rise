@@ -7,9 +7,14 @@ export default function LaunchSplashGate({ children }) {
   const { loading } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
   const [ready, setReady] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const [contentOpacity, setContentOpacity] = useState(0);
 
   const handleFinish = useCallback(() => {
     setShowSplash(false);
+    setContentOpacity(1);
+    const t = setTimeout(() => setShowContent(true), 400);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -25,7 +30,16 @@ export default function LaunchSplashGate({ children }) {
       {showSplash && (
         <GenesisLaunch onFinish={handleFinish} loading={!ready} />
       )}
-      <div style={{ display: showSplash ? 'none' : '' }}>
+      <div
+        style={{
+          opacity: contentOpacity,
+          transition: 'opacity 0.4s ease-out',
+          position: showContent ? 'relative' : 'fixed',
+          inset: 0,
+          overflow: showContent ? '' : 'hidden',
+          pointerEvents: showContent ? '' : 'none',
+        }}
+      >
         {children}
       </div>
     </>
