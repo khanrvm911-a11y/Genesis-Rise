@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Crown, Calendar, Target, Flame, Zap, Shield,
   ChevronRight, Camera, X, Dumbbell, Activity, Heart, Star,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { AVATAR_PRESETS } from '../../utils/avatarPresets';
 import { validateAvatarFile } from '../../utils/avatarUtils';
+import { requestStoragePermission } from '../../lib/permissions';
 
 export default function ProfileHero({
   user, profile, level, xp, progress, xpForNext, title,
@@ -14,6 +15,12 @@ export default function ProfileHero({
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef(null);
+
+  const handleUploadClick = async () => {
+    const granted = await requestStoragePermission();
+    if (granted) fileInputRef.current?.click();
+  };
 
   const joinDate = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -186,11 +193,11 @@ export default function ProfileHero({
                 );
               })}
             </div>
-            <label className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-sl-purple/20 border border-sl-purple/30 text-sl-purple-light text-sm font-semibold cursor-pointer hover:bg-sl-purple/30 transition">
+            <button onClick={handleUploadClick} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-sl-purple/20 border border-sl-purple/30 text-sl-purple-light text-sm font-semibold cursor-pointer hover:bg-sl-purple/30 transition">
               <Camera className="w-4 h-4" />
               Upload Photo
-              <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-            </label>
+            </button>
+            <input type="file" accept="image/*" className="hidden" onChange={handleUpload} ref={fileInputRef} />
             {uploadError && <p className="text-red-400 text-xs text-center mt-2">{uploadError}</p>}
           </div>
         </div>

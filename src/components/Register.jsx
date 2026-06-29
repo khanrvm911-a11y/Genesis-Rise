@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { requestNotificationPermission } from '../lib/permissions';
 
 const hasSpecialChar = (p) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(p);
 
@@ -154,6 +155,7 @@ const Register = () => {
     try {
       await register(formState.email, formState.password, formState.username);
       setSuccess(true);
+      requestNotificationPermission();
     } catch (err) {
       const msg = err.message || '';
       if (msg.includes('rate limit') || msg.includes('too many')) {

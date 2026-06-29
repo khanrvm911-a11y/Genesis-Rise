@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { User, KeyRound, Mail, Camera, Shield, Check, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAvatar } from '../../context/AvatarContext';
 import { supabase } from '../../lib/supabase';
 import { AVATAR_PRESETS, getAvatarEmoji } from '../../utils/avatarPresets';
 import { validateAvatarFile } from '../../utils/avatarUtils';
+import { requestStoragePermission } from '../../lib/permissions';
 
 export default function AccountSettings({ settings, onUpdate, showToast }) {
   const { user, updateUser } = useAuth();
   const { avatar, avatarType, updateAvatar } = useAvatar();
+  const fileInputRef = useRef(null);
 
   const [editing, setEditing] = useState(null);
   const [displayName, setDisplayName] = useState(user?.user_metadata?.full_name || '');
@@ -20,6 +22,11 @@ export default function AccountSettings({ settings, onUpdate, showToast }) {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const handleUploadClick = async () => {
+    const granted = await requestStoragePermission();
+    if (granted) fileInputRef.current?.click();
+  };
 
   const provider = user?.app_metadata?.provider || 'email';
 
@@ -270,11 +277,11 @@ export default function AccountSettings({ settings, onUpdate, showToast }) {
                 </button>
               ))}
             </div>
-            <label className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-sl-purple/20 border border-sl-purple/30 text-sl-purple-light text-sm font-semibold cursor-pointer hover:bg-sl-purple/30 transition">
+            <button onClick={handleUploadClick} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-sl-purple/20 border border-sl-purple/30 text-sl-purple-light text-sm font-semibold cursor-pointer hover:bg-sl-purple/30 transition">
               <Camera className="w-4 h-4" />
               Upload Photo
-              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-            </label>
+            </button>
+            <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} ref={fileInputRef} />
           </div>
         </div>
       )}
