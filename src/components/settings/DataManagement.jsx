@@ -1,6 +1,18 @@
-import { Database, Download, Upload, BarChart3, Heart, Settings2, Archive } from 'lucide-react';
+import { useState } from 'react';
+import { Database, Download, Upload, BarChart3, Heart, Settings2, Archive, AlertTriangle, Trash2 } from 'lucide-react';
 
 export default function DataManagement({ settings, onUpdate, showToast }) {
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const handleGenesisReset = () => {
+    const keys = Object.keys(localStorage);
+    const appKeys = keys.filter(k => k.startsWith('sl_') || k.startsWith('gr_'));
+    appKeys.forEach(k => localStorage.removeItem(k));
+    setShowResetConfirm(false);
+    showToast('GENESIS RESET complete. Reloading...');
+    setTimeout(() => window.location.reload(), 1500);
+  };
+
   const handleExport = (type) => {
     let data = {};
     switch (type) {
@@ -120,6 +132,47 @@ export default function DataManagement({ settings, onUpdate, showToast }) {
           </label>
         </div>
       </div>
+
+      <div className="border-t border-red-500/20 mt-2">
+        <div className="px-4 py-4">
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/15 hover:border-red-500/50 transition font-bold text-sm"
+          >
+            <Trash2 className="w-5 h-5" />
+            GENESIS RESET
+          </button>
+          <p className="text-[10px] text-sl-gray-light/40 text-center mt-2">Wipes all app data and restarts</p>
+        </div>
+      </div>
+
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-sl-gray/95 border border-red-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl shadow-red-500/10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">GENESIS RESET</h3>
+                <p className="text-[10px] text-sl-gray-light/60">This cannot be undone</p>
+              </div>
+            </div>
+            <p className="text-xs text-sl-gray-light mb-5 leading-relaxed">
+              All your workouts, XP, health data, settings, and profile will be permanently deleted.
+              Make sure you've exported a backup first.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-2.5 rounded-xl bg-sl-gray/40 border border-sl-purple/15 text-xs font-bold text-white hover:bg-sl-gray/50 transition">
+                Cancel
+              </button>
+              <button onClick={handleGenesisReset} className="flex-1 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-xs font-bold text-red-400 hover:bg-red-500/30 transition">
+                Confirm Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

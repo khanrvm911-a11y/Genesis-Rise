@@ -115,7 +115,7 @@ export const SETTINGS_SEARCH_INDEX = [
   { keywords: ['units', 'weight', 'height', 'distance', 'water', 'kg', 'lbs', 'cm', 'ft', 'km', 'mi', 'ml', 'liter', 'measurement'], section: 'units', label: 'Units & Preferences' },
   { keywords: ['notifications', 'reminder', 'alert', 'goal', 'achievement', 'report', 'coach', 'insights', 'announcement'], section: 'notifications', label: 'Notifications' },
   { keywords: ['privacy', 'security', 'session', 'sign out', 'data', 'download', 'delete', 'account', 'sharing'], section: 'privacy', label: 'Privacy & Security' },
-  { keywords: ['data', 'export', 'backup', 'restore', 'history', 'workout', 'progress', 'health', 'analytics'], section: 'data', label: 'Data Management' },
+  { keywords: ['data', 'export', 'backup', 'restore', 'history', 'workout', 'progress', 'health', 'analytics', 'reset', 'genesis reset', 'wipe', 'clear'], section: 'data', label: 'Data Management' },
   { keywords: ['about', 'version', 'build', 'release', 'license', 'support', 'contact', 'bug', 'feature', 'terms', 'privacy', 'policy'], section: 'about', label: 'About' },
 ];
 

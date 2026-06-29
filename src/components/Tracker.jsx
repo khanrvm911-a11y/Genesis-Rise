@@ -161,6 +161,25 @@ export default function Tracker() {
     const isTodayDone = completedList.includes(todayStr);
     setIsTodayCompleted(isTodayDone);
 
+    const savedCompleted = localStorage.getItem(STORAGE_KEY_COMPLETED_WORKOUT);
+    if (savedCompleted) {
+      try {
+        const parsed = JSON.parse(savedCompleted);
+        const completedDate = parsed.completedAt
+          ? new Date(parsed.completedAt).toISOString().split('T')[0]
+          : todayStr;
+        if (completedDate === todayStr) {
+          setTodaysCompletedWorkout(parsed);
+        } else {
+          localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
+          setTodaysCompletedWorkout(null);
+        }
+      } catch {
+        localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
+        setTodaysCompletedWorkout(null);
+      }
+    }
+
     const todayWorkout = localStorage.getItem(STORAGE_KEY_TODAYS_WORKOUT);
     if (todayWorkout) {
       try {
@@ -394,6 +413,7 @@ export default function Tracker() {
   const handleNewWorkout = () => {
     localStorage.removeItem(STORAGE_KEY_SESSION);
     localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
+    localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
     resetWorkoutState();
     setWorkflowStep('idle');
   };

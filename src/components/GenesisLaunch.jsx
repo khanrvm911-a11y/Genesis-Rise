@@ -1,12 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function GenesisLaunch({ onFinish, loading }) {
-  const [progress, setProgress] = useState(0);
   const [showContent, setShowContent] = useState(false);
   const [exit, setExit] = useState(false);
-  const progressRef = useRef(0);
-  const rafRef = useRef(null);
 
   useEffect(() => {
     const t1 = setTimeout(() => setShowContent(true), 100);
@@ -15,40 +12,11 @@ export default function GenesisLaunch({ onFinish, loading }) {
 
   useEffect(() => {
     if (!loading) {
-      const start = performance.now();
-      const duration = 800;
-      const animate = (now) => {
-        const elapsed = now - start;
-        const p = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        progressRef.current = eased;
-        setProgress(eased);
-        if (p < 1) {
-          rafRef.current = requestAnimationFrame(animate);
-        } else {
-          const t = setTimeout(() => {
-            setExit(true);
-            setTimeout(onFinish, 800);
-          }, 400);
-          return () => clearTimeout(t);
-        }
-      };
-      rafRef.current = requestAnimationFrame(animate);
-      return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-    } else {
-      const start = performance.now();
-      const duration = 3000;
-      const animate = (now) => {
-        const elapsed = now - start;
-        const raw = Math.min(elapsed / duration, 0.85);
-        progressRef.current = raw;
-        setProgress(raw);
-        if (raw < 0.85) {
-          rafRef.current = requestAnimationFrame(animate);
-        }
-      };
-      rafRef.current = requestAnimationFrame(animate);
-      return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+      const t = setTimeout(() => {
+        setExit(true);
+        setTimeout(onFinish, 800);
+      }, 800);
+      return () => clearTimeout(t);
     }
   }, [loading, onFinish]);
 
@@ -122,24 +90,18 @@ export default function GenesisLaunch({ onFinish, loading }) {
             </motion.div>
 
             <motion.div
-              className="mt-10 w-48 md:w-56"
+              className="mt-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.0 }}
+              transition={{ duration: 0.6, delay: 1.8 }}
             >
-              <div className="w-full h-1 bg-sl-gray/30 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${progress * 100}%`,
-                    background: 'linear-gradient(90deg, #8b5cf6, #f59e0b)',
-                    boxShadow: '0 0 10px rgba(139,92,246,0.4)',
-                  }}
-                />
-              </div>
-              <p className="text-[10px] text-sl-gray-light/40 text-center mt-2 font-mono tracking-wider">
-                {Math.round(progress * 100)}%
-              </p>
+              <span className="text-xs text-sl-purple-light/40 font-mono tracking-widest animate-pulse">
+                <span className="inline-flex gap-1">
+                  <span className="animate-bounce" style={{ animationDelay: '0s', animationDuration: '1.2s' }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '1.2s' }}>.</span>
+                  <span className="animate-bounce" style={{ animationDelay: '0.4s', animationDuration: '1.2s' }}>.</span>
+                </span>
+              </span>
             </motion.div>
           </div>
 

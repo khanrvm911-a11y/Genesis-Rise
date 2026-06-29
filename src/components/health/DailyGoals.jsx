@@ -211,6 +211,19 @@ const DailyGoals = () => {
     goalNotifiedRef.current = { water: false, steps: false, sleep: false, calories: false };
   };
 
+  const resetGoal = (key) => {
+    setToday(prev => {
+      const next = { ...prev };
+      if (key === 'water') next.water = { total: 0, entries: [] };
+      if (key === 'steps') next.steps = { count: 0 };
+      if (key === 'sleep') next.sleep = { start: null, end: null, duration: 0 };
+      if (key === 'calories') next.calories = { total: 0, fromSteps: 0 };
+      persist(next, null);
+      return next;
+    });
+    goalNotifiedRef.current[key] = false;
+  };
+
   const addWater = (amount) => {
     setToday(prev => {
       const next = {
@@ -360,7 +373,10 @@ const DailyGoals = () => {
                   <Icon className="w-3.5 h-3.5 text-sl-purple-light" />
                   <span className="text-xs font-bold text-white">{label}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => resetGoal(key)} className="text-red-400/40 hover:text-red-400 transition" title={`Reset ${label}`}>
+                    <RotateCcw className="w-2.5 h-2.5" />
+                  </button>
                   {editingGoal === key ? (
                     <div className="flex items-center gap-1">
                       <input type="number" value={goalInput} onChange={(e) => { const v = e.target.value; if (v === '' || /^\d*\.?\d*$/.test(v)) setGoalInput(v); }}
