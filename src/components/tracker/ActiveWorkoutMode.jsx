@@ -3,7 +3,6 @@ import { Trophy, SkipForward, CheckCircle, Cloud, CloudOff, Loader, Target, Acti
 import { calculateExerciseCalories } from '../../utils/calorieUtils';
 import { saveCompletedSet } from '../../utils/autoSaveUtils';
 import RestTimer from './RestTimer';
-import PersonalRecords from './PersonalRecords';
 
 const MUSCLE_COLORS = {
   Chest: 'from-red-500/20 to-red-600/10 border-red-500/30',
@@ -56,7 +55,6 @@ export default function ActiveWorkoutMode({
   const [timerRunning, setTimerRunning] = useState(false);
   const timerIntervalRef = useRef(null);
 
-  const [latestPRs, setLatestPRs] = useState(null);
   const [syncStatus, setSyncStatus] = useState('idle');
 
   const weightRef = useRef(null);
@@ -158,14 +156,6 @@ export default function ActiveWorkoutMode({
 
     if (onUpdateSets) onUpdateSets(exerciseIndex, updatedSets);
 
-    if (checkForNewPR) {
-      const prs = checkForNewPR(exercise.exerciseId || exercise.id, w, r);
-      if (prs.length > 0) {
-        setLatestPRs(prs);
-        setTimeout(() => setLatestPRs(null), 4000);
-      }
-    }
-
     setSyncStatus('saving');
     saveCompletedSet({
       sessionId, userId,
@@ -216,12 +206,6 @@ export default function ActiveWorkoutMode({
 
   return (
     <div className="space-y-4 pb-4">
-      {latestPRs && (
-        <div className="fixed top-20 right-4 z-50 w-[300px] animate-slide-up">
-          <PersonalRecords prs={latestPRs} exerciseName={exercise.name} compact />
-        </div>
-      )}
-
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-[10px] text-sl-gray-light font-semibold uppercase tracking-wider">
           <span>{workoutName || 'Workout'}</span>
