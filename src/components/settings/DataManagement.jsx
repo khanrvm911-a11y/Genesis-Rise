@@ -19,8 +19,8 @@ export default function DataManagement({ settings, onUpdate, showToast }) {
     const appKeys = keys.filter(k => k.startsWith('sl_') || k.startsWith('gr_'));
     appKeys.forEach(k => localStorage.removeItem(k));
     setShowResetConfirm(false);
-    showToast('GENESIS RESET complete. Reloading...');
-    setTimeout(() => window.location.reload(), 1500);
+    try { await supabase.auth.signOut(); } catch {}
+    window.location.reload();
   };
   const handleExport = (type) => {
     let data = {};

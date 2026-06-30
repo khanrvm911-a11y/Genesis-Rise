@@ -392,9 +392,6 @@ const DailyGoals = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-sl-purple-light/60 font-semibold">{displayValue}</span>
-                <button onClick={() => resetGoal(key)} className="text-sl-gray-light/40 hover:text-red-400 transition ml-1" title={`Reset ${label}`}>
-                  <RotateCcw className="w-2.5 h-2.5" />
-                </button>
                 <div className="flex items-center gap-1.5">
                   {key === 'water' && (
                     <>
@@ -448,6 +445,9 @@ const DailyGoals = () => {
                     <span className="text-[9px] text-sl-gray-light font-semibold">{todayWCal > 0 ? `${todayWCal} cal` : ''}</span>
                   )}
                 </div>
+                <button onClick={() => resetGoal(key)} className="text-red-400 hover:text-red-300 transition ml-1" title={`Reset ${label}`}>
+                  <RotateCcw className="w-2.5 h-2.5" />
+                </button>
               </div>
             </div>
           );

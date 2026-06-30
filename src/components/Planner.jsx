@@ -793,10 +793,10 @@ const Planner = () => {
                           </div>
                           <div className="grid grid-cols-1 gap-1.5">
                             <div><label className="text-[8px] text-sl-gray-light block font-semibold">Sets</label>
-                              <input type="number" min="1" max="10" value={ex.sets} onChange={e => {
+                              <input type="number" min="1" value={ex.sets} onChange={e => {
                                 const val = parseInt(e.target.value);
                                 if (val < 0) return;
-                                handleUpdateExercise(ex.exerciseId, 'sets', val > 10 ? 10 : (val || 1));
+                                handleUpdateExercise(ex.exerciseId, 'sets', val || 1);
                               }} className="holo-input text-center text-xs py-1" /></div>
                           </div>
                         </div>
@@ -814,7 +814,7 @@ const Planner = () => {
                       onChange={e => setCustomExerciseName(e.target.value)}
                       className="holo-input text-sm flex-1" />
                     <div className="w-16 shrink-0">
-                      <input type="number" min="1" max="10" value={customExerciseSets}
+                      <input type="number" min="1" value={customExerciseSets}
                         onChange={e => {
                           const val = parseInt(e.target.value);
                           if (val < 0) {
@@ -822,7 +822,7 @@ const Planner = () => {
                             return;
                           }
                           setSetsError('');
-                          setCustomExerciseSets(val > 10 ? 10 : (val || 1));
+                          setCustomExerciseSets(val || 1);
                         }}
                         className="holo-input text-center text-xs py-2" />
                       {setsError && <p className="text-red-400 text-[9px] mt-1 text-center">{setsError}</p>}
