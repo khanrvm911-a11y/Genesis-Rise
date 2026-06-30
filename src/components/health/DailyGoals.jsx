@@ -5,7 +5,7 @@ import { useWorkout } from '../../context/WorkoutContext';
 import { useNotification } from '../../context/NotificationContext';
 import { supabase } from '../../lib/supabase';
 import { createStepCounter, requestMotionPermission } from '../../utils/stepCounter';
-import { getGoogleFitStatus, connectGoogleFit, disconnectGoogleFit, fetchGoogleFitSteps } from '../../utils/googleFitSync';
+import { getGoogleFitStatus, connectGoogleFit, disconnectGoogleFit, fetchGoogleFitSteps, fetchHealthMetrics } from '../../utils/googleFitSync';
 
 const STORAGE_KEY = 'sl_daily_goals';
 
@@ -25,6 +25,8 @@ const defaultDay = () => ({
   steps: { count: 0 },
   sleep: { start: null, end: null, duration: 0 },
   calories: { total: 0, fromSteps: 0 },
+  distance: 0,
+  activeMinutes: 0,
 });
 
 const loadAll = () => {
@@ -204,29 +206,29 @@ const DailyGoals = () => {
       return;
     }
 
-    const syncSteps = async () => {
+    const syncMetrics = async () => {
       try {
-        const gfSteps = await fetchGoogleFitSteps();
-        if (gfSteps > 0) {
-          setToday(prev => {
-            const current = prev.steps.count;
-            if (gfSteps > current) {
-              const next = { ...prev, steps: { count: gfSteps } };
-              allData.current.days[next.date || todayKey] = next;
-              saveAll(allData.current);
-              return next;
-            }
-            return prev;
-          });
-        }
+        const metrics = await fetchHealthMetrics();
+        setToday(prev => {
+          const next = {
+            ...prev,
+            steps: { count: Math.max(metrics.steps, prev.steps.count) },
+            calories: { total: Math.max(metrics.calories, prev.calories.total), fromSteps: prev.calories.fromSteps },
+            distance: Math.max(metrics.distance, prev.distance || 0),
+            activeMinutes: Math.max(metrics.activeMinutes, prev.activeMinutes || 0),
+          };
+          allData.current.days[next.date || todayKey] = next;
+          saveAll(allData.current);
+          return next;
+        });
       } catch {
         const status = getGoogleFitStatus();
         if (!status.connected) setGfConnected(false);
       }
     };
 
-    syncSteps();
-    gfIntervalRef.current = setInterval(syncSteps, 300000);
+    syncMetrics();
+    gfIntervalRef.current = setInterval(syncMetrics, 300000);
 
     return () => {
       if (gfIntervalRef.current) {
@@ -308,16 +310,19 @@ const DailyGoals = () => {
     try {
       await connectGoogleFit();
       setGfConnected(true);
-      const gfSteps = await fetchGoogleFitSteps();
-      if (gfSteps > 0) {
+      const metrics = await fetchHealthMetrics();
+      if (metrics.steps > 0 || metrics.distance > 0 || metrics.calories > 0 || metrics.activeMinutes > 0) {
         setToday(prev => {
-          if (gfSteps > prev.steps.count) {
-            const next = { ...prev, steps: { count: gfSteps } };
-            allData.current.days[next.date || todayKey] = next;
-            saveAll(allData.current);
-            return next;
-          }
-          return prev;
+          const next = {
+            ...prev,
+            steps: { count: Math.max(metrics.steps, prev.steps.count) },
+            calories: { total: Math.max(metrics.calories, prev.calories.total), fromSteps: prev.calories.fromSteps },
+            distance: metrics.distance,
+            activeMinutes: metrics.activeMinutes,
+          };
+          allData.current.days[next.date || todayKey] = next;
+          saveAll(allData.current);
+          return next;
         });
       }
     } catch {
@@ -496,7 +501,7 @@ const DailyGoals = () => {
                         }`}>
                         {pedometerActive ? 'ON' : 'Auto'}
                       </button>
-                      <button onClick={toggleGoogleFit} disabled={gfLoading} title="Sync steps from Google Fit"
+                      <button onClick={toggleGoogleFit} disabled={gfLoading} title="Sync from Health Connect"
                         className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md border transition ${
                           gfConnected
                             ? 'bg-blue-500/20 border-blue-500/30 text-blue-400'
@@ -507,8 +512,22 @@ const DailyGoals = () => {
                         ) : (
                           <Smartphone size={10} />
                         )}
-                        {gfConnected ? 'Google Fit ✓' : 'Google Fit'}
+                        {gfConnected ? 'Health ✓' : 'Health Connect'}
                       </button>
+                      {gfConnected && (todaySafe.distance || todaySafe.activeMinutes) && (
+                        <div className="flex items-center gap-2 ml-1">
+                          {todaySafe.distance > 0 && (
+                            <span className="text-[8px] text-sl-gray-light/60 font-semibold whitespace-nowrap">
+                              {(todaySafe.distance / 1000).toFixed(1)}km
+                            </span>
+                          )}
+                          {todaySafe.activeMinutes > 0 && (
+                            <span className="text-[8px] text-sl-gray-light/60 font-semibold whitespace-nowrap">
+                              {todaySafe.activeMinutes}min active
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                   {key === 'sleep' && (
