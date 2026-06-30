@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Droplets, Activity, Moon, Flame, Target, Edit2, Plus, Play, Square, Check, ChevronDown, ChevronUp, Clock, RotateCcw } from 'lucide-react';
+import { Droplets, Activity, Moon, Flame, Target, Edit2, Plus, Play, Square, Check, ChevronDown, ChevronUp, Clock, RotateCcw, Smartphone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkout } from '../../context/WorkoutContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -496,13 +496,18 @@ const DailyGoals = () => {
                         }`}>
                         {pedometerActive ? 'ON' : 'Auto'}
                       </button>
-                      <button onClick={toggleGoogleFit} disabled={gfLoading} title="Google Fit Sync"
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border transition ${
+                      <button onClick={toggleGoogleFit} disabled={gfLoading} title="Sync steps from Google Fit"
+                        className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-md border transition ${
                           gfConnected
                             ? 'bg-blue-500/20 border-blue-500/30 text-blue-400'
-                            : 'bg-sl-purple/10 border-sl-purple/20 text-sl-purple-light hover:bg-sl-purple/20'
+                            : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
                         }`}>
-                        {gfLoading ? '...' : gfConnected ? 'Fit' : 'Fit'}
+                        {gfLoading ? (
+                          <span className="animate-spin w-2.5 h-2.5 border border-current border-t-transparent rounded-full" />
+                        ) : (
+                          <Smartphone size={10} />
+                        )}
+                        {gfConnected ? 'Google Fit ✓' : 'Google Fit'}
                       </button>
                     </>
                   )}
