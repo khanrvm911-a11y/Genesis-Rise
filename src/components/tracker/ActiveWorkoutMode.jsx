@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trophy, SkipForward, CheckCircle, Cloud, CloudOff, Loader, Target, Activity, Play, Flame } from 'lucide-react';
+import { Trophy, SkipForward, CheckCircle, Cloud, CloudOff, Loader, Target, Activity, Play, Flame, RefreshCw } from 'lucide-react';
 import { calculateExerciseCalories } from '../../utils/calorieUtils';
 import { saveCompletedSet } from '../../utils/autoSaveUtils';
+import { useWorkout } from '../../context/WorkoutContext';
 import RestTimer from './RestTimer';
 import PersonalRecords from './PersonalRecords';
 
@@ -58,6 +59,11 @@ export default function ActiveWorkoutMode({
 
   const [latestPRs, setLatestPRs] = useState(null);
   const [syncStatus, setSyncStatus] = useState('idle');
+
+  const { suggestProgressiveOverload, getLastPerformance } = useWorkout();
+  const exerciseId = exercise.exerciseId || exercise.id;
+  const overloadSuggestion = suggestProgressiveOverload(exerciseId);
+  const lastPerf = getLastPerformance(exerciseId);
 
   const weightRef = useRef(null);
   const repsRef = useRef(null);
@@ -339,6 +345,28 @@ export default function ActiveWorkoutMode({
               </span>
             )}
           </div>
+
+          {(overloadSuggestion || lastPerf) && (
+            <div className="flex items-center gap-2 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
+              <RefreshCw className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                {overloadSuggestion ? (
+                  <p className="text-xs font-semibold text-amber-300">
+                    {overloadSuggestion.value}
+                    {lastPerf && !overloadSuggestion.value.includes('Start') && (
+                      <span className="text-amber-400/60 ml-1">
+                        (last: {lastPerf.weight}kg × {lastPerf.reps})
+                      </span>
+                    )}
+                  </p>
+                ) : lastPerf && (
+                  <p className="text-xs text-amber-300/70">
+                    Last: {lastPerf.weight}kg × {lastPerf.reps}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
