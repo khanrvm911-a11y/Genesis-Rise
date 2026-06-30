@@ -130,6 +130,7 @@ const Planner = () => {
   const [mgSelectedExercises, setMgSelectedExercises] = useState([]);
   const [mgActiveSplit, setMgActiveSplit] = useState(null);
   const [focusedExerciseId, setFocusedExerciseId] = useState(null);
+  const [setsErrors, setSetsErrors] = useState({});
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [editExerciseName, setEditExerciseName] = useState('');
 
@@ -328,7 +329,7 @@ const Planner = () => {
     setSelectedExercises(prev => [...prev, {
       exerciseId: `custom-${Date.now()}`,
       name: '',
-      sets: 3,
+      sets: '',
       reps: 10,
       weight: 0,
       difficulty: 'Beginner',
@@ -764,11 +765,21 @@ const Planner = () => {
                             </div>
                             <div className="w-16 shrink-0">
                               <label className="text-[8px] text-sl-gray-light block font-semibold text-center mb-0.5">Sets</label>
-                              <input type="number" min="1" value={ex.sets} onChange={e => {
-                                const val = parseInt(e.target.value);
-                                if (val < 0) return;
-                                handleUpdateExercise(ex.exerciseId, 'sets', val || 1);
+                              <input type="text" inputMode="numeric" placeholder="Sets" value={ex.sets === '' || ex.sets === 0 ? '' : ex.sets} onChange={e => {
+                                const raw = e.target.value;
+                                if (raw === '') {
+                                  handleUpdateExercise(ex.exerciseId, 'sets', '');
+                                  setSetsErrors(prev => ({ ...prev, [ex.exerciseId]: '' }));
+                                  return;
+                                }
+                                if (/^\d+$/.test(raw)) {
+                                  setSetsErrors(prev => ({ ...prev, [ex.exerciseId]: '' }));
+                                  handleUpdateExercise(ex.exerciseId, 'sets', parseInt(raw, 10));
+                                } else {
+                                  setSetsErrors(prev => ({ ...prev, [ex.exerciseId]: 'no negative or symbols allowed' }));
+                                }
                               }} className="holo-input text-center text-xs py-1.5 w-full" />
+                              {setsErrors[ex.exerciseId] && <p className="text-red-400 text-[8px] mt-0.5 text-center">{setsErrors[ex.exerciseId]}</p>}
                             </div>
                             <button onClick={() => handleRemoveExercise(ex.exerciseId)} className="text-red-400 hover:text-red-300 shrink-0 mt-5">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
