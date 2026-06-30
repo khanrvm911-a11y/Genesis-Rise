@@ -5,6 +5,7 @@ import { useWorkout } from '../../context/WorkoutContext';
 import { useNotification } from '../../context/NotificationContext';
 import { supabase } from '../../lib/supabase';
 import { createStepCounter, requestMotionPermission } from '../../utils/stepCounter';
+import { getGoogleFitStatus, connectGoogleFit, disconnectGoogleFit, fetchGoogleFitSteps } from '../../utils/googleFitSync';
 
 const STORAGE_KEY = 'sl_daily_goals';
 
@@ -70,6 +71,9 @@ const DailyGoals = () => {
   const pedometerRef = useRef(null);
   const sleepTimerRef = useRef(null);
   const pedometerStarted = useRef(false);
+  const [gfConnected, setGfConnected] = useState(false);
+  const [gfLoading, setGfLoading] = useState(false);
+  const gfIntervalRef = useRef(null);
 
   const todaySafe = today || defaultDay();
 
@@ -91,6 +95,8 @@ const DailyGoals = () => {
       setToday(fresh);
       persist(fresh, null);
     }
+    const status = getGoogleFitStatus();
+    setGfConnected(status.connected);
   }, []);
 
   useEffect(() => {
@@ -190,6 +196,47 @@ const DailyGoals = () => {
   }, [pedometerActive, todayKey]);
 
   useEffect(() => {
+    if (!gfConnected) {
+      if (gfIntervalRef.current) {
+        clearInterval(gfIntervalRef.current);
+        gfIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const syncSteps = async () => {
+      try {
+        const gfSteps = await fetchGoogleFitSteps();
+        if (gfSteps > 0) {
+          setToday(prev => {
+            const current = prev.steps.count;
+            if (gfSteps > current) {
+              const next = { ...prev, steps: { count: gfSteps } };
+              allData.current.days[next.date || todayKey] = next;
+              saveAll(allData.current);
+              return next;
+            }
+            return prev;
+          });
+        }
+      } catch {
+        const status = getGoogleFitStatus();
+        if (!status.connected) setGfConnected(false);
+      }
+    };
+
+    syncSteps();
+    gfIntervalRef.current = setInterval(syncSteps, 300000);
+
+    return () => {
+      if (gfIntervalRef.current) {
+        clearInterval(gfIntervalRef.current);
+        gfIntervalRef.current = null;
+      }
+    };
+  }, [gfConnected, todayKey]);
+
+  useEffect(() => {
     if (todaySafe.sleep.start && !todaySafe.sleep.end) {
       const update = () => {
         const elapsed = (Date.now() - new Date(todaySafe.sleep.start).getTime()) / 3600000;
@@ -249,6 +296,35 @@ const DailyGoals = () => {
       return;
     }
     setPedometerActive(true);
+  };
+
+  const toggleGoogleFit = async () => {
+    if (gfConnected) {
+      disconnectGoogleFit();
+      setGfConnected(false);
+      return;
+    }
+    setGfLoading(true);
+    try {
+      await connectGoogleFit();
+      setGfConnected(true);
+      const gfSteps = await fetchGoogleFitSteps();
+      if (gfSteps > 0) {
+        setToday(prev => {
+          if (gfSteps > prev.steps.count) {
+            const next = { ...prev, steps: { count: gfSteps } };
+            allData.current.days[next.date || todayKey] = next;
+            saveAll(allData.current);
+            return next;
+          }
+          return prev;
+        });
+      }
+    } catch {
+      setGfConnected(false);
+    } finally {
+      setGfLoading(false);
+    }
   };
 
   const stopSleep = () => {
@@ -419,6 +495,14 @@ const DailyGoals = () => {
                             : 'bg-sl-purple/10 border-sl-purple/20 text-sl-purple-light hover:bg-sl-purple/20'
                         }`}>
                         {pedometerActive ? 'ON' : 'Auto'}
+                      </button>
+                      <button onClick={toggleGoogleFit} disabled={gfLoading} title="Google Fit Sync"
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border transition ${
+                          gfConnected
+                            ? 'bg-blue-500/20 border-blue-500/30 text-blue-400'
+                            : 'bg-sl-purple/10 border-sl-purple/20 text-sl-purple-light hover:bg-sl-purple/20'
+                        }`}>
+                        {gfLoading ? '...' : gfConnected ? 'Fit' : 'Fit'}
                       </button>
                     </>
                   )}

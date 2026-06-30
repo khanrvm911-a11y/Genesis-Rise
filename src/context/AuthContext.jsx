@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const sessionCheckTimer = useRef(null);
   const initializingGoogleUser = useRef(false);
+  const pendingAuthRef = useRef(false);
 
   const clearTimers = () => {
     if (inactivityTimer.current) {
@@ -99,33 +100,39 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        setSessionExpiresAt(session?.expires_at ? session.expires_at * 1000 : null);
+        setLoading(false);
+        if (currentUser && currentUser.app_metadata?.provider === 'google') {
+          checkAndInitializeGoogleUser(currentUser);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setSessionExpiresAt(null);
+        setLoading(false);
+      }
+    });
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       if (session) {
         setUser(session.user ?? null);
         setSessionExpiresAt(session.expires_at ? session.expires_at * 1000 : null);
         if (session.user && session.user.app_metadata?.provider === 'google') {
           checkAndInitializeGoogleUser(session.user);
         }
-      } else {
-        setUser(null);
-        setSessionExpiresAt(null);
       }
       setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      setSessionExpiresAt(session?.expires_at ? session.expires_at * 1000 : null);
-      setLoading(false);
-      if (currentUser && currentUser.app_metadata?.provider === 'google') {
-        checkAndInitializeGoogleUser(currentUser);
-      }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
       clearTimers();
     };
@@ -227,6 +234,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (identifier, password) => {
     setError(null);
+    pendingAuthRef.current = true;
     try {
       let email = identifier;
 
@@ -250,6 +258,8 @@ export const AuthProvider = ({ children }) => {
       const message = err.message || 'Login failed';
       setError(message);
       throw err;
+    } finally {
+      pendingAuthRef.current = false;
     }
   };
 
@@ -308,12 +318,14 @@ export const AuthProvider = ({ children }) => {
   
   const register = async (email, password, username) => {
     setError(null);
+    pendingAuthRef.current = true;
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { username },
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
       if (error) throw error;
@@ -322,6 +334,8 @@ export const AuthProvider = ({ children }) => {
       const message = err.message || 'Registration failed';
       setError(message);
       throw err;
+    } finally {
+      pendingAuthRef.current = false;
     }
   };
 
@@ -402,11 +416,33 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data, error } = await supabase.auth.resend({
         type: 'signup',
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
       });
       if (error) throw error;
       return data;
     } catch (err) {
       setError(err.message);
+      throw err;
+    }
+  };
+
+  const resendVerificationForEmail = async (email) => {
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      const message = err.message || 'Failed to resend verification';
+      setError(message);
       throw err;
     }
   };
@@ -432,10 +468,11 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     signInWithGoogle,
-        logout,
+    logout,
     forgotPassword,
     resetPassword,
     sendVerificationEmail,
+    resendVerificationForEmail,
     updateUser,
     checkUsernameExists,
     checkEmailExists,

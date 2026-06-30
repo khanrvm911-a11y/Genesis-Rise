@@ -24,7 +24,7 @@ function useDebounce(value, delay) {
 }
 
 const Register = () => {
-  const { register, signInWithGoogle, checkUsernameExists, checkEmailExists } = useAuth();
+  const { register, signInWithGoogle, checkUsernameExists, checkEmailExists, resendVerificationForEmail } = useAuth();
 
   const [formState, setFormState] = useState({
     username: '',
@@ -43,6 +43,8 @@ const Register = () => {
   const [socialLoading, setSocialLoading] = useState(null);
   const [usernameStatus, setUsernameStatus] = useState(null);
   const [emailStatus, setEmailStatus] = useState(null);
+  const [resending, setResending] = useState(false);
+  const [resentMsg, setResentMsg] = useState('');
 
   const debouncedUsername = useDebounce(formState.username, 500);
   const debouncedEmail = useDebounce(formState.email, 500);
@@ -175,6 +177,20 @@ const Register = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!formState.email) return;
+    setResending(true);
+    setResentMsg('');
+    try {
+      await resendVerificationForEmail(formState.email);
+      setResentMsg('Verification email sent! Check your inbox.');
+    } catch {
+      setResentMsg('Failed to resend. Try again later.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -328,7 +344,17 @@ const Register = () => {
               )}
             </div>
             {emailStatus === 'taken' && (
-              <p className="text-red-400 text-xs mt-1">An account with this email already exists</p>
+              <div className="mt-1">
+                <p className="text-red-400 text-xs">An account with this email already exists</p>
+                <button
+                  onClick={handleResendVerification}
+                  disabled={resending}
+                  className="text-xs text-amber-400 hover:text-amber-300 transition underline underline-offset-2 mt-0.5 disabled:opacity-50"
+                >
+                  {resending ? 'Sending...' : 'Resend verification email'}
+                </button>
+                {resentMsg && <p className="text-xs text-emerald-400 mt-0.5">{resentMsg}</p>}
+              </div>
             )}
           </div>
 

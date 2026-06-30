@@ -26,6 +26,7 @@ const Health = lazy(() => import('./components/Health'));
 const Analysis = lazy(() => import('./components/Analysis'));
 const Profile = lazy(() => import('./components/Profile'));
 const Settings = lazy(() => import('./components/Settings'));
+const AdminApp = lazy(() => import('./admin/AdminApp'));
 
 const NAV_ITEMS = [
   { to: '/', icon: HomeIcon, label: 'Home' },
@@ -94,6 +95,7 @@ function App() {
 
   const publicPaths = ['/', '/about', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy'];
   const isPublicPage = publicPaths.includes(location.pathname);
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   const authPages = ['/login', '/register'];
   const isAuthPage = authPages.includes(location.pathname);
@@ -103,7 +105,12 @@ function App() {
     return <Navigate to="/login" replace={true} />;
   }
 
+  const ADMIN_EMAIL = 'support.app@gmail.com';
+
   if (user && isAuthPage) {
+    if (user.email === ADMIN_EMAIL) {
+      return <Navigate to="/admin" replace={true} />;
+    }
     return <Navigate to="/" replace={true} />;
   }
 
@@ -121,7 +128,7 @@ function App() {
         <div className="absolute inset-0 bg-sl-pattern opacity-10"></div>
       </div>
 
-      {user && (
+      {user && !isAdminRoute && (
         <header className="fixed top-0 left-0 right-0 z-50 bg-sl-dark/95 backdrop-blur-md border-b border-sl-purple/20 safe-area-top">
           <div className="flex items-center justify-between px-4 h-16 max-w-lg mx-auto">
             <Link to="/" className="flex items-center gap-2 no-underline shrink-0">
@@ -219,7 +226,7 @@ function App() {
         </header>
       )}
 
-      {user && (
+      {user && !isAdminRoute && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sl-dark/98 backdrop-blur-md border-t border-sl-purple/20 safe-area-bottom">
           <div className="flex items-center justify-around max-w-lg mx-auto">
             {NAV_ITEMS.map(({ to, icon: Icon, label }) => {
@@ -244,7 +251,7 @@ function App() {
       )}
 
       <ScrollToTop />
-      <main className={user ? 'pt-16 pb-20' : ''}>
+      <main className={user && !isAdminRoute ? 'pt-16 pb-20' : user && isAdminRoute ? 'min-h-screen' : ''}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -261,6 +268,7 @@ function App() {
           <Route path="/analysis" element={<LazyRoute element={<Analysis />} skeleton={getSkeletonForPath('/analysis')} />} />
           <Route path="/profile" element={<LazyRoute element={<Profile />} skeleton={getSkeletonForPath('/profile')} />} />
           <Route path="/settings" element={<LazyRoute element={<Settings />} skeleton={getSkeletonForPath('/settings')} />} />
+          <Route path="/admin/*" element={<AdminApp />} />
           <Route path="*" element={<Navigate to="/" replace={true} />} />
         </Routes>
       </main>

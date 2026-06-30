@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Login = () => {
-  const { login, signInWithGoogle } = useAuth();
+  const { login, signInWithGoogle, resendVerificationForEmail } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +14,9 @@ const Login = () => {
   const [capsLock, setCapsLock] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [socialLoading, setSocialLoading] = useState(null);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
+  const [resending, setResending] = useState(false);
+  const [resentMsg, setResentMsg] = useState('');
 
   useEffect(() => {
     const saved = localStorage.getItem('gr_remember_identifier');
@@ -32,6 +35,8 @@ const Login = () => {
     if (!identifier.trim() || !password) return;
     setLoading(true);
     setError('');
+    setResentMsg('');
+    setUnconfirmedEmail('');
     try {
       await login(identifier.trim(), password);
       if (rememberMe) {
@@ -42,6 +47,8 @@ const Login = () => {
     } catch (err) {
       const msg = err.message || '';
       if (msg.includes('Email not confirmed')) {
+        const extractedEmail = identifier.includes('@') ? identifier.trim() : '';
+        setUnconfirmedEmail(extractedEmail);
         setError('Please verify your email before logging in.');
       } else if (msg.includes('Invalid login credentials') || msg.includes('User not found')) {
         setError('Incorrect username/email or password.');
@@ -54,6 +61,20 @@ const Login = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!identifier.includes('@') && !unconfirmedEmail) return;
+    setResending(true);
+    setResentMsg('');
+    try {
+      await resendVerificationForEmail(identifier.includes('@') ? identifier.trim() : unconfirmedEmail);
+      setResentMsg('Verification email sent! Check your inbox.');
+    } catch {
+      setResentMsg('Failed to resend. Try again later.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -225,6 +246,18 @@ const Login = () => {
                 <p className="text-red-400 text-sm bg-red-500/10 rounded-lg px-3 py-2 border border-red-500/20">
                   {error}
                 </p>
+                {unconfirmedEmail && (
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={resending}
+                    className="inline-block mt-2 text-xs text-amber-400 hover:text-amber-300 transition font-medium underline underline-offset-2 disabled:opacity-50"
+                  >
+                    {resending ? 'Sending...' : 'Resend verification email'}
+                  </button>
+                )}
+                {resentMsg && (
+                  <p className="mt-1 text-xs text-emerald-400">{resentMsg}</p>
+                )}
                 <Link
                   to="/forgot-password"
                   className="inline-block mt-2 text-xs text-sl-purple-light/70 hover:text-sl-purple-light transition font-medium underline underline-offset-2"
