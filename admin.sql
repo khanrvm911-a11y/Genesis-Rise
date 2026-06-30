@@ -218,22 +218,28 @@ END;
 $$;
 
 -- 11. RLS POLICIES FOR ADMIN ACCESS
-CREATE POLICY IF NOT EXISTS "admin_all_access_profiles" ON public.profiles
+DROP POLICY IF EXISTS "admin_all_access_profiles" ON public.profiles;
+CREATE POLICY "admin_all_access_profiles" ON public.profiles
     FOR ALL USING (public.is_admin(auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "admin_all_access_power_levels" ON public.power_levels
+DROP POLICY IF EXISTS "admin_all_access_power_levels" ON public.power_levels;
+CREATE POLICY "admin_all_access_power_levels" ON public.power_levels
     FOR ALL USING (public.is_admin(auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "admin_all_access_daily_goals" ON public.daily_goals
+DROP POLICY IF EXISTS "admin_all_access_daily_goals" ON public.daily_goals;
+CREATE POLICY "admin_all_access_daily_goals" ON public.daily_goals
     FOR ALL USING (public.is_admin(auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "admin_all_access_notifications" ON public.notifications
+DROP POLICY IF EXISTS "admin_all_access_notifications" ON public.notifications;
+CREATE POLICY "admin_all_access_notifications" ON public.notifications
     FOR ALL USING (public.is_admin(auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "admin_all_access_audit_logs" ON public.audit_logs
+DROP POLICY IF EXISTS "admin_all_access_audit_logs" ON public.audit_logs;
+CREATE POLICY "admin_all_access_audit_logs" ON public.audit_logs
     FOR ALL USING (public.is_admin(auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "admin_all_access_admin_notifications" ON public.admin_notifications
+DROP POLICY IF EXISTS "admin_all_access_admin_notifications" ON public.admin_notifications;
+CREATE POLICY "admin_all_access_admin_notifications" ON public.admin_notifications
     FOR ALL USING (public.is_admin(auth.uid()));
 
 -- 12. GRANT ADMIN PRIVILEGES TO SPECIFIC USER
