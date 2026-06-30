@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+
+const Planner = lazy(() => import('./Planner'));
 import { useLevel } from '../context/LevelContext';
 import { usePowerLevel } from '../context/PowerLevelContext';
 import { useWorkout } from '../context/WorkoutContext';
@@ -99,6 +101,7 @@ export default function Tracker() {
   const [syncKey, setSyncKey] = useState(0);
   const [sessionId, setSessionId] = useState(null);
   const [offlineQueueSize, setOfflineQueueSize] = useState(0);
+  const [showPlanner, setShowPlanner] = useState(false);
   const syncCleanupRef = useRef(null);
 
   useEffect(() => {
@@ -260,6 +263,7 @@ export default function Tracker() {
     setSessionActiveTime(0);
     setSessionIsResting(false);
     setSessionId(null);
+    setShowPlanner(false);
   };
 
   const handleBack = () => {
@@ -458,6 +462,7 @@ export default function Tracker() {
     localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
     localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
     resetWorkoutState();
+    setShowPlanner(false);
     setWorkflowStep('idle');
   };
 
@@ -466,10 +471,7 @@ export default function Tracker() {
   };
 
   const handleReturnToPlanner = () => {
-    localStorage.removeItem(STORAGE_KEY_SESSION);
-    localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
-    resetWorkoutState();
-    navigate('/planner');
+    setShowPlanner(true);
   };
 
   const handleBackFromAnalytics = () => {
@@ -514,9 +516,14 @@ export default function Tracker() {
               {stepTitle()}
             </h1>
           </div>
-          {workflowStep === 'complete' && (
+          {(workflowStep === 'complete' || (workflowStep === 'idle' && todaysCompletedWorkout)) && !showPlanner && (
             <button onClick={handleReturnToPlanner} className="holo-button px-4 py-2 text-sm">
-              Return to Planner
+              Plan Next Workout
+            </button>
+          )}
+          {showPlanner && (
+            <button onClick={() => setShowPlanner(false)} className="holo-button px-4 py-2 text-sm">
+              Hide Planner
             </button>
           )}
         </div>
@@ -532,6 +539,17 @@ export default function Tracker() {
                     onViewAnalytics={handleViewAnalytics}
                     onReturnToPlanner={handleReturnToPlanner}
                   />
+                  {showPlanner && (
+                    <div className="mt-6 border-t border-sl-purple/20 pt-6">
+                      <Suspense fallback={
+                        <div className="flex items-center justify-center py-12">
+                          <div className="animate-spin w-6 h-6 border-2 border-sl-purple border-t-transparent rounded-full" />
+                        </div>
+                      }>
+                        <Planner />
+                      </Suspense>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -637,6 +655,17 @@ export default function Tracker() {
                 onViewAnalytics={handleViewAnalytics}
                 onReturnToPlanner={handleReturnToPlanner}
               />
+              {showPlanner && (
+                <div className="mt-6 border-t border-sl-purple/20 pt-6">
+                  <Suspense fallback={
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin w-6 h-6 border-2 border-sl-purple border-t-transparent rounded-full" />
+                    </div>
+                  }>
+                    <Planner />
+                  </Suspense>
+                </div>
+              )}
             </motion.div>
           )}
 
