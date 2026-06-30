@@ -129,9 +129,7 @@ const Planner = () => {
   const [mgActiveGroup, setMgActiveGroup] = useState(null);
   const [mgSelectedExercises, setMgSelectedExercises] = useState([]);
   const [mgActiveSplit, setMgActiveSplit] = useState(null);
-  const [customExerciseName, setCustomExerciseName] = useState('');
-  const [customExerciseSets, setCustomExerciseSets] = useState(1);
-  const [setsError, setSetsError] = useState('');
+  const [focusedExerciseId, setFocusedExerciseId] = useState(null);
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [editExerciseName, setEditExerciseName] = useState('');
 
@@ -326,23 +324,19 @@ const Planner = () => {
     setEditExerciseName('');
   };
 
-  const handleAssignCustomExercise = () => {
-    const name = customExerciseName.trim();
-    if (!name || selectedExercises.length >= 10) return;
+  const handleAddExerciseRow = () => {
     setSelectedExercises(prev => [...prev, {
       exerciseId: `custom-${Date.now()}`,
-      name,
-      sets: customExerciseSets || 1,
+      name: '',
+      sets: 3,
       reps: 10,
       weight: 0,
       difficulty: 'Beginner',
       xpReward: 10,
-      muscleGroup: selectedMuscleGroup || 'Other',
+      muscleGroup: 'Other',
       trackingType: 'weight',
       equipment: '',
     }]);
-    setCustomExerciseName('');
-    setCustomExerciseSets(1);
   };
 
   const handleAssignCustomWorkout = () => {
@@ -549,8 +543,6 @@ const Planner = () => {
                 setMgActiveGroup(null);
                 setMgSelectedExercises([]);
                 setMgActiveSplit(null);
-                setCustomExerciseName('');
-                setCustomExerciseSets(1);
                 setEditingExerciseId(null);
                 setEditExerciseName('');
               }} className="holo-button holo-button-primary px-6 py-3 text-sm">
@@ -640,7 +632,7 @@ const Planner = () => {
 
             <div className="flex gap-3 mb-4 border-b border-sl-purple/15 pb-2">
               {['templates', 'custom', 'musclegroups'].map(tab => (
-                <button key={tab} onClick={() => { setModalTab(tab); setMgActiveGroup(null); setMgActiveSplit(null); setCustomExerciseName(''); setCustomExerciseSets(1); setEditingExerciseId(null); setEditExerciseName(''); }}
+                <button key={tab} onClick={() => { setModalTab(tab); setMgActiveGroup(null); setMgActiveSplit(null); setEditingExerciseId(null); setEditExerciseName(''); if (tab !== 'custom') setSelectedExercises([]); }}
                   className={`text-xs font-semibold pb-2 border-b-2 transition -mb-[10px] capitalize ${modalTab === tab ? 'text-sl-purple-light border-sl-purple' : 'text-sl-gray-light border-transparent hover:text-white'}`}>
                   {tab === 'musclegroups' ? 'Groups' : tab}
                 </button>
@@ -731,111 +723,67 @@ const Planner = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <div>
-                  <p className="text-[10px] text-sl-purple/60 uppercase tracking-widest font-bold mb-2">Select Muscle Group</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {MUSCLE_GROUPS.map(mg => (
-                      <button key={mg.id} onClick={() => { setSelectedMuscleGroup(mg.id); setSelectedExercises([]); }}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition border ${selectedMuscleGroup === mg.id ? 'bg-sl-purple/20 border-sl-purple/50 text-sl-purple-light' : 'bg-sl-gray/20 border-sl-gray/20 text-sl-gray-light'}`}>
-                        {mg.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {selectedMuscleGroup && (
                   <div>
-                    <p className="text-[10px] text-sl-purple/60 uppercase tracking-widest font-bold mb-2">Choose Exercises</p>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {filteredExercises.map(ex => {
-                        const isSelected = selectedExercises.some(e => e.exerciseId === ex.id);
-                        return (
-                          <button key={ex.id} onClick={() => isSelected ? handleRemoveExercise(ex.id) : handleAssignExercise(ex)}
-                            className={`w-full text-left p-2 rounded-xl border transition flex items-center justify-between ${isSelected ? 'bg-sl-purple/15 border-sl-purple/40' : 'bg-sl-gray/10 border-sl-purple/10'}`}>
-                            <div className="min-w-0 flex-1">
-                              <span className="text-xs font-medium text-white truncate block">{ex.name}</span>
-                              <span className="text-[9px] text-sl-gray-light/60">{ex.equipment}</span>
-                            </div>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-sl-purple-light shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <p className="text-[10px] text-sl-purple/60 uppercase tracking-widest font-bold mb-2">Workout Name</p>
+                    <input type="text" placeholder="e.g. Upper Body Blast" value={customWorkoutName}
+                      onChange={e => setCustomWorkoutName(e.target.value)}
+                      className="holo-input text-sm w-full" />
                   </div>
-                )}
 
-                {selectedExercises.length > 0 && (
                   <div>
-                    <p className="text-[10px] text-sl-purple/60 uppercase tracking-widest font-bold mb-2">Configure</p>
-                    <input type="text" placeholder="Workout name" value={customWorkoutName} onChange={e => setCustomWorkoutName(e.target.value)} className="holo-input text-sm mb-3" />
-                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                      {selectedExercises.map(ex => (
-                        <div key={ex.exerciseId} className="p-2 rounded-xl bg-sl-gray/10 border border-sl-purple/10">
-                          <div className="flex items-center gap-1 mb-1.5">
-                            {ex.exerciseId?.startsWith('custom-') && editingExerciseId === ex.exerciseId ? (
-                              <input type="text" value={editExerciseName}
-                                onChange={e => setEditExerciseName(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
-                                onBlur={handleSaveEdit}
-                                className="holo-input text-xs py-1 flex-1 min-w-0"
-                                autoFocus />
-                            ) : (
-                              <span className="text-xs font-semibold text-white truncate flex-1">{ex.name}</span>
-                            )}
-                            <div className="flex gap-1 shrink-0">
-                              {ex.exerciseId?.startsWith('custom-') && editingExerciseId === ex.exerciseId ? (
-                                <button onClick={handleSaveEdit} className="text-emerald-400 text-[10px]">Save</button>
-                              ) : ex.exerciseId?.startsWith('custom-') ? (
-                                <button onClick={() => handleStartEdit(ex)} className="text-sl-purple-light text-[10px]">Edit</button>
-                              ) : null}
-                              <button onClick={() => handleRemoveExercise(ex.exerciseId)} className="text-red-400 text-[10px]">Remove</button>
+                    <p className="text-[10px] text-sl-purple/60 uppercase tracking-widest font-bold mb-2">Exercises</p>
+                    <div className="space-y-2">
+                      {selectedExercises.map((ex, idx) => (
+                        <div key={ex.exerciseId} className="p-3 rounded-xl bg-sl-gray/10 border border-sl-purple/10">
+                          <div className="flex items-start gap-2">
+                            <div className="relative flex-1">
+                              <label className="text-[8px] text-sl-gray-light block font-semibold mb-0.5">Exercise</label>
+                              <input type="text" placeholder="Type exercise name" value={ex.name}
+                                onChange={e => {
+                                  handleUpdateExercise(ex.exerciseId, 'name', e.target.value);
+                                  setFocusedExerciseId(ex.exerciseId);
+                                }}
+                                onFocus={() => setFocusedExerciseId(ex.exerciseId)}
+                                onBlur={() => setTimeout(() => setFocusedExerciseId(null), 200)}
+                                className="holo-input text-xs py-1.5 w-full" />
+                              {focusedExerciseId === ex.exerciseId && ex.name.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-sl-dark border border-sl-purple/30 rounded-xl max-h-40 overflow-y-auto shadow-xl">
+                                  {exercises.filter(e => e.name.toLowerCase().includes(ex.name.toLowerCase())).slice(0, 8).map(e => (
+                                    <button key={e.id} type="button"
+                                      onMouseDown={() => {
+                                        setSelectedExercises(prev => prev.map(x => x.exerciseId === ex.exerciseId ? { ...x, exerciseId: e.id, name: e.name, muscleGroup: e.muscleGroup, trackingType: e.trackingType, equipment: e.equipment, difficulty: e.difficulty, xpReward: e.xpReward } : x));
+                                        setFocusedExerciseId(null);
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-xs text-white hover:bg-sl-purple/20 transition flex items-center justify-between">
+                                      <span>{e.name}</span>
+                                      <span className="text-[9px] text-sl-gray-light/50">{e.muscleGroup}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                          </div>
-                          <div className="grid grid-cols-1 gap-1.5">
-                            <div><label className="text-[8px] text-sl-gray-light block font-semibold">Sets</label>
+                            <div className="w-16 shrink-0">
+                              <label className="text-[8px] text-sl-gray-light block font-semibold text-center mb-0.5">Sets</label>
                               <input type="number" min="1" value={ex.sets} onChange={e => {
                                 const val = parseInt(e.target.value);
                                 if (val < 0) return;
                                 handleUpdateExercise(ex.exerciseId, 'sets', val || 1);
-                              }} className="holo-input text-center text-xs py-1" /></div>
+                              }} className="holo-input text-center text-xs py-1.5 w-full" />
+                            </div>
+                            <button onClick={() => handleRemoveExercise(ex.exerciseId)} className="text-red-400 hover:text-red-300 shrink-0 mt-5">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                )}
 
-                <div>
-                  <p className="text-[10px] text-sl-purple/60 uppercase tracking-widest font-bold mb-2">
-                    Assign Custom Exercise {selectedExercises.length > 0 && <span className="text-sl-gray-light/50">({selectedExercises.length}/10)</span>}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <input type="text" placeholder="Exercise name" value={customExerciseName}
-                      onChange={e => setCustomExerciseName(e.target.value)}
-                      className="holo-input text-sm flex-1" />
-                    <div className="w-16 shrink-0">
-                      <input type="number" min="1" value={customExerciseSets}
-                        onChange={e => {
-                          const val = parseInt(e.target.value);
-                          if (val < 0) {
-                            setSetsError("Sets can't be negative");
-                            return;
-                          }
-                          setSetsError('');
-                          setCustomExerciseSets(val || 1);
-                        }}
-                        className="holo-input text-center text-xs py-2" />
-                      {setsError && <p className="text-red-400 text-[9px] mt-1 text-center">{setsError}</p>}
-                    </div>
-                    <button onClick={handleAssignCustomExercise}
-                      disabled={!customExerciseName.trim() || selectedExercises.length >= 10}
-                      className="bg-sl-purple/20 hover:bg-sl-purple/30 text-sl-purple-light border border-sl-purple/30 px-3 py-2 rounded-xl text-xs font-semibold transition disabled:opacity-50 shrink-0">
-                      Assign
-                    </button>
-                  </div>
-                  <p className="text-[8px] text-sl-gray-light/50 mt-1">Type any exercise name and set the number of sets</p>
+                  <button onClick={handleAddExerciseRow} className="w-full py-2.5 rounded-xl border-2 border-dashed border-sl-purple/20 text-sl-purple-light/60 hover:border-sl-purple/40 hover:text-sl-purple-light text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                    Add Exercise
+                  </button>
                 </div>
-              </div>
             )}
 
             <div className="mt-4 flex justify-end gap-2">
