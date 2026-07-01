@@ -167,7 +167,7 @@ const Register = () => {
       if (msg.includes('rate limit') || msg.includes('too many')) {
         setError('Too many registration attempts. Please wait before trying again.');
       } else if (msg.includes('already') || msg.includes('exists')) {
-        setError('An account with this email already exists.');
+        setError('Registration failed. Please try again.');
       } else if (msg.includes('weak') || msg.includes('Password')) {
         setError('Password is too weak. Please choose a stronger password.');
       } else if (msg.includes('Network') || msg.includes('network') || msg.includes('fetch')) {
@@ -297,7 +297,7 @@ const Register = () => {
               )}
             </div>
             {usernameStatus === 'taken' && (
-              <p className="text-red-400 text-xs mt-1">This username is already taken</p>
+              <p className="text-red-400 text-xs mt-1">Username not available</p>
             )}
             {usernameStatus === 'invalid' && (
               <p className="text-amber-400 text-xs mt-1">Only letters, numbers, spaces, and underscores</p>
@@ -345,7 +345,7 @@ const Register = () => {
             </div>
             {emailStatus === 'taken' && (
               <div className="mt-1">
-                <p className="text-red-400 text-xs">An account with this email already exists</p>
+                <p className="text-red-400 text-xs">Email not available</p>
                 <button
                   onClick={handleResendVerification}
                   disabled={resending}

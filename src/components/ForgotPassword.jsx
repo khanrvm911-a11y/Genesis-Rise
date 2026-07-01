@@ -17,7 +17,7 @@ const ForgotPassword = () => {
     const initTurnstile = () => {
       if (window.turnstile && turnstileRef.current) {
         turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-          sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA',
+          sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
           callback: (token) => setCfToken(token),
           'expired-callback': () => setCfToken(''),
         });

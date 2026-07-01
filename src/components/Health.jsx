@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Heart, Weight, Ruler, Clock, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import DailyGoals from './health/DailyGoals';
-import BPMCalculator from './health/BPMCalculator';
 import DietPlanner from './health/DietPlanner';
 
 const Health = () => {
@@ -90,7 +89,6 @@ const Health = () => {
         <DailyGoals />
 
         {[
-          { title: 'BPM Calculator', icon: Heart, comp: BPMCalculator, key: 'bpm' },
           { title: 'Diet Planner', icon: Activity, comp: DietPlanner, key: 'diet' },
         ].map(s => {
           const isOpen = activeSection === s.key;

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 
-const ADMIN_CREDENTIALS = { email: 'support.app@gmail.com', password: 'Khan@786786786' };
+const ADMIN_EMAIL = 'support.app@gmail.com';
 const AdminAuthContext = createContext();
 
 export function AdminAuthProvider({ children }) {
@@ -17,12 +17,12 @@ export function AdminAuthProvider({ children }) {
     try {
       const { data, error: rpcError } = await supabase.rpc('is_admin', { check_user_id: userId });
       if (rpcError) throw rpcError;
-      const adminStatus = !!data || userEmail === ADMIN_CREDENTIALS.email;
+      const adminStatus = !!data || userEmail === ADMIN_EMAIL;
       setIsAdmin(adminStatus);
       if (!adminStatus) setError('Access denied. Admin privileges required.');
     } catch (err) {
       console.error('Admin check error:', err);
-      const adminStatus = userEmail === ADMIN_CREDENTIALS.email;
+      const adminStatus = userEmail === ADMIN_EMAIL;
       setIsAdmin(adminStatus);
       if (!adminStatus) setError('Access denied. Admin privileges required.');
     } finally {

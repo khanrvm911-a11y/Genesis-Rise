@@ -521,11 +521,6 @@ export default function Tracker() {
               {stepTitle()}
             </h1>
           </div>
-          {(workflowStep === 'complete' || (workflowStep === 'idle' && todaysCompletedWorkout)) && !showPlanner && (
-            <button onClick={handleReturnToPlanner} className="holo-button px-4 py-2 text-sm">
-              Plan Next Workout
-            </button>
-          )}
           {showPlanner && (
             <button onClick={() => setShowPlanner(false)} className="holo-button px-4 py-2 text-sm">
               Hide Planner

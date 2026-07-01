@@ -49,9 +49,9 @@ const Login = () => {
       if (msg.includes('Email not confirmed')) {
         const extractedEmail = identifier.includes('@') ? identifier.trim() : '';
         setUnconfirmedEmail(extractedEmail);
-        setError('Please verify your email before logging in.');
+        setError('Invalid email/username or password.');
       } else if (msg.includes('Invalid login credentials') || msg.includes('User not found')) {
-        setError('Incorrect username/email or password.');
+        setError('Invalid email/username or password.');
       } else if (msg.includes('rate limit') || msg.includes('429') || msg.includes('too many')) {
         setError('Too many attempts. Please wait before trying again.');
       } else if (msg.includes('Network') || msg.includes('network') || msg.includes('fetch')) {

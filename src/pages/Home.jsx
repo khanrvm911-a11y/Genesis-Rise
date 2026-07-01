@@ -795,7 +795,6 @@ const Home = () => {
 
                   <ul className="space-y-3 mb-8 flex-1">
                     {[
-                      'AI Coaching',
                       'Personalized Performance Reports',
                       'Advanced Analytics',
                       'Exclusive Challenges',
