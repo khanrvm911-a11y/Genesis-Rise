@@ -273,18 +273,16 @@ export default function Onboarding({ user, onComplete }) {
             <div className="absolute inset-0 bg-gradient-to-r from-sl-purple via-amber-400 to-amber-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
           </button>
 
-          {import.meta.env.VITE_APK_DOWNLOAD_URL && (
-            <div className="mt-4">
-              <a
-                href={import.meta.env.VITE_APK_DOWNLOAD_URL}
-                download
-                className="inline-flex items-center gap-1.5 text-xs text-sl-gray-light/50 hover:text-sl-purple-light transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Download Android APK
-              </a>
-            </div>
-          )}
+          <div className="mt-4">
+            <a
+              href={import.meta.env.VITE_APK_DOWNLOAD_URL || '#'}
+              download
+              className="inline-flex items-center gap-1.5 text-xs text-sl-gray-light/50 hover:text-sl-purple-light transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download Android APK
+            </a>
+          </div>
         </motion.div>
       </div>
     );
