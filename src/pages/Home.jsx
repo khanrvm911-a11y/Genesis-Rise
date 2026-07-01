@@ -16,7 +16,7 @@ import {
   ChevronRight, Target, Droplets, Moon, Flame,
   Clock, CheckCircle2, Play, BarChart3, Bell, Zap,
   Check, Shield, Crown, Star, Trophy, Users, Lock, Smartphone, X,
-  TrendingUp, Gift
+  TrendingUp, Gift, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
@@ -343,11 +343,21 @@ const Home = () => {
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-5 w-full sm:w-auto mx-auto"
+                className="flex flex-col items-center gap-4 w-full sm:w-auto mx-auto"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.7 }}
               >
+                <a
+                  href={import.meta.env.VITE_APK_DOWNLOAD_URL || '#'}
+                  download
+                  className="inline-flex items-center gap-1.5 text-xs text-sl-gray-light/50 hover:text-sl-purple-light transition-colors mb-1"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download Android APK
+                </a>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-5 w-full">
                 <button
                   onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
                   className="group relative inline-flex items-center justify-center gap-2.5 px-10 py-4 flex-1 sm:flex-none min-w-[200px] bg-gradient-to-r from-sl-purple to-amber-500 text-white font-bold text-lg rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-sl-purple/25 hover:scale-[1.03] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sl-purple focus-visible:ring-offset-2 focus-visible:ring-offset-sl-dark min-h-[56px]"
@@ -364,6 +374,7 @@ const Home = () => {
                   <Play className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
                   <span>Watch Experience</span>
                 </button>
+                </div>
               </motion.div>
 
               <p className="text-center text-xs text-sl-gray-light/50 mt-5 leading-relaxed">
