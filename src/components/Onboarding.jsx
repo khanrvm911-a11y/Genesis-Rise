@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import {
   Dumbbell, Flame, Activity, Zap, Heart,
-  Star, Target, ChevronLeft, ChevronRight, CheckCircle2, Check, Sparkles, Ruler, Weight, Calendar, Download
+  Star, Target, ChevronLeft, ChevronRight, CheckCircle2, Check, Sparkles, Ruler, Weight, Calendar
 } from 'lucide-react';
 
 const GOALS = [
@@ -273,16 +273,6 @@ export default function Onboarding({ user, onComplete }) {
             <div className="absolute inset-0 bg-gradient-to-r from-sl-purple via-amber-400 to-amber-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
           </button>
 
-          <div className="mt-4">
-            <a
-              href={import.meta.env.VITE_APK_DOWNLOAD_URL || '#'}
-              download
-              className="inline-flex items-center gap-1.5 text-xs text-sl-gray-light/50 hover:text-sl-purple-light transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Download Android APK
-            </a>
-          </div>
         </motion.div>
       </div>
     );
