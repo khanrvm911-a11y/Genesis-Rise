@@ -84,22 +84,6 @@ export function PlannerSkeleton() {
   );
 }
 
-export function CoachSkeleton() {
-  return (
-    <div className="min-h-screen bg-sl-gradient">
-      <div className="mobile-container py-4">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map(i => <SkeletonCard key={i} lines={1} height="56px" />)}
-          </div>
-          <SkeletonCard lines={3} height="100px" />
-          <SkeletonCard lines={2} height="80px" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-sl-gradient">

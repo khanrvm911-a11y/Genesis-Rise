@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { Heart, Weight, Ruler, Clock, Activity } from 'lucide-react';
+import { Heart, Weight, Ruler, Clock, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import DailyGoals from './health/DailyGoals';
+import BPMCalculator from './health/BPMCalculator';
+import DietPlanner from './health/DietPlanner';
 
 const Health = () => {
+  const [activeSection, setActiveSection] = useState(null);
   const [metrics, setMetrics] = useState({
     weight: '',
     height: '',
@@ -85,6 +88,28 @@ const Health = () => {
         </div>
 
         <DailyGoals />
+
+        {[
+          { title: 'BPM Calculator', icon: Heart, comp: BPMCalculator, key: 'bpm' },
+          { title: 'Diet Planner', icon: Activity, comp: DietPlanner, key: 'diet' },
+        ].map(s => {
+          const isOpen = activeSection === s.key;
+          const Icon = s.icon;
+          const Comp = s.comp;
+          return (
+            <div key={s.key}>
+              <button onClick={() => setActiveSection(isOpen ? null : s.key)}
+                className="w-full mobile-card p-3 flex items-center justify-between hover:bg-sl-gray/30 transition mb-3">
+                <div className="flex items-center gap-2">
+                  <Icon className="w-4 h-4 text-sl-purple-light" />
+                  <span className="text-sm font-bold text-white">{s.title}</span>
+                </div>
+                {isOpen ? <ChevronDown className="w-4 h-4 text-sl-purple-light/60" /> : <ChevronRight className="w-4 h-4 text-sl-purple-light/60" />}
+              </button>
+              {isOpen && <div className="mb-3"><Comp /></div>}
+            </div>
+          );
+        })}
 
         <div className="mobile-card p-4">
           <h2 className="text-base font-bold text-sl-purple-light mb-3 flex items-center gap-2 border-b border-sl-purple/15 pb-2">

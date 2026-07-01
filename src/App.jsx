@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Home as HomeIcon, Activity, Calendar, Sparkles, Heart, BarChart3, LogOut, ChevronDown, Settings as SettingsIcon } from 'lucide-react';
+import { Home as HomeIcon, Activity, Calendar, Heart, BarChart3, LogOut, ChevronDown, Settings as SettingsIcon } from 'lucide-react';
 import Home from './pages/Home';
 import About from './pages/About';
 import { useLevel } from './context/LevelContext';
@@ -15,13 +15,12 @@ import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import OfflineIndicator from './components/offline/OfflineIndicator';
 import SyncNotification from './components/offline/SyncNotification';
-import { PageSkeleton, AnalyticsSkeleton, PlannerSkeleton, CoachSkeleton, ProfileSkeleton } from './components/SkeletonLoaders';
+import { PageSkeleton, AnalyticsSkeleton, PlannerSkeleton, ProfileSkeleton } from './components/SkeletonLoaders';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AVATAR_PRESETS } from './utils/avatarPresets';
 
 const Tracker = lazy(() => import('./components/Tracker'));
 const Planner = lazy(() => import('./components/Planner'));
-const Adviser = lazy(() => import('./components/Adviser'));
 const Health = lazy(() => import('./components/Health'));
 const Analysis = lazy(() => import('./components/Analysis'));
 const Profile = lazy(() => import('./components/Profile'));
@@ -34,13 +33,11 @@ const NAV_ITEMS = [
   { to: '/planner', icon: Calendar, label: 'Planner' },
   { to: '/health', icon: Heart, label: 'Health' },
   { to: '/analysis', icon: BarChart3, label: 'Analysis' },
-  { to: '/adviser', icon: Sparkles, label: 'Coach' },
 ];
 
 const SKELETONS = {
   '/tracker': PageSkeleton,
   '/planner': PlannerSkeleton,
-  '/adviser': CoachSkeleton,
   '/health': PageSkeleton,
   '/analysis': AnalyticsSkeleton,
   '/profile': ProfileSkeleton,
@@ -187,6 +184,8 @@ function App() {
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg shrink-0 ${avatarType === 'preset' && avatarPreset ? `bg-gradient-to-br ${avatarPreset.colors}` : 'bg-gradient-to-br from-sl-purple to-sl-red'}`}>
                       {avatarType === 'preset' && AvatarIcon ? (
                         <AvatarIcon className="w-4 h-4" />
+                      ) : user?.user_metadata?.avatar_url ? (
+                        <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
                       ) : (
                         getUserName().charAt(0).toUpperCase()
                       )}
@@ -263,7 +262,6 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/tracker" element={<LazyRoute element={<Tracker />} skeleton={getSkeletonForPath('/tracker')} />} />
           <Route path="/planner" element={<LazyRoute element={<Planner />} skeleton={getSkeletonForPath('/planner')} />} />
-          <Route path="/adviser" element={<LazyRoute element={<Adviser />} skeleton={getSkeletonForPath('/adviser')} />} />
           <Route path="/health" element={<LazyRoute element={<Health />} skeleton={getSkeletonForPath('/health')} />} />
           <Route path="/analysis" element={<LazyRoute element={<Analysis />} skeleton={getSkeletonForPath('/analysis')} />} />
           <Route path="/profile" element={<LazyRoute element={<Profile />} skeleton={getSkeletonForPath('/profile')} />} />

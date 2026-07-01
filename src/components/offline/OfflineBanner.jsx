@@ -1,11 +1,6 @@
 import { WifiOff, RefreshCw } from 'lucide-react';
 
 const DEFAULT_MESSAGES = {
-  ai_coach: {
-    icon: '🤖',
-    title: 'AI Coach is unavailable while offline',
-    description: 'Your conversations will resume automatically when your connection returns.',
-  },
   notifications: {
     icon: '🔔',
     title: 'Live notifications are paused',
@@ -23,8 +18,8 @@ const DEFAULT_MESSAGES = {
   },
 };
 
-export default function OfflineBanner({ type = 'ai_coach', cachedTime, onDismiss, className = '' }) {
-  const config = DEFAULT_MESSAGES[type] || DEFAULT_MESSAGES.ai_coach;
+export default function OfflineBanner({ type = 'notifications', cachedTime, onDismiss, className = '' }) {
+  const config = DEFAULT_MESSAGES[type] || DEFAULT_MESSAGES.notifications;
 
   return (
     <div

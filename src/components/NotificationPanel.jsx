@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell, X, CheckCheck, Trash2, Dumbbell, Trophy, Calendar,
-  Sparkles, Heart, Activity, Zap, Moon, Star, User, Info,
+  Heart, Activity, Zap, Moon, Star, User, Info,
   Flame
 } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
@@ -15,7 +15,6 @@ const CATEGORY_ICONS = {
   streak: Zap,
   xp: Star,
   health: Heart,
-  ai_coach: Sparkles,
   system: Info,
 };
 
@@ -23,7 +22,6 @@ const ALLOWED_ACTION_LINKS = new Set([
   '/',
   '/tracker',
   '/planner',
-  '/adviser',
   '/health',
   '/analysis',
   '/profile',

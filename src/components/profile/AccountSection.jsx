@@ -53,7 +53,7 @@ export default function AccountSection({ user, onBack }) {
       'sl_user_settings', 'sl_mission_progress', 'sl_user_xp', 'sl_user_level',
       'sl_power_level', 'sl_weekly_change', 'gr_avatar', 'gr_avatar_type',
       'gr_workout_plans', 'gr_weekly_schedule', 'gr_active_plan_id', 'gr_todays_workout',
-      'sl_daily_goals', 'gr_coach_conversations',
+      'sl_daily_goals',
     ];
     const data = {};
     keys.forEach(k => {

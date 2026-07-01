@@ -14,7 +14,7 @@ export default function AboutSection({ settings, onUpdate, showToast }) {
   const links = [
     { icon: FileText, label: 'Privacy Policy', url: '/privacy' },
     { icon: Shield, label: 'Terms of Service', url: '/terms' },
-    { icon: BookOpen, label: 'Release Notes', action: () => showToast('Genesis Rise v1.0.0 — Initial release with workout tracking, AI coaching, and analytics.') },
+    { icon: BookOpen, label: 'Release Notes', action: () => showToast('Genesis Rise v1.0.0 — Initial release with workout tracking, health tracking, and analytics.') },
     { icon: MessageCircle, label: 'Contact Support', url: 'mailto:support.genesisrise.app@gmail.com' },
     { icon: Bug, label: 'Report a Bug', url: 'mailto:support.genesisrise.app@gmail.com?subject=Bug%20Report%20-%20Genesis%20Rise' },
     { icon: Lightbulb, label: 'Request a Feature', url: 'mailto:support.genesisrise.app@gmail.com?subject=Feature%20Request%20-%20Genesis%20Rise' },
@@ -28,7 +28,6 @@ export default function AboutSection({ settings, onUpdate, showToast }) {
     { name: 'Tailwind CSS', license: 'MIT' },
     { name: 'Lucide Icons', license: 'ISC' },
     { name: 'Chart.js', license: 'MIT' },
-    { name: 'Groq SDK', license: 'Apache 2.0' },
     { name: 'Framer Motion', license: 'MIT' },
     { name: 'React Router', license: 'MIT' },
   ];

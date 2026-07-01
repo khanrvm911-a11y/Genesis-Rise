@@ -2,9 +2,7 @@ import { Timer, Dumbbell, Calendar, Clock, CheckCircle } from 'lucide-react';
 
 export default function WorkoutCompleteScreen({
   data,
-  onNewWorkout,
   onViewAnalytics,
-  onReturnToPlanner,
 }) {
   const completedAt = data.completedAt
     ? new Date(data.completedAt).toLocaleString('en-US', {
@@ -82,13 +80,7 @@ export default function WorkoutCompleteScreen({
       </div>
 
       <div className="flex gap-2">
-        <button onClick={onReturnToPlanner} className="holo-button flex-1 text-center text-xs py-3">
-          Planner
-        </button>
-        <button onClick={onNewWorkout} className="holo-button holo-button-primary flex-1 text-center text-xs py-3">
-          New Workout
-        </button>
-        <button onClick={onViewAnalytics} className="holo-button flex-1 text-center text-xs py-3">
+        <button onClick={onViewAnalytics} className="holo-button holo-button-primary flex-1 text-center text-xs py-3">
           Analytics
         </button>
       </div>

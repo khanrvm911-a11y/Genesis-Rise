@@ -263,17 +263,17 @@ const Home = () => {
       <>
         <Helmet>
           <title>Genesis Rise — Transform Your Fitness Journey</title>
-          <meta name="description" content="Track workouts, get adaptive coaching, and level up your fitness with Genesis Rise — a premium platform that turns exercise into a rewarding journey of consistent growth." />
+          <meta name="description" content="Track workouts, monitor health, and level up your fitness with Genesis Rise — a premium platform that turns exercise into a rewarding journey of consistent growth." />
           <meta property="og:type" content="website" />
           <meta property="og:url" content="https://yourdomain.com/" />
           <meta property="og:title" content="Genesis Rise — Transform Your Fitness Journey" />
-          <meta property="og:description" content="Track workouts, get adaptive coaching, and level up your fitness with Genesis Rise — a premium platform that turns exercise into a rewarding journey of consistent growth." />
+          <meta property="og:description" content="Track workouts, monitor health, and level up your fitness with Genesis Rise — a premium platform that turns exercise into a rewarding journey of consistent growth." />
           <meta property="og:image" content="https://yourdomain.com/igris_shadow_face.png" />
           <meta property="og:image:alt" content="Genesis Rise Logo" />
           <meta property="twitter:card" content="summary_large_image" />
           <meta property="twitter:url" content="https://yourdomain.com/" />
-          <meta property="twitter:title" content="Genesis Rise - AI-Powered Fitness Platform" />
-          <meta property="twitter:description" content="Track workouts, earn XP, and reach your fitness goals with Genesis Rise — a premium AI-powered fitness platform with personalized coaching, training plans, and health tracking." />
+          <meta property="twitter:title" content="Genesis Rise - Premium Fitness Platform" />
+          <meta property="twitter:description" content="Track workouts, earn XP, and reach your fitness goals with Genesis Rise — a premium fitness platform with training plans, health tracking, and nutrition tools." />
           <meta property="twitter:image" content="https://yourdomain.com/igris_shadow_face.png" />
         </Helmet>
         <div className="bg-sl-gradient">
@@ -386,7 +386,7 @@ const Home = () => {
                   Trusted by the Genesis Community
                 </h2>
                 <p className="text-base text-sl-gray-light max-w-2xl mx-auto leading-relaxed">
-                  Build consistent habits with guided coaching, detailed progress tracking, and a progression system that keeps you motivated every day.
+                  Build consistent habits with detailed progress tracking, health monitoring, and a progression system that keeps you motivated every day.
                 </p>
               </div>
 
@@ -443,8 +443,8 @@ const Home = () => {
                     <Sparkles className="w-6 h-6 text-sl-purple-light" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-sl-purple-light leading-tight mb-2">Adaptive Coaching</h3>
-                    <p className="text-sm text-sl-gray-light leading-relaxed">Guidance that evolves with your progress and adapts to your goals.</p>
+                    <h3 className="text-lg font-bold text-sl-purple-light leading-tight mb-2">Diet & Nutrition</h3>
+                    <p className="text-sm text-sl-gray-light leading-relaxed">Track your calories and macros with a personalised diet planner.</p>
                   </div>
                 </div>
                 <div className="mobile-card flex flex-col items-center text-center gap-4 p-6 md:p-7 h-full">
@@ -507,7 +507,7 @@ const Home = () => {
                     ))}
                   </div>
                   <p className="text-sm text-sl-gray-light leading-relaxed">
-                    &ldquo;The AI coaching adapts to how my body feels each day. It&rsquo;s like having a personal trainer who actually gets it.&rdquo;
+                    &ldquo;The progress tracking keeps me consistent. Seeing my levels and streaks grow is genuinely motivating.&rdquo;
                   </p>
                 </div>
                 <div className="mobile-card p-5 h-full relative">
@@ -535,15 +535,15 @@ const Home = () => {
 
             <section className="mb-12">
               <h2 className="text-2xl font-bold text-center gradient-text mb-2">Features</h2>
-              <p className="text-base text-sl-gray-light max-w-2xl mx-auto leading-relaxed text-center mb-6">Build consistency, track every milestone, and stay motivated — from guided workouts to performance insights.</p>
+              <p className="text-base text-sl-gray-light max-w-2xl mx-auto leading-relaxed text-center mb-6">Build consistency, track every milestone, and stay motivated — from workout tracking to health monitoring.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="mobile-card flex flex-col items-center text-center gap-4 p-5 h-full">
                   <div className="w-12 h-12 bg-sl-purple/20 rounded-full flex items-center justify-center shrink-0">
-                    <Sparkles className="w-6 h-6 text-sl-purple-light" />
+                    <Heart className="w-6 h-6 text-sl-purple-light" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-sl-purple-light leading-tight mb-1.5">Guided Coach</h3>
-                    <p className="text-sm text-sl-gray-light leading-relaxed">Adaptive guidance tailored to your fitness level and goals.</p>
+                    <h3 className="text-lg font-bold text-sl-purple-light leading-tight mb-1.5">Health Dashboard</h3>
+                    <p className="text-sm text-sl-gray-light leading-relaxed">Monitor vitals, daily goals, BPM zones, and nutrition all in one place.</p>
                   </div>
                 </div>
                 <div className="mobile-card flex flex-col items-center text-center gap-4 p-5 h-full">
@@ -662,8 +662,8 @@ const Home = () => {
                     <Sparkles className="w-6 h-6 text-sl-purple-light" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-sl-purple-light leading-tight mb-2">AI Coach</h3>
-                    <p className="text-sm text-sl-gray-light leading-relaxed">Personalized guidance that adapts as your progress evolves.</p>
+                    <h3 className="text-lg font-bold text-sl-purple-light leading-tight mb-2">BPM Calculator</h3>
+                    <p className="text-sm text-sl-gray-light leading-relaxed">Calculate your heart rate zones and optimise your training intensity.</p>
                   </div>
                 </div>
                 <div className="mobile-card flex flex-col items-center text-center gap-4 p-6 md:p-7 h-full">
@@ -754,7 +754,7 @@ const Home = () => {
                       'Smart Planner',
                       'Health Monitor',
                       'Progress Analytics',
-                      'AI Coach (Basic)',
+                      'Diet Planner',
                       'Achievement System',
                       'Daily Goals',
                       'Google Sign-In',
@@ -795,7 +795,7 @@ const Home = () => {
 
                   <ul className="space-y-3 mb-8 flex-1">
                     {[
-                      'Advanced AI Coaching',
+                      'AI Coaching',
                       'Personalized Performance Reports',
                       'Advanced Analytics',
                       'Exclusive Challenges',
@@ -1323,12 +1323,12 @@ const Home = () => {
             </div>
             <span className="text-[9px] font-bold text-white">Planner</span>
           </button>
-          <button onClick={() => navigate('/adviser')}
+          <button onClick={() => navigate('/health')}
             className="flex flex-col items-center gap-1.5 rounded-xl bg-sl-gray/20 border border-sl-purple/10 p-3 hover:bg-sl-purple/15 hover:border-sl-purple/20 active:scale-95 transition cursor-pointer">
             <div className="w-9 h-9 rounded-full bg-sl-purple/15 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-sl-purple-light" />
+              <Heart className="w-4 h-4 text-sl-purple-light" />
             </div>
-            <span className="text-[9px] font-bold text-white">Coach</span>
+            <span className="text-[9px] font-bold text-white">Health</span>
           </button>
           <button onClick={() => navigate('/health')}
             className="flex flex-col items-center gap-1.5 rounded-xl bg-sl-gray/20 border border-sl-purple/10 p-3 hover:bg-sl-purple/15 hover:border-sl-purple/20 active:scale-95 transition cursor-pointer">
@@ -1350,7 +1350,7 @@ const Home = () => {
             </div>
             <h3 className="text-lg font-bold text-white text-center mb-2">Stay Updated</h3>
             <p className="text-sm text-sl-gray-light text-center leading-relaxed mb-5">
-              Allow push notifications to get workout reminders, progress updates, and personalized coaching messages.
+              Allow push notifications to get workout reminders, progress updates, and goal completion alerts.
             </p>
             <div className="flex flex-col gap-2">
               <button onClick={handleAllowNotifications}

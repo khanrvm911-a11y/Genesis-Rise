@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }) => {
       if (base.length < 2) base = 'user';
       const suffix = Math.random().toString(36).substring(2, 6);
       const username = `${base}_${suffix}`;
+      const googleAvatar = metadata.avatar_url || null;
 
       const { error: updateError } = await supabase.auth.updateUser({
         data: { username },
@@ -77,7 +78,7 @@ export const AuthProvider = ({ children }) => {
       if (existingProfile) {
         await supabase
           .from('profiles')
-          .update({ username, email })
+          .update({ username, email, avatar: googleAvatar, avatar_type: googleAvatar ? 'custom' : undefined })
           .eq('id', currentUser.id);
       } else {
         await supabase.from('profiles').insert({
@@ -87,6 +88,8 @@ export const AuthProvider = ({ children }) => {
           level: 1,
           xp: 0,
           rank: 'Initiate',
+          avatar: googleAvatar,
+          avatar_type: googleAvatar ? 'custom' : 'initial',
         });
       }
 

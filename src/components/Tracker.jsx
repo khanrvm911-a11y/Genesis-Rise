@@ -540,9 +540,7 @@ export default function Tracker() {
                 <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
                   <WorkoutCompleteScreen
                     data={todaysCompletedWorkout}
-                    onNewWorkout={handleNewWorkout}
                     onViewAnalytics={handleViewAnalytics}
-                    onReturnToPlanner={handleReturnToPlanner}
                   />
                   {showPlanner && (
                     <div className="mt-6 border-t border-sl-purple/20 pt-6">
@@ -656,9 +654,7 @@ export default function Tracker() {
             <motion.div key="complete" variants={motionVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2, ease: 'easeOut' }}>
               <WorkoutCompleteScreen
                 data={workoutCompleteData}
-                onNewWorkout={handleNewWorkout}
                 onViewAnalytics={handleViewAnalytics}
-                onReturnToPlanner={handleReturnToPlanner}
               />
               {showPlanner && (
                 <div className="mt-6 border-t border-sl-purple/20 pt-6">

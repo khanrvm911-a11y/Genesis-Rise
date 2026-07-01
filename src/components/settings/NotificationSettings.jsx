@@ -1,11 +1,10 @@
-import { Bell, Dumbbell, Target, Trophy, Calendar, BrainCircuit, Megaphone, Clock } from 'lucide-react';
+import { Bell, Dumbbell, Target, Trophy, Calendar, Megaphone, Clock } from 'lucide-react';
 
 const NOTIFICATION_ITEMS = [
   { id: 'workoutReminders', icon: Dumbbell, label: 'Workout Reminders', desc: 'Get reminded about scheduled workouts' },
   { id: 'dailyGoals', icon: Target, label: 'Daily Goals', desc: 'Notifications for daily goal completion' },
   { id: 'achievements', icon: Trophy, label: 'Achievement Notifications', desc: 'Alerts when you earn new achievements' },
   { id: 'weeklyReports', icon: Calendar, label: 'Weekly Reports', desc: 'Weekly progress summary' },
-  { id: 'aiCoachInsights', icon: BrainCircuit, label: 'AI Coach Insights', desc: 'Personalized tips from your AI Coach' },
   { id: 'systemAnnouncements', icon: Megaphone, label: 'System Announcements', desc: 'Updates and feature announcements' },
 ];
 

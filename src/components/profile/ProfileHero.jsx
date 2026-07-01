@@ -76,6 +76,8 @@ export default function ProfileHero({
                     return <Icon className="w-7 h-7 text-white" />;
                   })()}
                 </div>
+              ) : user?.user_metadata?.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-sl-purple/20 flex items-center justify-center">
                   <span className="text-sl-purple-light font-bold text-2xl">

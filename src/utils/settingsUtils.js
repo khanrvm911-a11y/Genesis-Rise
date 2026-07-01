@@ -16,7 +16,6 @@ export const DEFAULT_SETTINGS = {
     dailyGoals: true,
     achievements: true,
     weeklyReports: false,
-    aiCoachInsights: true,
     systemAnnouncements: true,
     reminderTime: '19:00',
   },

@@ -24,7 +24,7 @@ export default function DataManagement({ settings, onUpdate, showToast }) {
           'sl_user_settings', 'sl_mission_progress', 'sl_user_xp', 'sl_user_level',
           'sl_power_level', 'sl_weekly_change', 'gr_avatar', 'gr_avatar_type',
           'gr_workout_plans', 'gr_weekly_schedule', 'gr_active_plan_id',
-          'sl_daily_goals', 'gr_coach_conversations', 'gr_app_settings',
+          'sl_daily_goals', 'gr_app_settings',
         ];
         keys.forEach(k => {
           try { const val = localStorage.getItem(k); if (val) data[k] = JSON.parse(val); }
