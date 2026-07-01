@@ -351,10 +351,11 @@ const Home = () => {
                 <a
                   href={import.meta.env.VITE_APK_DOWNLOAD_URL || '#'}
                   download
-                  className="inline-flex items-center gap-1.5 text-xs text-sl-gray-light/50 hover:text-sl-purple-light transition-colors mb-1"
+                  className="group relative inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-sl-purple-light/70 hover:text-white rounded-full border border-sl-purple/20 hover:border-sl-purple/50 bg-sl-purple/5 hover:bg-sl-purple/15 transition-all duration-300 mb-1"
                 >
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="w-3.5 h-3.5 group-hover:scale-110 transition-transform duration-300" />
                   Download Android APK
+                  <span className="absolute -inset-0.5 bg-gradient-to-r from-sl-purple/0 via-sl-purple/20 to-amber-500/0 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 rounded-full" />
                 </a>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-5 w-full">
