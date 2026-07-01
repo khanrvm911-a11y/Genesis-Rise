@@ -1,13 +1,16 @@
 import { readFileSync, existsSync } from 'fs';
-import { createServer } from 'https';
-import { createServer as createHttpServer } from 'http';
+import { createServer } from 'http';
 import { join, extname } from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const dist = join(__dirname, 'dist');
 const PORT = process.env.PORT || 3000;
+
+if (!existsSync(dist)) {
+  console.error('dist/ folder not found. Run "npm run build" first.');
+  process.exit(1);
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -15,33 +18,25 @@ const MIME = {
   '.css': 'text/css; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.json': 'application/json',
-  '.woff2': 'font/woff2',
-  '.woff': 'font/woff',
 };
 
-const server = createHttpServer((req, res) => {
-  let path = req.url.split('?')[0];
-  if (path === '/') path = '/index.html';
-
+createServer((req, res) => {
+  const path = req.url === '/' ? '/index.html' : req.url.split('?')[0];
   const filePath = join(dist, path);
-  const ext = extname(filePath);
 
   if (existsSync(filePath)) {
     const content = readFileSync(filePath);
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    res.writeHead(200, { 'Content-Type': MIME[extname(path)] || 'application/octet-stream' });
     res.end(content);
   } else {
     const idx = readFileSync(join(dist, 'index.html'));
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(idx);
   }
-});
-
-server.listen(PORT, () => {
-  console.log(`Static server running on port ${PORT}`);
+}).listen(PORT, () => {
+  console.log(`Serving on port ${PORT}`);
 });
