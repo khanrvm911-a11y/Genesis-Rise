@@ -3,3 +3,7 @@ include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
 apply from: 'capacitor.settings.gradle'
+
+// Override capgo-capacitor-health to use our local Health Connect module
+// (the generated capacitor.settings.gradle points to node_modules which is incompatible)
+project(':capgo-capacitor-health').projectDir = new File('./health-connect/')
