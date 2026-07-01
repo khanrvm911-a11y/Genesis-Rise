@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postinstall": "node scripts/patch-capacitor-health.js && npm run build",
+    "postinstall": "node scripts/fix-android-health-connect.js && npm run build",
     "start": "node server.js",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -30,7 +30,6 @@
     "autoprefixer": "^10.5.0",
     "canvas-confetti": "^1.9.4",
     "chart.js": "^4.5.1",
-
     "framer-motion": "^12.41.0",
     "lucide-react": "^1.21.0",
     "postcss": "^8.5.15",

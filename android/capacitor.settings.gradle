@@ -18,4 +18,4 @@ include ':capacitor-push-notifications'
 project(':capacitor-push-notifications').projectDir = new File('../node_modules/@capacitor/push-notifications/android')
 
 include ':capgo-capacitor-health'
-project(':capgo-capacitor-health').projectDir = new File('../node_modules/@capgo/capacitor-health/android')
+project(':capgo-capacitor-health').projectDir = new File('./health-connect/')
