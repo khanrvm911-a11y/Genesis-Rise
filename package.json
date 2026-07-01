@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postinstall": "npm run build",
+    "postinstall": "node scripts/patch-capacitor-health.js && npm run build",
     "start": "node server.js",
     "lint": "eslint .",
     "preview": "vite preview"
