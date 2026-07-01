@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import {
   Dumbbell, Flame, Activity, Zap, Heart,
-  Star, Target, ChevronLeft, ChevronRight, CheckCircle2, Check, Sparkles, Ruler, Weight, Calendar
+  Star, Target, ChevronLeft, ChevronRight, CheckCircle2, Check, Sparkles, Ruler, Weight, Calendar, Download
 } from 'lucide-react';
 
 const GOALS = [
@@ -263,7 +263,7 @@ export default function Onboarding({ user, onComplete }) {
           transition={{ delay: 0.5 }}
           className="mt-8"
         >
-          <button
+            <button
             type="button"
             onClick={goNext}
             className="group relative inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-sl-purple to-amber-500 text-white font-bold text-base rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-sl-purple/25 hover:scale-[1.03] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sl-purple focus-visible:ring-offset-2 focus-visible:ring-offset-sl-dark min-h-[52px] min-w-[200px]"
@@ -272,6 +272,19 @@ export default function Onboarding({ user, onComplete }) {
             <ChevronRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
             <div className="absolute inset-0 bg-gradient-to-r from-sl-purple via-amber-400 to-amber-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
           </button>
+
+          {import.meta.env.VITE_APK_DOWNLOAD_URL && (
+            <div className="mt-4">
+              <a
+                href={import.meta.env.VITE_APK_DOWNLOAD_URL}
+                download
+                className="inline-flex items-center gap-1.5 text-xs text-sl-gray-light/50 hover:text-sl-purple-light transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download Android APK
+              </a>
+            </div>
+          )}
         </motion.div>
       </div>
     );
