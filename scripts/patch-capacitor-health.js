@@ -9,19 +9,19 @@ try {
   let content = readFileSync(buildGradle, 'utf8');
   const original = content;
 
+  if (content.includes("apply plugin: 'org.jetbrains.kotlin.android'") && !content.includes('// AGP')) {
+    content = content.replace(
+      /apply plugin: 'org\.jetbrains\.kotlin\.android'/,
+      "// AGP 9.x handles Kotlin natively — plugin omitted\n// apply plugin: 'org.jetbrains.kotlin.android'"
+    );
+  }
+
   content = content
     .replace(/def kotlinVersion = '[\d.]+'/, "def kotlinVersion = '2.1.20'")
     .replace(/classpath 'com\.android\.tools\.build:gradle:[\d.]+'/, "classpath 'com.android.tools.build:gradle:9.2.1'")
     .replace(/classpath 'org\.jetbrains\.kotlin:kotlin-gradle-plugin:[\d.]+'/, "classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20'")
     .replace(/implementation\s+\("org\.jetbrains\.kotlin:kotlin-stdlib:" \+ project\.ext\.kotlinVersion\)/, 'implementation "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"')
     .replace(/compileSdk = \d+/, "compileSdk = rootProject.ext.has('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 36");
-
-  if (!content.includes("hasPlugin('org.jetbrains.kotlin.android')")) {
-    content = content.replace(
-      "apply plugin: 'org.jetbrains.kotlin.android'",
-      "if (!project.plugins.hasPlugin('org.jetbrains.kotlin.android')) {\n    apply plugin: 'org.jetbrains.kotlin.android'\n    }"
-    );
-  }
 
   if (content !== original) {
     writeFileSync(buildGradle, content, 'utf8');
