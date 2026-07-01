@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { showDeviceNotification } from '../utils/deviceNotifications';
+import { scheduleDailyReminder, cancelAllReminders } from '../utils/notificationScheduler';
+import { loadSettings } from '../utils/settingsUtils';
 
 const NotificationContext = createContext();
 
@@ -74,9 +76,15 @@ export function NotificationProvider({ children }) {
       import('../lib/permissions').then(m => m.requestNotificationPermission()).catch(() => {});
     }
 
+    const settings = loadSettings();
+    if (settings.notifications.dailyGoals) {
+      scheduleDailyReminder(settings.notifications.reminderTime);
+    }
+
     return () => {
       mounted = false;
       supabase.removeChannel(channel);
+      cancelAllReminders();
     };
   }, [user]);
 

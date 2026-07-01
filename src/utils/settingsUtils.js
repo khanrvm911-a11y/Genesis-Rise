@@ -18,6 +18,7 @@ export const DEFAULT_SETTINGS = {
     weeklyReports: false,
     aiCoachInsights: true,
     systemAnnouncements: true,
+    reminderTime: '19:00',
   },
   privacy: {
     dataSharing: false,

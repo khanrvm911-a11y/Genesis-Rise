@@ -1,4 +1,4 @@
-import { Bell, Dumbbell, Target, Trophy, Calendar, BrainCircuit, Megaphone } from 'lucide-react';
+import { Bell, Dumbbell, Target, Trophy, Calendar, BrainCircuit, Megaphone, Clock } from 'lucide-react';
 
 const NOTIFICATION_ITEMS = [
   { id: 'workoutReminders', icon: Dumbbell, label: 'Workout Reminders', desc: 'Get reminded about scheduled workouts' },
@@ -34,6 +34,24 @@ export default function NotificationSettings({ settings, onUpdate, showToast }) 
             className="text-[10px] font-bold text-sl-purple-light hover:text-sl-purple-light/80">
             {allOn ? 'Disable All' : 'Enable All'}
           </button>
+        </div>
+      </div>
+
+      <div className="px-4 py-3 border-b border-sl-purple/10 bg-sl-gray/15">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-sl-purple/15 border border-sl-purple/25">
+              <Clock className="w-4 h-4 text-sl-purple-light" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white">Daily Reminder Time</p>
+              <p className="text-[10px] text-sl-purple-light/60 mt-0.5">Time for daily goal reminder notification</p>
+            </div>
+          </div>
+          <input type="time" value={settings.notifications.reminderTime || '19:00'}
+            onChange={(e) => onUpdate('notifications.reminderTime', e.target.value)}
+            className="w-28 h-8 bg-sl-gray/40 border border-sl-purple/20 rounded-lg text-xs text-white text-center px-2 focus:outline-none focus:border-sl-purple/50"
+          />
         </div>
       </div>
 

@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Settings, Search, X } from 'lucide-react';
 import {
   loadSettings, saveSettings, applyFontSize,
   searchSettings,
 } from '../../utils/settingsUtils';
+import { scheduleDailyReminder } from '../../utils/notificationScheduler';
 import AppearanceSettings from './AppearanceSettings';
 import UnitsSettings from './UnitsSettings';
 import NotificationSettings from './NotificationSettings';
@@ -28,10 +29,22 @@ export default function SettingsPage() {
   const [expanded, setExpanded] = useState(null);
   const [toast, setToast] = useState('');
 
+  const prevReminderTime = useRef(settings.notifications.reminderTime);
+
   useEffect(() => {
     saveSettings(settings);
     applyFontSize(settings.appearance.fontSize);
   }, [settings]);
+
+  useEffect(() => {
+    const newTime = settings.notifications.reminderTime;
+    if (newTime && newTime !== prevReminderTime.current) {
+      prevReminderTime.current = newTime;
+      if (settings.notifications.dailyGoals) {
+        scheduleDailyReminder(newTime);
+      }
+    }
+  }, [settings.notifications.reminderTime, settings.notifications.dailyGoals]);
 
   const showToast = useCallback((msg) => {
     setToast(msg);

@@ -75,6 +75,7 @@ const DailyGoals = () => {
   const pedometerStarted = useRef(false);
   const [gfConnected, setGfConnected] = useState(false);
   const [gfLoading, setGfLoading] = useState(false);
+  const [gfError, setGfError] = useState(null);
   const gfIntervalRef = useRef(null);
 
   const todaySafe = today || defaultDay();
@@ -304,9 +305,11 @@ const DailyGoals = () => {
     if (gfConnected) {
       disconnectGoogleFit();
       setGfConnected(false);
+      setGfError(null);
       return;
     }
     setGfLoading(true);
+    setGfError(null);
     try {
       await connectGoogleFit();
       setGfConnected(true);
@@ -325,8 +328,9 @@ const DailyGoals = () => {
           return next;
         });
       }
-    } catch {
+    } catch (err) {
       setGfConnected(false);
+      setGfError(err?.message || 'Failed to connect to Health Connect');
     } finally {
       setGfLoading(false);
     }
@@ -514,6 +518,9 @@ const DailyGoals = () => {
                         )}
                         {gfConnected ? 'Health ✓' : 'Health Connect'}
                       </button>
+                      {gfError && (
+                        <span className="text-[8px] text-red-400 font-semibold max-w-[120px] leading-tight">{gfError}</span>
+                      )}
                       {gfConnected && (todaySafe.distance || todaySafe.activeMinutes) && (
                         <div className="flex items-center gap-2 ml-1">
                           {todaySafe.distance > 0 && (

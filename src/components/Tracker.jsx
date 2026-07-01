@@ -192,38 +192,36 @@ export default function Tracker() {
       }
     }
 
+    const completedList = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
+
     if (hasCompleted) {
       localStorage.removeItem(STORAGE_KEY_SESSION);
-      setWorkoutExercises([]);
-      setWorkoutName('');
       setWorkflowStep('idle');
       setTodayDayType(null);
       setIsTodayCompleted(true);
-      return;
+    } else {
+      const activeSession = localStorage.getItem(STORAGE_KEY_SESSION);
+      if (activeSession) {
+        try {
+          const data = JSON.parse(activeSession);
+          const age = Date.now() - (data.lastUpdated || 0);
+          if (age < 86400000 && data.exercises?.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            const loaded = loadExercisesWithData(data);
+            setWorkoutExercises(loaded);
+            setWorkoutName(data.workoutName || 'Workout');
+            setCurrentExerciseIndex(data.currentExerciseIndex || 0);
+            setSessionStarted(data.started || false);
+            setSessionActiveTime(data.activeTime || 0);
+            setSessionIsResting(data.isResting || false);
+            setWorkflowStep('activeWorkout');
+            return;
+          }
+          localStorage.removeItem(STORAGE_KEY_SESSION);
+        } catch { /* invalid session data */ }
+      }
     }
 
-    const activeSession = localStorage.getItem(STORAGE_KEY_SESSION);
-    if (activeSession) {
-      try {
-        const data = JSON.parse(activeSession);
-        const age = Date.now() - (data.lastUpdated || 0);
-        if (age < 86400000 && data.exercises?.length > 0) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          const loaded = loadExercisesWithData(data);
-          setWorkoutExercises(loaded);
-          setWorkoutName(data.workoutName || 'Workout');
-          setCurrentExerciseIndex(data.currentExerciseIndex || 0);
-          setSessionStarted(data.started || false);
-          setSessionActiveTime(data.activeTime || 0);
-          setSessionIsResting(data.isResting || false);
-          setWorkflowStep('activeWorkout');
-          return;
-        }
-        localStorage.removeItem(STORAGE_KEY_SESSION);
-      } catch { /* invalid session data */ }
-    }
-
-    const completedList = JSON.parse(localStorage.getItem('gr_completed_workouts') || '[]');
     setIsTodayCompleted(completedList.includes(todayLocal));
 
     const todayWorkout = localStorage.getItem(STORAGE_KEY_TODAYS_WORKOUT);
@@ -240,16 +238,18 @@ export default function Tracker() {
       } catch { /* invalid today workout data */ }
     }
 
-    setWorkoutExercises([]);
-    setWorkoutName('');
-    setWorkflowStep('idle');
+    if (!hasCompleted) {
+      setWorkoutExercises([]);
+      setWorkoutName('');
+      setWorkflowStep('idle');
 
-    const schedule = JSON.parse(localStorage.getItem(STORAGE_KEY_SCHEDULE) || '{}');
-    const todayPlan = schedule[todayLocal];
-    if (todayPlan && todayPlan.type !== 'workout' && !completedList.includes(todayLocal)) {
-      setTodayDayType(todayPlan.type);
-    } else {
-      setTodayDayType(null);
+      const schedule = JSON.parse(localStorage.getItem(STORAGE_KEY_SCHEDULE) || '{}');
+      const todayPlan = schedule[todayLocal];
+      if (todayPlan && todayPlan.type !== 'workout' && !completedList.includes(todayLocal)) {
+        setTodayDayType(todayPlan.type);
+      } else {
+        setTodayDayType(null);
+      }
     }
   }, [syncKey]);
 
@@ -460,10 +460,15 @@ export default function Tracker() {
   const handleNewWorkout = () => {
     localStorage.removeItem(STORAGE_KEY_SESSION);
     localStorage.removeItem(STORAGE_KEY_TODAYS_WORKOUT);
-    localStorage.removeItem(STORAGE_KEY_COMPLETED_WORKOUT);
-    resetWorkoutState();
-    setShowPlanner(false);
+    setCurrentExerciseIndex(0);
+    setWorkoutExercises([]);
+    setWorkoutName('');
+    setSessionStarted(false);
+    setSessionActiveTime(0);
+    setSessionIsResting(false);
+    setSessionId(null);
     setWorkflowStep('idle');
+    setShowPlanner(true);
   };
 
   const handleViewAnalytics = () => {
